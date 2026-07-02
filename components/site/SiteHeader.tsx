@@ -1,14 +1,33 @@
+import Image from "next/image";
 import Link from "next/link";
 
 export function SiteHeader() {
   return (
-    <header className="border-b border-zinc-200 dark:border-zinc-800">
+    <header className="border-b border-zinc-800">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-        <Link href="/" className="text-lg font-semibold tracking-tight">
-          Payloadify
+        <Link href="/" className="flex items-center gap-3">
+          <Image
+            src="/android-chrome-192x192.png"
+            alt="Payloadify logo"
+            width={32}
+            height={32}
+            className="h-8 w-8"
+          />
+          <span
+            className="text-lg font-semibold tracking-tight"
+            style={{ fontFamily: "var(--font-space-grotesk)", color: "#F5F5F5" }}
+          >
+            Payloadify
+          </span>
+          <span
+            className="hidden sm:inline text-sm"
+            style={{ fontFamily: "var(--font-jetbrains-mono)", color: "#8A8A8A" }}
+          >
+            &gt;_generate.exploit.learn
+          </span>
         </Link>
-        <nav className="text-sm text-zinc-600 dark:text-zinc-400">
-          <Link href="/" className="hover:text-zinc-900 dark:hover:text-zinc-100">
+        <nav className="text-sm text-zinc-400">
+          <Link href="/" className="hover:text-zinc-100">
             All tools
           </Link>
         </nav>
