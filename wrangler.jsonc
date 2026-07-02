@@ -1,0 +1,9 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "payloadify",
+  "compatibility_date": "2026-07-02",
+  "assets": {
+    "directory": "./out",
+    "not_found_handling": "404-page"
+  }
+}
