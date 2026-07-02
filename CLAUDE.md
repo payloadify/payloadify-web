@@ -18,25 +18,21 @@ They arrive via Google search for a specific task, use the tool once, leave.
 
 ## Build order (v1 — build in this order, one at a time)
 1. JWT Decoder/Tamper — decode header/payload, flag alg:none and weak signing
-2. Hash Identifier — detect hash type (MD5/SHA1/SHA256/NTLM/bcrypt) + show matching Hashcat mode number
-3. Payload Encoder/Decoder — chainable Base64, Hex, URL, HTML-entity, and Unicode escape encode/decode
-4. CVSS 3.1/4.0 Calculator — click-through vectors, output vector string
-5. Reverse Shell Generator — multi-language one-liners (bash, python, PHP, nc, PowerShell)
-
-(Tools 6-8 — subdomain permutation generator, security headers analyzer,
-SPF/DKIM/DMARC checker — come later, after v1 validates)
+2. Hash Identifier — detect hash type + show matching Hashcat mode number
+3. Hash Generator — same layout as Identifier, connected via tabs (see below)
+4. Payload Encoder/Decoder — chainable Base64, Hex, URL, HTML-entity, Unicode escape
+5. CVSS 3.1/4.0 Calculator — click-through vectors, output vector string
+6. Reverse Shell Generator — multi-language one-liners (bash, python, PHP, nc, PowerShell)
+(Tools 7-9 — subdomain permutation generator, security headers analyzer, SPF/DKIM/DMARC checker — come later, after v1 validates)
 
 ## Deferred features (intentionally out of scope for now)
-- Hash Identifier batch mode (paste a whole file of dumped hashes, one per
-  line, get a results table) — v1 only identifies one hash at a time.
-  Batch support is saved as a future monetization-driving feature once site
-  traffic justifies the extra build effort, not part of initial launch.
+- Hash Identifier batch mode (paste a whole file of dumped hashes, one per line, get a results table) — v1 only identifies one hash at a time. Batch support is saved as a future monetization-driving feature once site traffic justifies the extra build effort, not part of initial launch.
 
 ## Future ideas (not active build order)
-- A dedicated bcrypt tool/page — bcrypt needs a salt + cost-factor input,
-  which is a different UI shape than the plain "type text, get a hash"
-  Hash Generator. Worth its own page eventually rather than bolting onto
-  Hash Generator. Not scheduled; revisit after the current build order.
+- A dedicated bcrypt tool/page — bcrypt needs a salt + cost-factor input,  which is a different UI shape than the plain "type text, get a hash" Hash Generator. Worth its own page eventually rather than bolting onto Hash Generator. Not scheduled; revisit after the current build order.
+- PWA support (manifest + service worker) if analytics show meaningful mobile traffic — do NOT build a native mobile app before this data exists
+- Subdomain permutation generator, security headers analyzer,
+  SPF/DKIM/DMARC checker (tools 7-9)
 
 ## Design/UX principles
 - One URL per tool (e.g. /jwt-decoder), never a single blank-canvas app
@@ -46,8 +42,7 @@ SPF/DKIM/DMARC checker — come later, after v1 validates)
   how people actually search (e.g. "jwt decoder online")
 
 ## Important constraints
-- I (the project owner) have a pentesting/security background but am NOT
-  an experienced coder. Explain what you're building in plain terms as you go.
+- I (the project owner) have a pentesting/security background but am NOT an experienced coder. Explain what you're building in plain terms as you go.
 - Since our audience is security-literate, correctness matters a lot —
   flag any assumptions or edge cases you're unsure about rather than
   guessing silently.
@@ -56,5 +51,4 @@ SPF/DKIM/DMARC checker — come later, after v1 validates)
 
 ## Scope discipline
 Do not add features, fields, or behaviors beyond what's explicitly requested. 
-If you think an enhancement would help, describe it and ask before building 
-it — don't build it silently as part of an unrelated task.
+If you think an enhancement would help, describe it and ask before building it — don't build it silently as part of an unrelated task.
