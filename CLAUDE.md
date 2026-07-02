@@ -35,9 +35,11 @@ They arrive via Google search for a specific task, use the tool once, leave.
 - Has options of what types of XSS (reflect/stored, or DOM-based)
 - Has a button to generate random XSS payload based on level chosen (or user can just uncheck 'maintain level' and XSS randomize from basic level to advance one.)
 - All generated payload can be changed in each attribute, if the generated payload using alert, there's a dropdown to change it into prompt or custom input by user.
+- Security for users and website must be in mind, the generated payload must not be able to be abused by bots (e.g. automated generation of payloads and the output send to victims without abuser has to access the website). Implement rate limits to prevent multiple generations of payloads.
 
 ## Deferred features (intentionally out of scope for now)
 - Hash Identifier batch mode (paste a whole file of dumped hashes, one per line, get a results table) — v1 only identifies one hash at a time. Batch support is saved as a future monetization-driving feature once site traffic justifies the extra build effort, not part of initial launch.
+- XSS payload batch mode (generate a long list of payloads with different or same levels (user choice)) - v1 only generate one at a time.
 
 ## Future ideas (not active build order)
 - A dedicated bcrypt tool/page — bcrypt needs a salt + cost-factor input,  which is a different UI shape than the plain "type text, get a hash" Hash Generator. Worth its own page eventually rather than bolting onto Hash Generator. Not scheduled; revisit after the current build order.
