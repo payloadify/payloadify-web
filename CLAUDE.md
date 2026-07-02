@@ -19,11 +19,24 @@ They arrive via Google search for a specific task, use the tool once, leave.
 ## Build order (v1 — build in this order, one at a time)
 1. JWT Decoder/Tamper — decode header/payload, flag alg:none and weak signing
 2. Hash Identifier — detect hash type (MD5/SHA1/SHA256/NTLM/bcrypt) + show matching Hashcat mode number
-3. CVSS 3.1/4.0 Calculator — click-through vectors, output vector string
-4. Reverse Shell Generator — multi-language one-liners (bash, python, PHP, nc, PowerShell)
+3. Payload Encoder/Decoder — chainable Base64, Hex, URL, HTML-entity, and Unicode escape encode/decode
+4. CVSS 3.1/4.0 Calculator — click-through vectors, output vector string
+5. Reverse Shell Generator — multi-language one-liners (bash, python, PHP, nc, PowerShell)
 
-(Tools 5-8 — subdomain permutation generator, security headers analyzer,
-SPF/DKIM/DMARC checker, payload encoder/decoder — come later, after v1 validates)
+(Tools 6-8 — subdomain permutation generator, security headers analyzer,
+SPF/DKIM/DMARC checker — come later, after v1 validates)
+
+## Deferred features (intentionally out of scope for now)
+- Hash Identifier batch mode (paste a whole file of dumped hashes, one per
+  line, get a results table) — v1 only identifies one hash at a time.
+  Batch support is saved as a future monetization-driving feature once site
+  traffic justifies the extra build effort, not part of initial launch.
+
+## Future ideas (not active build order)
+- A dedicated bcrypt tool/page — bcrypt needs a salt + cost-factor input,
+  which is a different UI shape than the plain "type text, get a hash"
+  Hash Generator. Worth its own page eventually rather than bolting onto
+  Hash Generator. Not scheduled; revisit after the current build order.
 
 ## Design/UX principles
 - One URL per tool (e.g. /jwt-decoder), never a single blank-canvas app
@@ -40,3 +53,8 @@ SPF/DKIM/DMARC checker, payload encoder/decoder — come later, after v1 validat
   guessing silently.
 - Budget is near-$0. Avoid suggesting paid services/dependencies unless
   there's no free alternative.
+
+## Scope discipline
+Do not add features, fields, or behaviors beyond what's explicitly requested. 
+If you think an enhancement would help, describe it and ask before building 
+it — don't build it silently as part of an unrelated task.
