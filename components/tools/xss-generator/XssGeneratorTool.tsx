@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Callout } from "@/components/ui/Callout";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
+import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
+import { loadHistory, saveHistory } from "@/lib/storage/generationHistory";
 import { XSS_ACTIONS, XSS_ACTIONS_BY_ID, XssActionId } from "@/lib/xss/actions";
 import { COMMON_BLACKLIST_CHARS, unavoidableChars } from "@/lib/xss/blacklist";
 import { LEVEL_ORDER, buildPayload, effectiveLevel, pickInjectionAndObfuscation } from "@/lib/xss/generate";
@@ -29,48 +32,6 @@ const CONTEXT_LABELS: Record<XssContext, string> = {
 
 const RANDOM = "random" as const;
 
-const toggleButtonClasses = (active: boolean) =>
-  `rounded border px-3 py-1.5 text-sm ${
-    active
-      ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-      : "border-zinc-300 text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500"
-  }`;
-const selectClasses =
-  "rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
-const inputClasses =
-  "w-full rounded border border-zinc-300 bg-white p-3 font-mono text-sm outline-none focus:ring-1 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
-
-function loadHistory(): number[] {
-  try {
-    const raw = localStorage.getItem(HISTORY_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((n) => typeof n === "number") : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveHistory(history: number[]) {
-  try {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-  } catch {
-    // localStorage unavailable (e.g. private browsing quota) — rate limiting just falls
-    // back to in-memory only for this tab session, which is an acceptable degradation.
-  }
-}
-
-// Delays updating the returned value until `value` has stopped changing for `delayMs` —
-// used so fast typing doesn't trigger the blacklist-checkbox recompute on every keystroke.
-function useDebouncedValue<T>(value: T, delayMs: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delayMs);
-    return () => clearTimeout(timer);
-  }, [value, delayMs]);
-  return debounced;
-}
-
 export function XssGeneratorTool() {
   const [level, setLevel] = useState<UiLevel>("basic");
   const [context, setContext] = useState<XssContext>("reflected-stored");
@@ -89,7 +50,7 @@ export function XssGeneratorTool() {
   // reads real history once hydrated client-side; `history` never affects rendered JSX
   // directly, so there's no hydration mismatch to worry about.
   const [history, setHistory] = useState<number[]>(() =>
-    typeof window === "undefined" ? [] : pruneHistory(loadHistory(), Date.now()),
+    typeof window === "undefined" ? [] : pruneHistory(loadHistory(HISTORY_KEY), Date.now()),
   );
   const [blockedMsg, setBlockedMsg] = useState<string | null>(null);
 
@@ -188,7 +149,7 @@ export function XssGeneratorTool() {
     setBlockedMsg(null);
     const nextHistory = [...pruneHistory(history, now), now];
     setHistory(nextHistory);
-    saveHistory(nextHistory);
+    saveHistory(HISTORY_KEY, nextHistory);
 
     // "Custom" has no level tier to constrain randomization by, so any axis still left on
     // "random" draws from the full basic-through-advanced pool.
