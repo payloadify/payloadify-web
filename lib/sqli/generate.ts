@@ -26,9 +26,11 @@ function eligibleObfuscations(
   infoExpr: string | null,
 ): SqliObfuscation[] {
   if (!technique.usesInfoExpr) return [NONE_SQLI_OBFUSCATION];
-  return SQLI_OBFUSCATIONS.filter(
-    (o) => (!maintainLevel || o.level === level) && (infoExpr === null || o.apply(infoExpr, dialect, QUOTE) !== null),
-  );
+  // infoExpr is guaranteed non-null here: this is only reached for a `technique` that already
+  // survived `pickTechniqueAndObfuscation`'s techniquePool filter below, and every
+  // usesInfoExpr:true technique's render() returns null for a null infoExpr — so a null infoExpr
+  // would have already excluded `technique` from the pool before eligibleObfuscations is called.
+  return SQLI_OBFUSCATIONS.filter((o) => (!maintainLevel || o.level === level) && o.apply(infoExpr!, dialect, QUOTE) !== null);
 }
 
 /** Randomly picks a technique and/or obfuscation (honoring any `fixedTechnique`/
@@ -63,7 +65,14 @@ export function pickTechniqueAndObfuscation(
 
   const combos: { technique: SqliTechnique; obfuscation: SqliObfuscation }[] = [];
   for (const technique of techniquePool) {
-    const obfuscationPool = fixedObfuscation ? [fixedObfuscation] : eligibleObfuscations(level, technique, maintainLevel, dialect, infoExpr);
+    // A pinned obfuscation only makes sense for techniques that actually consume the info
+    // expression — pairing it with e.g. tautology/time-based-blind/stacked-queries would silently
+    // no-op the pin (nothing for it to transform) while the UI still reports it as "chosen".
+    const obfuscationPool = !technique.usesInfoExpr
+      ? [NONE_SQLI_OBFUSCATION]
+      : fixedObfuscation
+        ? [fixedObfuscation]
+        : eligibleObfuscations(level, technique, maintainLevel, dialect, infoExpr);
     for (const obfuscation of obfuscationPool.length > 0 ? obfuscationPool : [NONE_SQLI_OBFUSCATION]) {
       combos.push({ technique, obfuscation });
     }

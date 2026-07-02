@@ -58,6 +58,24 @@ describe("pickTechniqueAndObfuscation", () => {
     }
   });
 
+  it("forces a pinned obfuscation to none when paired with a technique that doesn't use the info expression", () => {
+    const fixedTechnique = SQLI_TECHNIQUES_BY_ID["tautology"];
+    const fixedObfuscation = SQLI_OBFUSCATIONS_BY_ID["hex-literal-strings"];
+    const { technique, obfuscation } = pickTechniqueAndObfuscation(
+      "basic",
+      "string",
+      false,
+      SQL_DIALECTS_BY_ID.mysql,
+      null,
+      1,
+      new Set(),
+      fixedTechnique,
+      fixedObfuscation,
+    );
+    expect(technique.id).toBe("tautology");
+    expect(obfuscation.id).toBe("none");
+  });
+
   it("prefers a combination that fully avoids the blacklist over one that reports violations", () => {
     // Numeric context has no breakout quote of its own, so blacklisting "'" here only pressures
     // the picker to obfuscate the quote inside the info expression itself (via char-code-strings

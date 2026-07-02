@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Callout } from "@/components/ui/Callout";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { iconButtonClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { CHARSET_GROUPS, DEFAULT_CHARSET } from "@/lib/encoding/charsets";
 import { ENCODING_OPERATIONS, ENCODING_OPERATIONS_BY_ID, EncodingOperationId } from "@/lib/encoding/operations";
 import { COMMON_BLACKLIST_CHARS, unavoidableChars } from "@/lib/sqli/blacklist";
@@ -13,10 +14,15 @@ import { SQLI_INFO_TARGETS, SQLI_INFO_TARGETS_BY_ID, SqliInfoTargetId } from "@/
 import { NONE_SQLI_OBFUSCATION, SQLI_OBFUSCATIONS, SQLI_OBFUSCATIONS_BY_ID, SqliObfuscation, SqliObfuscationId } from "@/lib/sqli/obfuscation";
 import { SQLI_TECHNIQUES, SqliLevel, SqliTechnique } from "@/lib/sqli/techniques";
 import { canGenerate, pruneHistory } from "@/lib/sqli/rateLimit";
+import { loadHistory, saveHistory } from "@/lib/storage/generationHistory";
 
 const HISTORY_KEY = "payloadify:sqli-generator:history";
 const QUOTE = "'";
 const RANDOM = "random" as const;
+/** UNION SELECT pads the info expression with this many NULL columns — capped well above any
+ *  realistic original-query column count to keep `Array(padCount).fill(...)` from ever being
+ *  asked to build a pathologically large array from a mistyped/pasted value. */
+const MAX_COLUMN_COUNT = 64;
 
 const ENCODABLE_CHARSETS = CHARSET_GROUPS.flatMap((group) => group.charsets).filter((c) => c.encodable);
 
@@ -40,48 +46,6 @@ let nextFieldId = 1;
 type SqliInfoField = { id: number; targetId: SqliInfoTargetId; customExpr?: string };
 function defaultInfoField(): SqliInfoField {
   return { id: nextFieldId++, targetId: "dbVersion" };
-}
-
-const toggleButtonClasses = (active: boolean) =>
-  `rounded border px-3 py-1.5 text-sm ${
-    active
-      ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-      : "border-zinc-300 text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500"
-  }`;
-const selectClasses =
-  "rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
-const inputClasses =
-  "w-full rounded border border-zinc-300 bg-white p-3 font-mono text-sm outline-none focus:ring-1 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
-const iconButtonClasses =
-  "rounded border border-zinc-300 px-2 py-1.5 text-sm text-zinc-600 hover:border-zinc-400 disabled:opacity-30 disabled:hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500 dark:disabled:hover:border-zinc-700";
-
-function loadHistory(): number[] {
-  try {
-    const raw = localStorage.getItem(HISTORY_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed.filter((n) => typeof n === "number") : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveHistory(history: number[]) {
-  try {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-  } catch {
-    // localStorage unavailable (e.g. private browsing quota) — rate limiting just falls
-    // back to in-memory only for this tab session, which is an acceptable degradation.
-  }
-}
-
-function useDebouncedValue<T>(value: T, delayMs: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delayMs);
-    return () => clearTimeout(timer);
-  }, [value, delayMs]);
-  return debounced;
 }
 
 /** Probes `technique`/`obfuscation` against `dialect` with a placeholder expression, purely to
@@ -116,7 +80,7 @@ export function SqliGeneratorTool() {
   const [generatedTechnique, setGeneratedTechnique] = useState<SqliTechnique | null>(null);
   const [generatedObfuscation, setGeneratedObfuscation] = useState<SqliObfuscation | null>(null);
   const [history, setHistory] = useState<number[]>(() =>
-    typeof window === "undefined" ? [] : pruneHistory(loadHistory(), Date.now()),
+    typeof window === "undefined" ? [] : pruneHistory(loadHistory(HISTORY_KEY), Date.now()),
   );
   const [blockedMsg, setBlockedMsg] = useState<string | null>(null);
 
@@ -158,11 +122,10 @@ export function SqliGeneratorTool() {
     return dialectCompatible;
   }, [dialect, techniqueSelect, chosenTechnique]);
 
-  const debouncedCombinedInfoExpr = useDebouncedValue(combinedInfoExpr, 200);
   const unavoidableByObfuscation = useMemo(() => {
     if (obfuscationSelect === RANDOM) return new Set<string>();
-    return unavoidableChars(SQLI_OBFUSCATIONS_BY_ID[obfuscationSelect], dialect, debouncedCombinedInfoExpr);
-  }, [obfuscationSelect, dialect, debouncedCombinedInfoExpr]);
+    return unavoidableChars(SQLI_OBFUSCATIONS_BY_ID[obfuscationSelect], dialect, combinedInfoExpr);
+  }, [obfuscationSelect, dialect, combinedInfoExpr]);
 
   const adapted = useMemo(() => {
     if (!generatedTechnique) return null;
@@ -224,13 +187,18 @@ export function SqliGeneratorTool() {
       const chosen = SQLI_TECHNIQUES.find((t) => t.id === techniqueSelect);
       const stillValid = chosen ? chosen.contexts.includes(context) && techniqueSupportsDialect(chosen, newDialect) : false;
       if (!stillValid) {
+        // techniqueSelect !== RANDOM only happens after selectTechnique forced level to "custom",
+        // so dropping the pin here means "custom" no longer means anything — revert the level
+        // label too, rather than leaving it stuck on "Custom" while generation is actually random.
         setTechniqueSelect(RANDOM);
         setObfuscationSelect(RANDOM);
+        setLevel("basic");
         return;
       }
     }
     if (obfuscationSelect !== RANDOM && !obfuscationSupportsDialect(SQLI_OBFUSCATIONS_BY_ID[obfuscationSelect], newDialect)) {
       setObfuscationSelect(RANDOM);
+      setLevel("basic");
     }
   }
 
@@ -240,8 +208,10 @@ export function SqliGeneratorTool() {
     if (techniqueSelect !== RANDOM) {
       const stillValid = SQLI_TECHNIQUES.some((t) => t.id === techniqueSelect && t.contexts.includes(c));
       if (!stillValid) {
+        // Same reasoning as selectDialect above — the pin that put us in "custom" no longer holds.
         setTechniqueSelect(RANDOM);
         setObfuscationSelect(RANDOM);
+        setLevel("basic");
       }
     }
   }
@@ -279,9 +249,6 @@ export function SqliGeneratorTool() {
       return;
     }
     setBlockedMsg(null);
-    const nextHistory = [...pruneHistory(history, now), now];
-    setHistory(nextHistory);
-    saveHistory(nextHistory);
 
     const effMaintain = level === "custom" ? false : maintainLevel;
     const presetLevel: SqliLevel = level === "custom" ? "advanced" : level;
@@ -303,6 +270,12 @@ export function SqliGeneratorTool() {
       );
       setGeneratedTechnique(nextTechnique);
       setGeneratedObfuscation(nextObfuscation);
+
+      // Only count successful generations against the rate limit — a combination with no valid
+      // technique never produces a payload, so it shouldn't burn the user's cooldown/quota.
+      const nextHistory = [...pruneHistory(history, now), now];
+      setHistory(nextHistory);
+      saveHistory(HISTORY_KEY, nextHistory);
     } catch {
       // No technique in the pool is supported for this dialect/level/context combination — e.g.
       // Advanced + Oracle + no valid info field leaves every advanced technique unsupported.
@@ -393,19 +366,24 @@ export function SqliGeneratorTool() {
         </div>
       </div>
 
-      {chosenTechnique?.columnCountAware && (
+      {(chosenTechnique?.columnCountAware || generatedTechnique?.columnCountAware) && (
         <div>
           <label className="mb-1 block text-sm font-medium">Original query column count</label>
           <input
             type="number"
             min={1}
+            max={MAX_COLUMN_COUNT}
+            step={1}
             value={columnCount}
-            onChange={(e) => setColumnCount(Math.max(1, Number(e.target.value) || 1))}
+            onChange={(e) => {
+              const parsed = Math.round(Number(e.target.value));
+              setColumnCount(Number.isFinite(parsed) ? Math.min(MAX_COLUMN_COUNT, Math.max(1, parsed)) : 1);
+            }}
             className={`${selectClasses} w-24`}
           />
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             UNION SELECT must return the same number of columns as the original query — pad with the count you&apos;ve probed for (e.g. via ORDER
-            BY).
+            BY). Max {MAX_COLUMN_COUNT}.
           </p>
         </div>
       )}
