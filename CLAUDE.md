@@ -23,10 +23,11 @@ They arrive via Google search for a specific task, use the tool once, leave.
 4. Payload Encoder/Decoder — chainable Base64, Hex, URL, HTML-entity, Unicode escape
 5. Homoglyph Identifier/Generator — see spec below
 6. XSS payload generator — an all in one XSS payload generators for pentesters, full specs read below.
-7. SQLi payload generator - an all in one SQLi payload that helps pentesters build a SQLi command, full specs read below.
+7. SQLi payload generator — an all in one SQLi payload that helps pentesters build a SQLi command, full specs read below.
 8. Reverse Shell Generator — multi-language one-liners (bash, python, PHP, nc, PowerShell)
-9. CVSS 3.1/4.0 Calculator — click-through vectors, output vector string. 
-(Tools 10-13 — subdomain permutation generator, security headers analyzer, SPF/DKIM/DMARC checker — come later, JWT generator, after v1 validates)
+9. MSFVenom Generator — an all in one MSFVenom generator that helps pentesters and learners to generate their own MSFVenom command in one click
+10. CVSS 3.1/4.0 Calculator — click-through vectors, output vector string. 
+(Tools 11-14 — subdomain permutation generator, security headers analyzer, SPF/DKIM/DMARC checker — come later, JWT generator, after v1 validates)
 
 ### Tool 7: SQLi Payload generator
 - Feature is intended to help pentesters by generating a useful sql injection commands by just a single click.
