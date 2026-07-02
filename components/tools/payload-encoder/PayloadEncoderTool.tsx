@@ -1,0 +1,228 @@
+"use client";
+
+import { useState } from "react";
+import { ENCODING_OPERATIONS, ENCODING_OPERATIONS_BY_ID, EncodingOperationId } from "@/lib/encoding/operations";
+import { Callout } from "@/components/ui/Callout";
+import { CopyButton } from "@/components/ui/CopyButton";
+
+const SAMPLE_INPUT = "Hello, World!";
+
+type Direction = "encode" | "decode";
+
+type Step = {
+  id: number;
+  operationId: EncodingOperationId;
+  direction: Direction;
+  mode?: string;
+};
+
+let nextStepId = 1;
+
+function defaultStep(): Step {
+  return { id: nextStepId++, operationId: "base64", direction: "encode", mode: "all" };
+}
+
+const inputClasses =
+  "w-full rounded border border-zinc-300 bg-white p-3 font-mono text-sm outline-none focus:ring-1 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+const selectClasses =
+  "rounded border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+const toggleButtonClasses = (active: boolean) =>
+  `rounded border px-2 py-1.5 text-sm ${
+    active
+      ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
+      : "border-zinc-300 text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500"
+  }`;
+const iconButtonClasses =
+  "rounded border border-zinc-300 px-2 py-1.5 text-sm text-zinc-600 hover:border-zinc-400 disabled:opacity-30 disabled:hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500 dark:disabled:hover:border-zinc-700";
+
+type ChainEntry = { output: string; error: null } | { output: null; error: string } | { output: null; error: null };
+
+function computeChain(input: string, steps: Step[]): ChainEntry[] {
+  const entries: ChainEntry[] = [];
+  let current: string | null = input;
+  for (const step of steps) {
+    if (current === null) {
+      entries.push({ output: null, error: null });
+      continue;
+    }
+    const operation = ENCODING_OPERATIONS_BY_ID[step.operationId];
+    try {
+      const output: string =
+        step.direction === "encode" ? operation.encode(current, step.mode) : operation.decode(current);
+      entries.push({ output, error: null });
+      current = output;
+    } catch (err) {
+      entries.push({ output: null, error: err instanceof Error ? err.message : "Invalid input." });
+      current = null;
+    }
+  }
+  return entries;
+}
+
+export function PayloadEncoderTool() {
+  const [input, setInput] = useState(SAMPLE_INPUT);
+  const [steps, setSteps] = useState<Step[]>([defaultStep()]);
+
+  const results = computeChain(input, steps);
+
+  function updateStep(id: number, patch: Partial<Step>) {
+    setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  }
+
+  function setOperation(id: number, operationId: EncodingOperationId) {
+    const operation = ENCODING_OPERATIONS_BY_ID[operationId];
+    updateStep(id, { operationId, mode: operation.modes ? operation.modes[0].id : undefined });
+  }
+
+  function addStep() {
+    setSteps((prev) => [...prev, defaultStep()]);
+  }
+
+  function removeStep(id: number) {
+    setSteps((prev) => (prev.length > 1 ? prev.filter((s) => s.id !== id) : prev));
+  }
+
+  function moveStep(index: number, delta: number) {
+    setSteps((prev) => {
+      const target = index + delta;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <label className="mb-1 block text-sm font-medium">Input</label>
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          rows={3}
+          spellCheck={false}
+          placeholder="Type or paste the text to encode/decode"
+          className={inputClasses}
+        />
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Computed entirely in your browser — this text is never sent anywhere.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {steps.map((step, index) => {
+          const operation = ENCODING_OPERATIONS_BY_ID[step.operationId];
+          const result = results[index];
+          const isFinal = index === steps.length - 1;
+
+          return (
+            <div key={step.id} className="rounded border border-zinc-200 dark:border-zinc-800">
+              <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 p-2 dark:border-zinc-800">
+                <select
+                  value={step.operationId}
+                  onChange={(e) => setOperation(step.id, e.target.value as EncodingOperationId)}
+                  className={selectClasses}
+                >
+                  {ENCODING_OPERATIONS.map((op) => (
+                    <option key={op.id} value={op.id}>
+                      {op.name}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => updateStep(step.id, { direction: "encode" })}
+                    className={toggleButtonClasses(step.direction === "encode")}
+                  >
+                    Encode
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateStep(step.id, { direction: "decode" })}
+                    className={toggleButtonClasses(step.direction === "decode")}
+                  >
+                    Decode
+                  </button>
+                </div>
+
+                {operation.modes && step.direction === "encode" && (
+                  <select
+                    value={step.mode}
+                    onChange={(e) => updateStep(step.id, { mode: e.target.value })}
+                    className={selectClasses}
+                  >
+                    {operation.modes.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                <div className="ml-auto flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => moveStep(index, -1)}
+                    disabled={index === 0}
+                    className={iconButtonClasses}
+                    aria-label="Move step up"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveStep(index, 1)}
+                    disabled={index === steps.length - 1}
+                    className={iconButtonClasses}
+                    aria-label="Move step down"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeStep(step.id)}
+                    disabled={steps.length === 1}
+                    className={iconButtonClasses}
+                    aria-label="Remove step"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-3">
+                {result.error !== null && <Callout variant="danger">{result.error}</Callout>}
+                {result.output === null && result.error === null && (
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    Blocked — fix the error in an earlier step.
+                  </p>
+                )}
+                {result.output !== null && (
+                  <>
+                    <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                      {isFinal ? "Final output" : `After step ${index + 1}`}
+                    </p>
+                    <div className="flex items-start justify-between gap-2">
+                      <code className="break-all text-xs text-zinc-600 dark:text-zinc-400">{result.output}</code>
+                      <CopyButton text={result.output} />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <button
+        type="button"
+        onClick={addStep}
+        className="self-start rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+      >
+        + Add step
+      </button>
+    </div>
+  );
+}
