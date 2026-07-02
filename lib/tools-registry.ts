@@ -27,6 +27,13 @@ export const tools: Tool[] = [
       "Generate MD5, SHA-1, SHA-256, SHA-384, SHA-512, and NTLM hashes from any text, instantly in your browser.",
     status: "live",
   },
+  {
+    slug: "payload-encoder",
+    name: "Payload Encoder/Decoder",
+    shortDescription:
+      "Chain Base64, Hex, URL, HTML-entity, and Unicode escape encoding and decoding steps to build or unwrap obfuscated payloads.",
+    status: "live",
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {
