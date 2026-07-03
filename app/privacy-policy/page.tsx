@@ -104,6 +104,28 @@ export default function PrivacyPolicyPage() {
           </p>
 
           <h3 className="mt-4 text-base font-medium text-zinc-900 dark:text-zinc-100">
+            Tool accuracy and ongoing refinement
+          </h3>
+          <p>
+            Payloadify's tools are developed and shipped rapidly, often with
+            the help of AI-assisted development workflows. As a result, some
+            generated commands, payloads, or outputs may not behave exactly
+            as expected in every environment or edge case. Every new tool and
+            feature goes through code review and security testing before it's
+            deployed, but we can't cover every possible configuration or
+            environment.
+          </p>
+          <p>
+            This is an intentional, ongoing process rather than a
+            one-time effort: as each tool sees more real-world use, we
+            revisit it, retire rough edges, and tighten its accuracy in
+            subsequent updates. Tools you use today should be expected to
+            keep improving over time, not stay static. If you run into
+            output that looks wrong, we'd appreciate a report (see Contact
+            below) — that feedback directly shapes what gets refined next.
+          </p>
+
+          <h3 className="mt-4 text-base font-medium text-zinc-900 dark:text-zinc-100">
             Limitation of liability
           </h3>
           <p>

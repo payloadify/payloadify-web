@@ -17,6 +17,8 @@ REVIEW.md
 msfvenom-generator-specifications.md
 msfvenom-reference.md
 reverse-shell-payloads-reference.md
+msfvenom-reference-deepseek.md
+
 
 # archived features — not wired into the app, kept locally for reference only
 /_archive/
