@@ -1,51 +1,102 @@
-# Payloadify - all-in-one pentest tools project
+# Payloadify — Security Toolkit for Pentesters
 
-A free, client-side hub of security/pentesting utility tools — think iLovePDF, but for pentesters. Built for pentesters, bug bounty hunters, OSCP/CEH students, and red teamers who land on a specific tool via search, use it once, and leave.
+> Fast. Open-source. No install required.
+
+## What is Payloadify?
+
+Crafting a correct payload or command by hand usually means digging through man pages, `--help` output, or scattered docs first. Payloadify skips that: click through a few options and get a ready-to-use command or payload straight away — think iLovePDF, but for pentesters, bug bounty hunters, OSCP/CEH students, and red teamers who land on a specific tool via search, use it once, and leave.
 
 Live at [payloadify.dev](https://payloadify.dev).
 
-## Why client-side
-
-Nearly everything runs entirely in the browser — no data leaves the user's machine. For a security-conscious audience, that's not a nice-to-have, it's the selling point. There's no database, no accounts, and no login. A Cloudflare Worker backend is used only where it's genuinely unavoidable (e.g. DNS lookups).
-
-## Tools
+## Features
 
 Each tool lives at its own URL (e.g. `/jwt-decoder`), never a shared blank-canvas app.
 
-- **JWT Decoder/Tamper** (`/jwt-decoder`) — decode header/payload, flag `alg:none` and weak signing
-- **Hash Identifier** (`/hash-identifier`) — detect hash type and show the matching Hashcat mode number
-- **Hash Generator** (`/hash-generator`) — generate hashes, tab-linked with the Identifier
-- **Payload Encoder** (`/payload-encoder`) / **Decoder** (`/payload-decoder`) — chainable Base64, Hex, URL, HTML-entity, Unicode escape
-- **Homoglyph Identifier** (`/homoglyph-identifier`) / **Generator** (`/homoglyph-generator`)
-- **XSS Payload Generator** (`/xss-generator`) — configurable XSS payload builder with evasion/obfuscation options
-- **SQLi Payload Generator** (`/sqli-generator`) — configurable SQL injection payload builder with obfuscation and blacklist-aware character filtering
+- **JWT Decoder/Tamper** (`/jwt-decoder`) — decode header/payload, flag `alg:none` and weak signing, edit claims and re-sign
+- **Hash Identifier** (`/hash-identifier`) — identify a hash's likely type with ranked candidates and matching Hashcat mode numbers
+- **Hash Generator** (`/hash-generator`) — generate MD5, SHA-1, SHA-256, SHA-384, SHA-512, and NTLM hashes from text, tab-linked with the Identifier
+- **Payload Encoder** (`/payload-encoder`) / **Decoder** (`/payload-decoder`) — chain Base64, Hex, URL, HTML-entity, and Unicode-escape steps to build or unwrap obfuscated payloads
+- **Homoglyph Identifier** (`/homoglyph-identifier`) — detect Unicode homoglyph/confusable characters in suspicious text (e.g. spoofed domains)
+- **Homoglyph Generator** (`/homoglyph-generator`) — generate homoglyph-substituted lookalike strings
+- **XSS Payload Generator** (`/xss-generator`) — build XSS payloads across basic to advanced WAF-bypass and encoding techniques, for reflected/stored or DOM-based contexts
+- **SQLi Payload Generator** (`/sqli-generator`) — build SQL injection payloads across MySQL, MSSQL, PostgreSQL, Oracle, and SQLite, with chainable info extraction, WAF-evasion obfuscation, and blacklist-character avoidance
+- **Reverse Shell Generator** (`/reverse-shell-generator`) — generate reverse shell one-liners across Bash, Netcat, Python, PHP, Perl, Ruby, Socat, Awk, Telnet, Node.js, Lua, Golang, and PowerShell, with a matching listener command and save-as-file options
+- **MSFVenom Command Generator** (`/msfvenom-generator`) — build msfvenom commands with template presets for Windows, Linux, macOS, and Android payloads, evasion encoders, and architectures, with a listener setup guide
 
-More tools (reverse shell generator, CVSS calculator, subdomain permutation generator, security headers analyzer, SPF/DKIM/DMARC checker) are in progress — see [CLAUDE.md](CLAUDE.md) for the full build order and specs.
+More tools (CVSS calculator, subdomain permutation generator, security headers analyzer, SPF/DKIM/DMARC checker) are planned — see [Roadmap](#roadmap).
 
-## Tech stack
+## Getting Started
 
-- [Next.js](https://nextjs.org) (static export)
-- Tailwind CSS
-- Hosted on Cloudflare Pages (free tier)
-- Cloudflare Workers only where a backend is unavoidable
+### Online (No Installation)
 
-## Getting started
+Visit [payloadify.dev](https://payloadify.dev) — everything runs in your browser.
+
+### Self-Host (Local)
 
 ```bash
+git clone https://github.com/yourusername/payloadify.git
+cd payloadify
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the site. Each tool page lives under `app/<tool-name>/`, with shared logic in `lib/` and shared UI in `components/`.
+Open [http://localhost:3000](http://localhost:3000).
 
 Other scripts:
 
 ```bash
-npm run build   # static production build
+npm run build   # static production build (outputs to /out)
 npm run lint    # eslint
 npm run test    # vitest
 ```
 
-## Project docs
+## How It Works
 
-[CLAUDE.md](CLAUDE.md) is the source of truth for project scope, build order, and detailed specs for each tool.
+All tools run **client-side only** — your data never leaves your browser. Paste, generate, copy. That's it. There's no database, no accounts, and no login. A backend is used only where it's genuinely unavoidable (none of the shipped tools currently need one).
+
+## Tech Stack
+
+- Frontend: [Next.js](https://nextjs.org) (static export), React, TypeScript
+- Styling: Tailwind CSS
+- Hosting: Cloudflare Pages (free tier)
+- Testing: Vitest
+
+## Project Structure
+
+```
+app/          Route pages — one folder per tool URL (e.g. app/jwt-decoder/)
+components/   UI, organized by tool (components/tools/<tool-name>/) and shared/site chrome
+lib/          Framework-free core logic per tool (encoding, hashing, generation, validation)
+public/       Static assets (favicons, manifest)
+scripts/      One-off data build scripts (not part of the app runtime)
+```
+
+## Security
+
+- Client-side processing — no server, no data collection
+- Open source — audit the code yourself
+- No tracking, no analytics, no ads
+- Spec-compliant outputs (RFC 7519, msfvenom format, Hashcat mode numbers, etc.)
+
+## Roadmap
+
+Not yet shipped:
+
+- CVSS 3.1/4.0 calculator
+- Subdomain permutation generator
+- Security headers analyzer
+- SPF/DKIM/DMARC checker
+
+## Contributing
+
+Found a bug? Want to add a tool? See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details.
+
+## Built By
+
+Made by a pentester, for pentesters.
+
+Feedback? Open an issue on GitHub.

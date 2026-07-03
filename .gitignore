@@ -14,11 +14,6 @@
 .claudeignore
 CLAUDE.md
 REVIEW.md
-msfvenom-generator-specifications.md
-msfvenom-reference.md
-reverse-shell-payloads-reference.md
-msfvenom-reference-deepseek.md
-
 
 # archived features — not wired into the app, kept locally for reference only
 /_archive/
@@ -32,10 +27,12 @@ msfvenom-reference-deepseek.md
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
 *.pem
+.vscode/
 
 # debug
 npm-debug.log*
@@ -45,6 +42,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
