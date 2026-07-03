@@ -75,7 +75,7 @@ export function MsfvenomGeneratorTool() {
   const [payloadId, setPayloadId] = useState<PayloadId>(DEFAULTS.payloadId);
   const [formatId, setFormatId] = useState<FormatId>(DEFAULTS.formatId);
   const [encoderId, setEncoderId] = useState<EncoderId>(DEFAULTS.encoderId);
-  const [iterations, setIterations] = useState(DEFAULTS.iterations);
+  const [iterationsText, setIterationsText] = useState(DEFAULTS.iterations > 0 ? String(DEFAULTS.iterations) : "");
   const [archId, setArchId] = useState<ArchId | null>(DEFAULTS.archId);
   const [exitfunc, setExitfunc] = useState<ExitfuncId | null>(DEFAULTS.exitfunc);
   const [lhost, setLhost] = useState(DEFAULTS.lhost);
@@ -115,7 +115,8 @@ export function MsfvenomGeneratorTool() {
   const hostValidation = useMemo(() => validateLhost(lhost), [lhost]);
   const port = Number(lportText);
   const portValid = lportText.trim().length > 0 && isValidPort(port);
-  const iterationsValid = isValidIterations(iterations, encoder);
+  const iterations = Number(iterationsText);
+  const iterationsValid = encoderId === "none" || (iterationsText.trim().length > 0 && isValidIterations(iterations, encoder));
   const needsFilename = requiresOutputFilename(payload, format);
   const filenameValid = !needsFilename || isValidFilename(filename);
   const canGenerateNow = hostValidation.ok && portValid && iterationsValid && filenameValid;
@@ -170,7 +171,7 @@ export function MsfvenomGeneratorTool() {
     setExitfunc(nextExitfunc);
     if (!encoderStillValid) {
       setEncoderId("none");
-      setIterations(0);
+      setIterationsText("");
     }
 
     if (!filenameTouched) {
@@ -205,14 +206,15 @@ export function MsfvenomGeneratorTool() {
     setEncoderId(id);
     resetToCustom();
     if (id === "none") {
-      setIterations(0);
+      setIterationsText("");
     } else {
-      setIterations(clampIterations(iterations || 1, MSFVENOM_ENCODERS_BY_ID[id]));
+      setIterationsText(String(clampIterations(iterations || 1, MSFVENOM_ENCODERS_BY_ID[id])));
     }
   }
 
-  function setIterationsWrapped(n: number) {
-    setIterations(n);
+  function setIterationsTextWrapped(text: string) {
+    if (text !== "" && !/^\d+$/.test(text)) return;
+    setIterationsText(text);
     resetToCustom();
   }
 
@@ -221,7 +223,7 @@ export function MsfvenomGeneratorTool() {
     resetToCustom();
     if (!encodersForArch(id).some((e) => e.id === encoderId)) {
       setEncoderId("none");
-      setIterations(0);
+      setIterationsText("");
     }
     if (!filenameTouched) {
       setFilename(suggestFilename(payload, format, id));
@@ -260,7 +262,7 @@ export function MsfvenomGeneratorTool() {
     setPlatformFilter(MSFVENOM_PAYLOADS_BY_ID[t.payloadId].platform);
     setFormatId(t.formatId);
     setEncoderId(t.encoderId);
-    setIterations(t.iterations);
+    setIterationsText(t.iterations > 0 ? String(t.iterations) : "");
     setArchId(t.archId);
     setExitfunc(t.exitfunc);
     setFilename(t.filename);
@@ -333,7 +335,7 @@ export function MsfvenomGeneratorTool() {
     setPayloadId(DEFAULTS.payloadId);
     setFormatId(DEFAULTS.formatId);
     setEncoderId(DEFAULTS.encoderId);
-    setIterations(DEFAULTS.iterations);
+    setIterationsText(DEFAULTS.iterations > 0 ? String(DEFAULTS.iterations) : "");
     setArchId(DEFAULTS.archId);
     setExitfunc(DEFAULTS.exitfunc);
     setLhost(DEFAULTS.lhost);
@@ -499,13 +501,17 @@ export function MsfvenomGeneratorTool() {
                 type="number"
                 min={1}
                 max={encoder.maxIterations || 1}
-                value={iterations}
+                value={iterationsText}
                 disabled={encoderId === "none"}
-                onChange={(e) => setIterationsWrapped(Number(e.target.value))}
+                onChange={(e) => setIterationsTextWrapped(e.target.value)}
                 className={`${selectClasses} w-full disabled:opacity-40`}
               />
               {encoderId !== "none" && !iterationsValid && (
-                <p className="mt-1 text-xs text-red-600 dark:text-red-400">Enter a value between 1 and {encoder.maxIterations}.</p>
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+                  {iterationsText.trim().length === 0
+                    ? "Iterations must be at least 1."
+                    : `Enter a value between 1 and ${encoder.maxIterations}.`}
+                </p>
               )}
             </div>
           </div>
