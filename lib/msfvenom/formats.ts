@@ -8,64 +8,133 @@ export interface MsfvenomFormat {
   extension: string;
   category: FormatCategory;
   /** False for stdout-dump formats (raw bytecode / source-code snippets) where msfvenom prints to
-   *  the console rather than writing a file — generate.ts omits -o entirely for these. */
+   *  the console rather than writing a file — generate.ts omits -o entirely for these, unless the
+   *  selected payload sets forceOutputFilename (e.g. Android, which uses -f raw -o file.apk). */
   producesFile: boolean;
   note?: string;
 }
 
+/** Ids below are verified against `msfvenom -l formats`. Earlier drafts of this catalog included
+ *  several formats that don't exist as real -f values (elf32/elf64/macho32/macho64 — arch is set
+ *  via -a, not a separate format; apk/dex — Android output is `-f raw -o file.apk`; cab/scr/jsp/php —
+ *  not in msfvenom's format list; veil — a separate framework, not an msfvenom format; hta — the
+ *  real id is hta-psh). Those have been removed or corrected. */
 export const MSFVENOM_FORMATS: MsfvenomFormat[] = [
   { id: "exe", label: "EXE (.exe) — Windows executable", extension: "exe", category: "executable", producesFile: true },
+  {
+    id: "exe-only",
+    label: "EXE-only — Windows executable without a stub template",
+    extension: "exe",
+    category: "executable",
+    producesFile: true,
+    note: "Skips msfvenom's default template wrapper — typically paired with -x/a custom template (add it via Extra Options).",
+  },
+  {
+    id: "exe-service",
+    label: "EXE-service — Windows service executable",
+    extension: "exe",
+    category: "executable",
+    producesFile: true,
+    note: "Built to run as a Windows service — useful for persistence.",
+  },
+  { id: "exe-small", label: "EXE-small — smaller Windows executable", extension: "exe", category: "executable", producesFile: true },
   {
     id: "elf",
     label: "ELF — Linux executable",
     extension: "elf",
     category: "executable",
     producesFile: true,
-    note: "No extension is required by msfvenom convention on Linux; .elf is added here for clarity.",
+    note: "No extension is required by msfvenom convention on Linux; .elf is added here for clarity. Architecture is set via -a, not the format.",
   },
-  { id: "elf32", label: "ELF32 — explicit 32-bit Linux executable", extension: "elf", category: "executable", producesFile: true },
-  { id: "elf64", label: "ELF64 — explicit 64-bit Linux executable", extension: "elf", category: "executable", producesFile: true },
+  {
+    id: "elf-so",
+    label: "ELF-SO — Linux shared object (.so)",
+    extension: "so",
+    category: "executable",
+    producesFile: true,
+    note: "For library injection (LD_PRELOAD-style delivery) rather than standalone execution.",
+  },
   {
     id: "macho",
     label: "Mach-O — macOS binary",
     extension: "macho",
     category: "executable",
     producesFile: true,
-    note: "No extension is required by msfvenom convention on macOS; .macho is added here for clarity.",
+    note: "No extension is required by msfvenom convention on macOS; .macho is added here for clarity. Architecture is set via -a, not the format.",
   },
-  { id: "macho32", label: "Mach-O32 — 32-bit macOS binary (rare)", extension: "macho", category: "executable", producesFile: true },
-  { id: "macho64", label: "Mach-O64 — 64-bit macOS binary", extension: "macho", category: "executable", producesFile: true },
-  { id: "apk", label: "APK — Android package", extension: "apk", category: "executable", producesFile: true },
-  { id: "dex", label: "DEX — raw Dalvik executable (rarely used)", extension: "dex", category: "executable", producesFile: true },
   { id: "dll", label: "DLL — Windows Dynamic Link Library", extension: "dll", category: "executable", producesFile: true },
   { id: "msi", label: "MSI — Windows Installer package", extension: "msi", category: "executable", producesFile: true },
-  { id: "cab", label: "CAB — Cabinet archive (legacy packaging)", extension: "cab", category: "executable", producesFile: true },
-  { id: "scr", label: "SCR — Screensaver executable (social engineering)", extension: "scr", category: "executable", producesFile: true },
-  { id: "ps1", label: "PS1 — PowerShell script", extension: "ps1", category: "script", producesFile: true },
-  { id: "vbs", label: "VBS — VBScript, runs via cscript.exe", extension: "vbs", category: "script", producesFile: true },
   {
-    id: "hta",
-    label: "HTA — HTML Application (mshta.exe)",
+    id: "msi-nouac",
+    label: "MSI-noUAC — Windows Installer without a UAC prompt",
+    extension: "msi",
+    category: "executable",
+    producesFile: true,
+    note: "Skips the UAC elevation prompt on install — relevant for privilege-escalation scenarios.",
+  },
+  { id: "jar", label: "JAR — Java archive", extension: "jar", category: "executable", producesFile: true },
+  {
+    id: "hta-psh",
+    label: "HTA-PSH (.hta) — HTML Application (mshta.exe)",
     extension: "hta",
     category: "script",
     producesFile: true,
-    note: "Not in msfvenom's official -f list; documented community technique — verify support on your msfvenom version.",
+    note: "Embeds a base64-encoded PowerShell command inside an HTA wrapper.",
   },
+  {
+    id: "psh",
+    label: "PSH — PowerShell wrapper script",
+    extension: "ps1",
+    category: "script",
+    producesFile: true,
+    note: "Wraps the payload's shellcode in a PowerShell dropper — distinct from the ps1 transform format, which is for the dedicated PowerShell payloads.",
+  },
+  {
+    id: "psh-cmd",
+    label: "PSH-CMD — PowerShell one-liner command",
+    extension: "",
+    category: "script",
+    producesFile: false,
+    note: "Prints a single PowerShell command to the console for direct copy-paste execution rather than saving a script file.",
+  },
+  { id: "psh-net", label: "PSH-NET — PowerShell .NET reflection loader", extension: "ps1", category: "script", producesFile: true },
+  { id: "ps1", label: "PS1 — PowerShell script", extension: "ps1", category: "script", producesFile: true },
+  { id: "vbs", label: "VBS — VBScript, runs via cscript.exe", extension: "vbs", category: "script", producesFile: true },
+  { id: "bash", label: "Bash — Bash script", extension: "sh", category: "script", producesFile: true },
+  { id: "sh", label: "SH — POSIX shell script", extension: "sh", category: "script", producesFile: true },
   { id: "asp", label: "ASP — Active Server Pages web shell (IIS)", extension: "asp", category: "web", producesFile: true },
   { id: "aspx", label: "ASPX — ASP.NET web shell (IIS)", extension: "aspx", category: "web", producesFile: true },
-  { id: "jsp", label: "JSP — Java Server Pages web shell", extension: "jsp", category: "web", producesFile: true },
   { id: "war", label: "WAR — Java Web Archive", extension: "war", category: "web", producesFile: true },
-  { id: "php", label: "PHP — PHP web shell", extension: "php", category: "web", producesFile: true },
   { id: "py", label: "PY — Python script", extension: "py", category: "script", producesFile: true },
   { id: "rb", label: "RB — Ruby script", extension: "rb", category: "script", producesFile: true },
   { id: "pl", label: "PL — Perl script", extension: "pl", category: "script", producesFile: true },
-  { id: "raw", label: "Raw — direct bytecode, no wrapper", extension: "", category: "raw", producesFile: false },
+  {
+    id: "raw",
+    label: "Raw — direct bytecode, no wrapper",
+    extension: "",
+    category: "raw",
+    producesFile: false,
+    note: "Prints raw bytes to the console by default; Android payloads generate with -o since raw is the only way to produce an installable .apk.",
+  },
   { id: "hex", label: "Hex — hexadecimal shellcode dump", extension: "", category: "raw", producesFile: false },
   { id: "c", label: "C — C source code array", extension: "", category: "raw", producesFile: false },
   { id: "csharp", label: "C# — C# source code array", extension: "", category: "raw", producesFile: false },
   { id: "java", label: "Java — Java source template", extension: "", category: "raw", producesFile: false },
   { id: "vba", label: "VBA — Office macro code snippet", extension: "", category: "raw", producesFile: false },
-  { id: "veil", label: "Veil — Veil-Evasion framework integration output", extension: "", category: "raw", producesFile: false },
+  { id: "vbapplication", label: "VBApplication — alternate VBA transform", extension: "", category: "raw", producesFile: false },
+  { id: "vbscript", label: "VBScript — alternate VBS transform (array, not a runnable script)", extension: "", category: "raw", producesFile: false },
+  {
+    id: "powershell",
+    label: "PowerShell array — byte array, not a runnable script",
+    extension: "",
+    category: "raw",
+    producesFile: false,
+    note: "Distinct from ps1/psh, which produce runnable PowerShell scripts — this dumps a PowerShell byte array for embedding in your own script.",
+  },
+  { id: "base32", label: "Base32 — Base32-encoded shellcode", extension: "", category: "raw", producesFile: false },
+  { id: "base64", label: "Base64 — Base64-encoded shellcode", extension: "", category: "raw", producesFile: false },
+  { id: "js_be", label: "JS (Big Endian) — JavaScript shellcode array", extension: "", category: "raw", producesFile: false },
+  { id: "js_le", label: "JS (Little Endian) — JavaScript shellcode array", extension: "", category: "raw", producesFile: false },
 ];
 
 export const MSFVENOM_FORMATS_BY_ID: Record<FormatId, MsfvenomFormat> = Object.fromEntries(

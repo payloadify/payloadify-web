@@ -1,4 +1,4 @@
-import type { EncoderId, MsfvenomEncoder } from "./encoders";
+import type { MsfvenomEncoder } from "./encoders";
 
 export type HostKind = "ipv4" | "ipv6" | "hostname" | "invalid";
 
@@ -68,11 +68,12 @@ export function clampPort(value: number): number {
   return Math.min(65535, Math.max(1, Math.round(value)));
 }
 
-/** Iterations only matter once an encoder is selected — with encoderId "none" any value is
- *  treated as valid since it won't appear in the generated command at all. */
-export function isValidIterations(value: number, encoderId: EncoderId): boolean {
-  if (encoderId === "none") return true;
-  return Number.isInteger(value) && value >= 1 && value <= 10;
+/** Iterations only matter once an encoder is selected — with encoder "none" any value is
+ *  treated as valid since it won't appear in the generated command at all. Ceiling is the
+ *  specific encoder's own maxIterations (they differ per encoder), not a fixed 10. */
+export function isValidIterations(value: number, encoder: MsfvenomEncoder): boolean {
+  if (encoder.id === "none") return true;
+  return Number.isInteger(value) && value >= 1 && value <= encoder.maxIterations;
 }
 
 export function clampIterations(value: number, encoder: MsfvenomEncoder): number {

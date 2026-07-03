@@ -26,7 +26,14 @@ export function resolvePayloadId(payload: MsfvenomPayload, arch: ArchId | null):
 
 export function suggestFilename(payload: MsfvenomPayload, format: MsfvenomFormat, arch: ArchId | null): string {
   const withArch = arch && format.category === "executable" ? `${payload.filenameSlug}_${arch}` : payload.filenameSlug;
-  return format.extension ? `${withArch}.${format.extension}` : withArch;
+  const extension = payload.filenameExtension ?? format.extension;
+  return extension ? `${withArch}.${extension}` : withArch;
+}
+
+/** True when the command needs -o <filename> — either the format conventionally produces a file,
+ *  or the payload forces one regardless of format (e.g. Android's -f raw -o file.apk). */
+export function requiresOutputFilename(payload: MsfvenomPayload, format: MsfvenomFormat): boolean {
+  return format.producesFile || Boolean(payload.forceOutputFilename);
 }
 
 /** Pure, deterministic command builder — flag order:
@@ -54,7 +61,7 @@ export function buildCommand(sel: MsfvenomSelection): string {
     parts.push(extra);
   }
 
-  if (sel.format.producesFile) {
+  if (requiresOutputFilename(sel.payload, sel.format)) {
     parts.push("-o", sel.filename);
   }
 

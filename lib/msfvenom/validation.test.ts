@@ -64,22 +64,31 @@ describe("isValidPort / clampPort", () => {
 });
 
 describe("isValidIterations / clampIterations", () => {
-  it("treats any integer as valid when encoderId is none", () => {
-    expect(isValidIterations(0, "none")).toBe(true);
-    expect(isValidIterations(99, "none")).toBe(true);
+  it("treats any integer as valid when encoder is none", () => {
+    expect(isValidIterations(0, NONE_ENCODER)).toBe(true);
+    expect(isValidIterations(99, NONE_ENCODER)).toBe(true);
   });
 
-  it("enforces 1-10 when an encoder is selected", () => {
-    expect(isValidIterations(1, "shikata_ga_nai")).toBe(true);
-    expect(isValidIterations(10, "shikata_ga_nai")).toBe(true);
-    expect(isValidIterations(0, "shikata_ga_nai")).toBe(false);
-    expect(isValidIterations(11, "shikata_ga_nai")).toBe(false);
-    expect(isValidIterations(4.5, "shikata_ga_nai")).toBe(false);
+  it("enforces 1-10 for shikata_ga_nai (its own maxIterations)", () => {
+    const shikata = MSFVENOM_ENCODERS_BY_ID["x86/shikata_ga_nai"];
+    expect(isValidIterations(1, shikata)).toBe(true);
+    expect(isValidIterations(10, shikata)).toBe(true);
+    expect(isValidIterations(0, shikata)).toBe(false);
+    expect(isValidIterations(11, shikata)).toBe(false);
+    expect(isValidIterations(4.5, shikata)).toBe(false);
+  });
+
+  it("enforces each encoder's own (lower) maxIterations, not a blanket 10", () => {
+    const xorDynamic = MSFVENOM_ENCODERS_BY_ID["x64/xor_dynamic"];
+    expect(xorDynamic.maxIterations).toBe(2);
+    expect(isValidIterations(2, xorDynamic)).toBe(true);
+    expect(isValidIterations(3, xorDynamic)).toBe(false);
+    expect(isValidIterations(5, xorDynamic)).toBe(false);
   });
 
   it("clamps into [1, encoder.maxIterations], and 0 for the none encoder", () => {
     expect(clampIterations(5, NONE_ENCODER)).toBe(0);
-    const xorDynamic = MSFVENOM_ENCODERS_BY_ID.xor_dynamic;
+    const xorDynamic = MSFVENOM_ENCODERS_BY_ID["x64/xor_dynamic"];
     expect(clampIterations(99, xorDynamic)).toBe(xorDynamic.maxIterations);
     expect(clampIterations(0, xorDynamic)).toBe(1);
   });

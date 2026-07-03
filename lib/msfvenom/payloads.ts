@@ -24,24 +24,32 @@ export interface MsfvenomPayload {
   filenameSlug: string;
   whyUseIt: string;
   note?: string;
+  /** Android's only real -f value is "raw" (msfvenom has no dedicated apk/dex format) — but unlike
+   *  other raw usages, Android *always* needs -o to produce an installable .apk file. Set together
+   *  with filenameExtension so generate.ts/suggestFilename() force the file to have a real extension. */
+  forceOutputFilename?: boolean;
+  /** Overrides the selected format's extension when suggesting a filename — needed for Android,
+   *  where the format is "raw" (extension "") but the output must still be named *.apk. */
+  filenameExtension?: string;
 }
 
 const WINDOWS_FORMATS: FormatId[] = [
-  "exe", "dll", "msi", "cab", "scr", "ps1", "vbs", "hta",
-  "asp", "aspx", "jsp", "war", "php", "raw", "hex", "c", "csharp", "vba", "veil",
+  "exe", "exe-only", "exe-service", "exe-small", "dll", "msi", "msi-nouac", "jar", "hta-psh", "psh", "psh-cmd", "psh-net",
+  "ps1", "vbs", "asp", "aspx", "war", "raw", "hex", "c", "csharp", "vba", "vbapplication", "vbscript", "powershell",
+  "base32", "base64", "js_be", "js_le",
 ];
-const LINUX_SHELL_FORMATS: FormatId[] = ["elf", "elf32", "elf64", "py", "pl", "rb", "php", "raw", "hex", "c"];
-const LINUX_METERPRETER_FORMATS: FormatId[] = ["elf", "elf32", "elf64"];
-const MACOS_FORMATS: FormatId[] = ["macho", "macho32", "macho64", "raw", "hex", "c"];
-const ANDROID_FORMATS: FormatId[] = ["apk", "dex"];
+const LINUX_SHELL_FORMATS: FormatId[] = ["elf", "elf-so", "bash", "sh", "py", "pl", "rb", "raw", "hex", "c", "base32", "base64", "js_be", "js_le"];
+const LINUX_METERPRETER_FORMATS: FormatId[] = ["elf", "elf-so"];
+const MACOS_FORMATS: FormatId[] = ["macho", "bash", "sh", "raw", "hex", "c", "base32", "base64", "js_be", "js_le"];
+/** msfvenom has no dedicated apk/dex -f value — Android output is always -f raw -o file.apk. */
+const ANDROID_FORMATS: FormatId[] = ["raw"];
 const PYTHON_FORMATS: FormatId[] = ["py", "raw"];
 const WINDOWS_ARCHS: ArchId[] = ["x86", "x64"];
 const LINUX_STANDARD_ARCHS: ArchId[] = ["x86", "x64"];
-const LINUX_IOT_ARCHS: ArchId[] = [
-  "x86", "x64", "x86_64", "armv5l", "armv5b", "armv6l", "armv7l", "aarch64", "mips", "mips64", "ppc",
-];
+/** Real msfvenom -a values are generic "armle"/"armbe" (endianness only) — not chip-generation-
+ *  specific labels like armv5l/armv6l/armv7l, which aren't accepted by -a. */
+const LINUX_IOT_ARCHS: ArchId[] = ["x86", "x64", "x86_64", "armle", "armbe", "aarch64", "mips", "mips64", "ppc"];
 const MACOS_ARCHS: ArchId[] = ["x86", "x64"];
-const ANDROID_ARCHS: ArchId[] = ["armeabi-v7a", "arm64-v8a"];
 
 export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
   {
@@ -263,23 +271,6 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     whyUseIt: "PowerShell bind shell — target listens for the connection.",
   },
   {
-    id: "windows/meterpreter/reverse_tcp_dll",
-    label: "Meterpreter — Reverse TCP (DLL, reflective injection)",
-    platform: "windows",
-    category: "DLL Injection",
-    staging: "staged",
-    stagingSiblingId: null,
-    archPlacement: "flag-only",
-    archs: WINDOWS_ARCHS,
-    defaultArch: "x86",
-    compatibleFormats: ["dll"],
-    supportsExitfunc: true,
-    filenameSlug: "meterpreter_reverse_dll",
-    whyUseIt:
-      "Meterpreter packaged as a DLL for reflective injection into a running process — never touches disk as a standalone .exe, which helps evade file-based AV detection.",
-    note: "Format is locked to dll — this payload is designed for reflective DLL injection (e.g. via rundll32 or a custom loader), not standalone execution.",
-  },
-  {
     id: "linux/{arch}/meterpreter/reverse_tcp",
     label: "Meterpreter — Reverse TCP",
     platform: "linux",
@@ -365,13 +356,16 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     staging: "staged",
     stagingSiblingId: null,
     archPlacement: "flag-only",
-    archs: ANDROID_ARCHS,
-    defaultArch: "armeabi-v7a",
+    archs: [],
+    defaultArch: null,
     compatibleFormats: ANDROID_FORMATS,
     supportsExitfunc: false,
     filenameSlug: "meterpreter_reverse",
+    forceOutputFilename: true,
+    filenameExtension: "apk",
     whyUseIt:
       "Full Meterpreter for Android, delivered as an installable .apk. LHOST/LPORT are mandatory, and the APK needs to be signed for installation on most devices.",
+    note: "Architecture doesn't apply — Android Meterpreter runs as Dalvik/Java bytecode, not arch-specific native code. Real msfvenom -a values don't include an Android ABI name.",
   },
   {
     id: "android/meterpreter/reverse_https",
@@ -381,12 +375,15 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     staging: "staged",
     stagingSiblingId: null,
     archPlacement: "flag-only",
-    archs: ANDROID_ARCHS,
-    defaultArch: "armeabi-v7a",
+    archs: [],
+    defaultArch: null,
     compatibleFormats: ANDROID_FORMATS,
     supportsExitfunc: false,
     filenameSlug: "meterpreter_reverse_https",
+    forceOutputFilename: true,
+    filenameExtension: "apk",
     whyUseIt: "HTTPS variant of Android Meterpreter — encrypted C2 channel, same delivery/signing requirements as the TCP version.",
+    note: "Architecture doesn't apply — Android Meterpreter runs as Dalvik/Java bytecode, not arch-specific native code.",
   },
   {
     id: "android/shell_reverse_tcp",
@@ -396,12 +393,15 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     staging: "stageless",
     stagingSiblingId: null,
     archPlacement: "flag-only",
-    archs: ANDROID_ARCHS,
-    defaultArch: "armeabi-v7a",
+    archs: [],
+    defaultArch: null,
     compatibleFormats: ANDROID_FORMATS,
     supportsExitfunc: false,
     filenameSlug: "shell_reverse",
+    forceOutputFilename: true,
+    filenameExtension: "apk",
     whyUseIt: "Basic Android shell payload — less common than Meterpreter since it lacks post-exploitation features, but smaller.",
+    note: "Architecture doesn't apply — Android payloads run as Dalvik/Java bytecode, not arch-specific native code.",
   },
   {
     id: "python/meterpreter/reverse_tcp",
