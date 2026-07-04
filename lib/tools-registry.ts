@@ -62,6 +62,13 @@ export const tools: Tool[] = [
       "Build msfvenom commands with template presets for Windows, Linux, macOS, and Android payloads, evasion encoders, and architectures — copy-ready, with a listener setup guide.",
     status: "live",
   },
+  {
+    slug: "cvss-calculator",
+    name: "CVSS 3.1 / 4.0 Calculator",
+    shortDescription:
+      "Click through CVSS 3.1 and 4.0 base metrics, or pick a vulnerability scenario template, to get an instant score, severity, OWASP/VRT/CWE mapping, and copy-ready vector string.",
+    status: "live",
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {
