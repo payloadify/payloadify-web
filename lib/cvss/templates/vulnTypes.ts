@@ -40,6 +40,7 @@ export const VULN_TYPES: VulnType[] = [
     label: "OS Command Injection",
     platforms: ["web", "api", "desktop-windows", "desktop-mac", "desktop-linux"],
   },
+  { id: "parameter-tampering", label: "Parameter Tampering", platforms: ["web", "api", "mobile"] },
 ];
 
 export const VULN_TYPES_BY_ID: Record<string, VulnType> = Object.fromEntries(VULN_TYPES.map((v) => [v.id, v]));

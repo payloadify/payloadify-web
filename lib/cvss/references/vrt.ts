@@ -93,6 +93,13 @@ export const VRT_CATEGORIES: VrtCategory[] = [
     inferred: true,
     note: "Bugcrowd's only literal 'Command Injection' leaf sits under Insecure OS/Firmware (IoT/hardware-scoped); a web/API command injection finding is reported/scored as RCE.",
   },
+  {
+    id: "parameter-tampering",
+    label: "Business Logic Errors > Parameter Tampering (Assumed-Immutable Parameter Manipulation)",
+    priority: null,
+    inferred: true,
+    note: "Bugcrowd's current taxonomy has no general-purpose 'Parameter Tampering' leaf — the only literal match is 'Price or Fee Manipulation' (P2) under Decentralized Application Misconfiguration > Marketplace Security, which is scoped to e-commerce/DeFi pricing abuse. Priority is scored by impact: price/quantity/discount tampering is typically P2-P3, while tampering with a privilege/role parameter (e.g. isAdmin=true) is scored under Broken Access Control / Privilege Escalation instead.",
+  },
 ];
 
 export const VRT_CATEGORIES_BY_ID: Record<string, VrtCategory> = Object.fromEntries(VRT_CATEGORIES.map((v) => [v.id, v]));

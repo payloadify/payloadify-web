@@ -140,4 +140,12 @@ export const VRT_AUTOFILL: Record<string, VrtAutofillEntry> = {
       { label: "OWASP Cheat Sheet — OS Command Injection Defense", url: "https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html" },
     ],
   },
+  "parameter-tampering": {
+    owaspRefId: "web-a04-insecure-design",
+    cweId: "CWE-472",
+    references: [
+      { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
+      { label: "OWASP Top 10 2021 — A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
 };
