@@ -1,7 +1,7 @@
 import { ChainPair } from "./types";
 
 /**
- * Every unique unordered pair of the 14 VulnType families (vulnTypes.ts) — C(14,2) = 91
+ * Every unique unordered pair of the 15 VulnType families (vulnTypes.ts) — C(15,2) = 105
  * entries, one per pair, per the confirmed "fully hand-authored matrix" scope decision. No
  * runtime "no override" fallback exists; chaining.test.ts asserts this file has exactly one
  * entry for every pair and fails loudly if a family is added without its new pair entries.
@@ -1463,6 +1463,238 @@ export const CHAIN_MATRIX: ChainPair[] = [
     cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"N","SI":"N","SA":"N","E":"X"},
     // combined score 3.1=9.8 4.0=9.3
     rationale: "Combined by taking the more severe rating per metric between Broken Authentication / Session Management and OS Command Injection. Category shown reflects whichever of the two carries the higher standalone severity.",
+    owaspRefId: "web-a03-injection",
+    vrtRefId: "command-injection",
+    cweId: "CWE-78",
+    references: [
+      { label: "PortSwigger — OS command injection", url: "https://portswigger.net/web-security/os-command-injection" },
+      { label: "OWASP Cheat Sheet — OS Command Injection Defense", url: "https://cheatsheetseries.owasp.org/cheatsheets/OS_Command_Injection_Defense_Cheat_Sheet.html" },
+    ],
+  },
+
+  // ---- parameter-tampering x each pre-existing family ----
+  // Parameter Tampering's own "worst case" vector (across its web/API/mobile templates) is
+  // {AV:N,AC:L,PR:L,UI:N,S:C,C:H,I:H,A:H} (3.1 base 9.9) / {AV:N,AC:L,AT:N,PR:L,UI:N,VC:H,VI:H,
+  // VA:H,SC:N,SI:N,SA:N} (4.0 base 8.7) — combined against each other family the same way as the
+  // rest of this matrix. Where Parameter Tampering wins, its category defaults to A04:2021
+  // Insecure Design / CWE-472 (the same default used by its own web template and vrtAutofill.ts),
+  // since a chain pair carries a single category regardless of platform.
+  {
+    vulnTypeIdA: "xss",
+    vulnTypeIdB: "parameter-tampering",
+    label: "Cross-Site Scripting (XSS) chained with Parameter Tampering",
+    cvss31: {"AV":"N","AC":"L","PR":"N","UI":"N","S":"C","C":"H","I":"H","A":"H"},
+    cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"N","SI":"N","SA":"N","E":"X"},
+    // combined score 3.1=10 4.0=9.3
+    rationale: "Combined by taking the more severe rating per metric between Cross-Site Scripting (XSS) and Parameter Tampering. Category shown reflects whichever of the two carries the higher standalone severity.",
+    owaspRefId: "web-a03-injection",
+    vrtRefId: "xss-stored",
+    cweId: "CWE-79",
+    references: [
+      { label: "PortSwigger — Cross-site scripting", url: "https://portswigger.net/web-security/cross-site-scripting" },
+      { label: "OWASP Cheat Sheet — XSS Prevention", url: "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html" },
+    ],
+  },
+  {
+    vulnTypeIdA: "sqli",
+    vulnTypeIdB: "parameter-tampering",
+    label: "SQL Injection chained with Parameter Tampering",
+    cvss31: {"AV":"N","AC":"L","PR":"N","UI":"N","S":"C","C":"H","I":"H","A":"H"},
+    cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"N","SI":"N","SA":"N","E":"X"},
+    // combined score 3.1=10 4.0=9.3 — Parameter Tampering's own worst case (9.9) now edges out SQLi's (8.2)
+    rationale: "Combined by taking the more severe rating per metric between SQL Injection and Parameter Tampering. Category shown reflects whichever of the two carries the higher standalone severity.",
+    owaspRefId: "web-a04-insecure-design",
+    vrtRefId: "parameter-tampering",
+    cweId: "CWE-472",
+    references: [
+      { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
+      { label: "OWASP Top 10 2021 — A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
+  {
+    vulnTypeIdA: "idor",
+    vulnTypeIdB: "parameter-tampering",
+    label: "Insecure Direct Object Reference (IDOR) chained with Parameter Tampering",
+    cvss31: {"AV":"N","AC":"L","PR":"N","UI":"N","S":"C","C":"H","I":"H","A":"H"},
+    cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"N","SI":"N","SA":"N","E":"X"},
+    // combined score 3.1=10 4.0=9.3
+    rationale: "Combined by taking the more severe rating per metric between Insecure Direct Object Reference (IDOR) and Parameter Tampering. Category shown reflects whichever of the two carries the higher standalone severity.",
+    owaspRefId: "web-a04-insecure-design",
+    vrtRefId: "parameter-tampering",
+    cweId: "CWE-472",
+    references: [
+      { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
+      { label: "OWASP Top 10 2021 — A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
+  {
+    vulnTypeIdA: "broken-access-control",
+    vulnTypeIdB: "parameter-tampering",
+    label: "Broken Access Control / Privilege Escalation chained with Parameter Tampering",
+    cvss31: {"AV":"N","AC":"L","PR":"N","UI":"N","S":"C","C":"H","I":"H","A":"H"},
+    cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"N","SI":"N","SA":"N","E":"X"},
+    // combined score 3.1=10 4.0=9.3
+    rationale: "Combined by taking the more severe rating per metric between Broken Access Control / Privilege Escalation and Parameter Tampering. Category shown reflects whichever of the two carries the higher standalone severity.",
+    owaspRefId: "web-a01-broken-access-control",
+    vrtRefId: "broken-access-control",
+    cweId: "CWE-284",
+    references: [
+      { label: "PortSwigger — Access control vulnerabilities", url: "https://portswigger.net/web-security/access-control" },
+      { label: "OWASP Top 10 2021 — A01 Broken Access Control", url: "https://owasp.org/Top10/2021/A01_2021-Broken_Access_Control/" },
+    ],
+  },
+  {
+    vulnTypeIdA: "ssrf",
+    vulnTypeIdB: "parameter-tampering",
+    label: "Server-Side Request Forgery (SSRF) chained with Parameter Tampering",
+    cvss31: {"AV":"N","AC":"L","PR":"N","UI":"N","S":"C","C":"H","I":"H","A":"H"},
+    cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"H","SI":"H","SA":"N","E":"X"},
+    // combined score 3.1=10 4.0=9.9
+    rationale: "Combined by taking the more severe rating per metric between Server-Side Request Forgery (SSRF) and Parameter Tampering. Category shown reflects whichever of the two carries the higher standalone severity.",
+    owaspRefId: "web-a04-insecure-design",
+    vrtRefId: "parameter-tampering",
+    cweId: "CWE-472",
+    references: [
+      { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
+      { label: "OWASP Top 10 2021 — A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
+  {
+    vulnTypeIdA: "csrf",
+    vulnTypeIdB: "parameter-tampering",
+    label: "Cross-Site Request Forgery (CSRF) chained with Parameter Tampering",
+    cvss31: {"AV":"N","AC":"L","PR":"N","UI":"N","S":"C","C":"H","I":"H","A":"H"},
+    cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"N","SI":"N","SA":"N","E":"X"},
+    // combined score 3.1=10 4.0=9.3
+    rationale: "Combined by taking the more severe rating per metric between Cross-Site Request Forgery (CSRF) and Parameter Tampering. Category shown reflects whichever of the two carries the higher standalone severity.",
+    owaspRefId: "web-a04-insecure-design",
+    vrtRefId: "parameter-tampering",
+    cweId: "CWE-472",
+    references: [
+      { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
+      { label: "OWASP Top 10 2021 — A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
+  {
+    vulnTypeIdA: "sensitive-data-exposure",
+    vulnTypeIdB: "parameter-tampering",
+    label: "Sensitive Data Exposure / Cryptographic Failures chained with Parameter Tampering",
+    cvss31: {"AV":"N","AC":"L","PR":"N","UI":"N","S":"C","C":"H","I":"H","A":"H"},
+    cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"H","SI":"L","SA":"N","E":"X"},
+    // combined score 3.1=10 4.0=9.9
+    rationale: "Combined by taking the more severe rating per metric between Sensitive Data Exposure / Cryptographic Failures and Parameter Tampering. Category shown reflects whichever of the two carries the higher standalone severity.",
+    owaspRefId: "web-a04-insecure-design",
+    vrtRefId: "parameter-tampering",
+    cweId: "CWE-472",
+    references: [
+      { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
+      { label: "OWASP Top 10 2021 — A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
+  {
+    vulnTypeIdA: "open-redirect",
+    vulnTypeIdB: "parameter-tampering",
+    label: "Open Redirect chained with Parameter Tampering",
+    cvss31: {"AV":"N","AC":"L","PR":"N","UI":"N","S":"C","C":"H","I":"H","A":"H"},
+    cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"N","SI":"N","SA":"N","E":"X"},
+    // combined score 3.1=10 4.0=9.3
+    rationale: "Combined by taking the more severe rating per metric between Open Redirect and Parameter Tampering. Category shown reflects whichever of the two carries the higher standalone severity.",
+    owaspRefId: "web-a04-insecure-design",
+    vrtRefId: "parameter-tampering",
+    cweId: "CWE-472",
+    references: [
+      { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
+      { label: "OWASP Top 10 2021 — A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
+  {
+    vulnTypeIdA: "security-misconfiguration",
+    vulnTypeIdB: "parameter-tampering",
+    label: "Security Misconfiguration chained with Parameter Tampering",
+    cvss31: {"AV":"N","AC":"L","PR":"N","UI":"N","S":"C","C":"H","I":"H","A":"H"},
+    cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"N","SI":"N","SA":"N","E":"X"},
+    // combined score 3.1=10 4.0=9.3
+    rationale: "Combined by taking the more severe rating per metric between Security Misconfiguration and Parameter Tampering. Category shown reflects whichever of the two carries the higher standalone severity.",
+    owaspRefId: "web-a04-insecure-design",
+    vrtRefId: "parameter-tampering",
+    cweId: "CWE-472",
+    references: [
+      { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
+      { label: "OWASP Top 10 2021 — A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
+  {
+    vulnTypeIdA: "insecure-deserialization",
+    vulnTypeIdB: "parameter-tampering",
+    label: "Insecure Deserialization chained with Parameter Tampering",
+    cvss31: {"AV":"N","AC":"L","PR":"N","UI":"N","S":"C","C":"H","I":"H","A":"H"},
+    cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"N","SI":"N","SA":"N","E":"X"},
+    // combined score 3.1=10 4.0=9.3
+    rationale: "Combined by taking the more severe rating per metric between Insecure Deserialization and Parameter Tampering. Category shown reflects whichever of the two carries the higher standalone severity.",
+    owaspRefId: "web-a04-insecure-design",
+    vrtRefId: "parameter-tampering",
+    cweId: "CWE-472",
+    references: [
+      { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
+      { label: "OWASP Top 10 2021 — A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
+  {
+    vulnTypeIdA: "xxe",
+    vulnTypeIdB: "parameter-tampering",
+    label: "XML External Entity (XXE) Injection chained with Parameter Tampering",
+    cvss31: {"AV":"N","AC":"L","PR":"N","UI":"N","S":"C","C":"H","I":"H","A":"H"},
+    cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"H","SI":"N","SA":"N","E":"X"},
+    // combined score 3.1=10 4.0=9.9
+    rationale: "Combined by taking the more severe rating per metric between XML External Entity (XXE) Injection and Parameter Tampering. Category shown reflects whichever of the two carries the higher standalone severity.",
+    owaspRefId: "web-a04-insecure-design",
+    vrtRefId: "parameter-tampering",
+    cweId: "CWE-472",
+    references: [
+      { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
+      { label: "OWASP Top 10 2021 — A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
+  {
+    vulnTypeIdA: "path-traversal",
+    vulnTypeIdB: "parameter-tampering",
+    label: "Path Traversal / Local File Inclusion chained with Parameter Tampering",
+    cvss31: {"AV":"N","AC":"L","PR":"N","UI":"N","S":"C","C":"H","I":"H","A":"H"},
+    cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"N","SI":"N","SA":"N","E":"X"},
+    // combined score 3.1=10 4.0=9.3
+    rationale: "Combined by taking the more severe rating per metric between Path Traversal / Local File Inclusion and Parameter Tampering. Category shown reflects whichever of the two carries the higher standalone severity.",
+    owaspRefId: "web-a04-insecure-design",
+    vrtRefId: "parameter-tampering",
+    cweId: "CWE-472",
+    references: [
+      { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
+      { label: "OWASP Top 10 2021 — A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
+  {
+    vulnTypeIdA: "broken-authentication",
+    vulnTypeIdB: "parameter-tampering",
+    label: "Broken Authentication / Session Management chained with Parameter Tampering",
+    cvss31: {"AV":"N","AC":"L","PR":"N","UI":"N","S":"C","C":"H","I":"H","A":"H"},
+    cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"N","SI":"N","SA":"N","E":"X"},
+    // combined score 3.1=10 4.0=9.3
+    rationale: "Combined by taking the more severe rating per metric between Broken Authentication / Session Management and Parameter Tampering. Category shown reflects whichever of the two carries the higher standalone severity.",
+    owaspRefId: "web-a04-insecure-design",
+    vrtRefId: "parameter-tampering",
+    cweId: "CWE-472",
+    references: [
+      { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
+      { label: "OWASP Top 10 2021 — A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
+  {
+    vulnTypeIdA: "command-injection",
+    vulnTypeIdB: "parameter-tampering",
+    label: "OS Command Injection chained with Parameter Tampering",
+    cvss31: {"AV":"N","AC":"L","PR":"N","UI":"N","S":"C","C":"H","I":"H","A":"H"},
+    cvss40: {"AV":"N","AC":"L","AT":"N","PR":"N","UI":"N","VC":"H","VI":"H","VA":"H","SC":"N","SI":"N","SA":"N","E":"X"},
+    // combined score 3.1=10 4.0=9.3
+    rationale: "Combined by taking the more severe rating per metric between OS Command Injection and Parameter Tampering. Category shown reflects whichever of the two carries the higher standalone severity.",
     owaspRefId: "web-a03-injection",
     vrtRefId: "command-injection",
     cweId: "CWE-78",
