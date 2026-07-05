@@ -5,7 +5,7 @@ import { iconButtonClasses, inputClasses, selectClasses, toggleButtonClasses } f
 import { CopyField } from "@/lib/cvss/shared/copyFormat";
 import { CvssVersion, Platform } from "@/lib/cvss/shared/types";
 import { CWE_ENTRIES_BY_ID } from "@/lib/cvss/references/cwe";
-import { OWASP_CATEGORIES_BY_ID } from "@/lib/cvss/references/owasp";
+import { OWASP_CATEGORIES_BY_ID, OwaspWebVersion, toOwaspWebVersion } from "@/lib/cvss/references/owasp";
 import { VRT_CATEGORIES_BY_ID } from "@/lib/cvss/references/vrt";
 import { findChainPair } from "@/lib/cvss/templates/chaining";
 import { CVSS_TEMPLATES, CVSS_TEMPLATES_BY_ID } from "@/lib/cvss/templates/templates";
@@ -83,6 +83,7 @@ export function CvssCalculatorTool() {
   const [metrics31, setMetrics31] = useState<Cvss31Metrics>(CVSS31_DEFAULT_METRICS);
   const [metrics40, setMetrics40] = useState<Cvss40Metrics>(CVSS40_DEFAULT_METRICS);
   const [meta, setMeta] = useState<CvssMeta>(EMPTY_CVSS_META);
+  const [owaspWebVersion, setOwaspWebVersion] = useState<OwaspWebVersion>("2021");
   const [saveNameInput, setSaveNameInput] = useState("");
   const [savedMenuOpen, setSavedMenuOpen] = useState(false);
   const [selectedSavedTemplateId, setSelectedSavedTemplateId] = useState<string | null>(null);
@@ -98,6 +99,23 @@ export function CvssCalculatorTool() {
 
   function updateMeta(patch: Partial<CvssMeta>) {
     setMeta((prev) => ({ ...prev, ...patch }));
+  }
+
+  /** Templates/chains/saved templates are authored against the 2021 Web catalogue — this
+   *  translates that to whichever Web edition is currently selected, driven by the finding's
+   *  CWE (see toOwaspWebVersion's doc comment for why a straight category-number rename isn't
+   *  accurate here). No-op for api-/mobile- ids. */
+  function resolveOwaspRefId(owaspRefId: string | null, cweId: string): string | null {
+    if (owaspRefId === null) return null;
+    return toOwaspWebVersion(owaspRefId, cweId, owaspWebVersion);
+  }
+
+  /** Flipping the Web edition toggle also re-resolves an *already-selected* OWASP category (if
+   *  any) to the new edition — otherwise a category picked while on one edition would silently
+   *  stay on that edition after switching, and the toggle would look like it does nothing. */
+  function changeOwaspWebVersion(next: OwaspWebVersion) {
+    setOwaspWebVersion(next);
+    setMeta((prev) => (prev.owaspRefId && prev.cweId ? { ...prev, owaspRefId: toOwaspWebVersion(prev.owaspRefId, prev.cweId, next) } : prev));
   }
 
   function selectPlatform(p: Platform) {
@@ -133,7 +151,13 @@ export function CvssCalculatorTool() {
     setChainVulnTypeId(null);
     setMetrics31(template.cvss31);
     setMetrics40(template.cvss40);
-    setMeta({ rationale: "", owaspRefId: template.owaspRefId, vrtRefId: template.vrtRefId, cweId: template.cweId, references: template.references });
+    setMeta({
+      rationale: "",
+      owaspRefId: resolveOwaspRefId(template.owaspRefId, template.cweId),
+      vrtRefId: template.vrtRefId,
+      cweId: template.cweId,
+      references: template.references,
+    });
   }
 
   function selectChain(secondId: string | null) {
@@ -145,7 +169,7 @@ export function CvssCalculatorTool() {
       setMetrics40(currentTemplate.cvss40);
       setMeta({
         rationale: "",
-        owaspRefId: currentTemplate.owaspRefId,
+        owaspRefId: resolveOwaspRefId(currentTemplate.owaspRefId, currentTemplate.cweId),
         vrtRefId: currentTemplate.vrtRefId,
         cweId: currentTemplate.cweId,
         references: currentTemplate.references,
@@ -157,7 +181,13 @@ export function CvssCalculatorTool() {
     setChainVulnTypeId(secondId);
     setMetrics31(pair.cvss31);
     setMetrics40(pair.cvss40);
-    setMeta({ rationale: pair.rationale, owaspRefId: pair.owaspRefId, vrtRefId: pair.vrtRefId, cweId: pair.cweId, references: pair.references });
+    setMeta({
+      rationale: pair.rationale,
+      owaspRefId: resolveOwaspRefId(pair.owaspRefId, pair.cweId),
+      vrtRefId: pair.vrtRefId,
+      cweId: pair.cweId,
+      references: pair.references,
+    });
   }
 
   function loadSavedTemplate(saved: SavedCvssTemplate) {
@@ -252,6 +282,7 @@ export function CvssCalculatorTool() {
       </div>
 
       <PlatformVulnPicker
+        version={version}
         platformFilter={platformFilter}
         onPlatformChange={selectPlatform}
         vulnTypeId={vulnTypeId}
@@ -321,7 +352,15 @@ export function CvssCalculatorTool() {
         </div>
       )}
 
-      <OutputPanel baseScore={baseScore} severity={severity} vector={vector} meta={meta} onMetaChange={updateMeta} />
+      <OutputPanel
+        baseScore={baseScore}
+        severity={severity}
+        vector={vector}
+        meta={meta}
+        onMetaChange={updateMeta}
+        owaspWebVersion={owaspWebVersion}
+        onOwaspWebVersionChange={changeOwaspWebVersion}
+      />
 
       <div className="flex flex-col gap-2 rounded border border-zinc-200 p-4 dark:border-zinc-800">
         <div className="flex flex-wrap items-end gap-2">

@@ -1,7 +1,7 @@
 "use client";
 
 import { selectClasses } from "@/components/ui/formClasses";
-import { VULN_TYPES } from "@/lib/cvss/templates/vulnTypes";
+import { VULN_CATEGORIES, VULN_TYPES } from "@/lib/cvss/templates/vulnTypes";
 
 export function ChainPicker({
   firstVulnTypeId,
@@ -12,7 +12,10 @@ export function ChainPicker({
   chainVulnTypeId: string | null;
   onChainChange: (id: string | null) => void;
 }) {
-  const options = VULN_TYPES.filter((v) => v.id !== firstVulnTypeId);
+  const optionsByCategory = VULN_CATEGORIES.map((category) => ({
+    category,
+    types: VULN_TYPES.filter((v) => v.categoryId === category.id && v.id !== firstVulnTypeId),
+  })).filter((group) => group.types.length > 0);
 
   return (
     <details className="rounded border border-zinc-300 dark:border-zinc-700">
@@ -25,10 +28,14 @@ export function ChainPicker({
           onChange={(e) => onChainChange(e.target.value === "" ? null : e.target.value)}
         >
           <option value="">None</option>
-          {options.map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.label}
-            </option>
+          {optionsByCategory.map(({ category, types }) => (
+            <optgroup key={category.id} label={category.label}>
+              {types.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.label}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
       </div>

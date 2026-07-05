@@ -2,11 +2,22 @@
 
 import { selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { CvssTemplate } from "@/lib/cvss/templates/types";
-import { VULN_TYPES } from "@/lib/cvss/templates/vulnTypes";
+import { VULN_CATEGORIES, VULN_TYPES } from "@/lib/cvss/templates/vulnTypes";
 import { PLATFORMS } from "@/lib/cvss/shared/types";
-import { Platform } from "@/lib/cvss/shared/types";
+import { CvssVersion, Platform, SeverityRating } from "@/lib/cvss/shared/types";
+import { severityRating } from "@/lib/cvss/shared/severityRating";
+import { computeCvss31Score } from "@/lib/cvss/v3_1/score";
+import { computeCvss40Score } from "@/lib/cvss/v4_0/score";
+
+const SEVERITY_ORDER: SeverityRating[] = ["Critical", "High", "Medium", "Low", "None"];
+
+function templateSeverity(template: CvssTemplate, version: CvssVersion): SeverityRating {
+  const score = version === "3.1" ? computeCvss31Score(template.cvss31).baseScore : computeCvss40Score(template.cvss40).baseScore;
+  return severityRating(score);
+}
 
 export function PlatformVulnPicker({
+  version,
   platformFilter,
   onPlatformChange,
   vulnTypeId,
@@ -15,6 +26,7 @@ export function PlatformVulnPicker({
   onTemplateChange,
   templatesForVulnType,
 }: {
+  version: CvssVersion;
   platformFilter: Platform;
   onPlatformChange: (p: Platform) => void;
   vulnTypeId: string | null;
@@ -24,6 +36,15 @@ export function PlatformVulnPicker({
   templatesForVulnType: CvssTemplate[];
 }) {
   const vulnTypesForPlatform = VULN_TYPES.filter((v) => v.platforms.includes(platformFilter));
+  const vulnTypesByCategory = VULN_CATEGORIES.map((category) => ({
+    category,
+    types: vulnTypesForPlatform.filter((v) => v.categoryId === category.id),
+  })).filter((group) => group.types.length > 0);
+
+  const templatesBySeverity = SEVERITY_ORDER.map((sev) => ({
+    severity: sev,
+    templates: templatesForVulnType.filter((t) => templateSeverity(t, version) === sev),
+  })).filter((group) => group.templates.length > 0);
 
   return (
     <div className="flex flex-col gap-3 rounded border border-zinc-300 p-4 dark:border-zinc-700">
@@ -52,10 +73,14 @@ export function PlatformVulnPicker({
             onChange={(e) => onVulnTypeChange(e.target.value === "" ? null : e.target.value)}
           >
             <option value="">Any / Custom</option>
-            {vulnTypesForPlatform.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.label}
-              </option>
+            {vulnTypesByCategory.map(({ category, types }) => (
+              <optgroup key={category.id} label={category.label}>
+                {types.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.label}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>
@@ -69,10 +94,14 @@ export function PlatformVulnPicker({
             disabled={templatesForVulnType.length === 0}
           >
             <option value="">Custom</option>
-            {templatesForVulnType.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label}
-              </option>
+            {templatesBySeverity.map(({ severity, templates }) => (
+              <optgroup key={severity} label={severity}>
+                {templates.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
         </div>

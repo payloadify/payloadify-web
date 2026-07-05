@@ -1,9 +1,16 @@
 "use client";
 
 import { CopyButton } from "@/components/ui/CopyButton";
-import { iconButtonClasses, inputClasses, selectClasses } from "@/components/ui/formClasses";
+import { iconButtonClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { CWE_ENTRIES, CWE_ENTRIES_BY_ID } from "@/lib/cvss/references/cwe";
-import { OWASP_CATEGORIES, OWASP_CATEGORIES_BY_ID } from "@/lib/cvss/references/owasp";
+import {
+  OWASP_CATEGORIES,
+  OWASP_CATEGORIES_BY_ID,
+  OWASP_GROUP_LABELS,
+  OWASP_GROUP_ORDER,
+  OwaspWebVersion,
+  owaspGroupOf,
+} from "@/lib/cvss/references/owasp";
 import { VRT_CATEGORIES, VRT_CATEGORIES_BY_ID } from "@/lib/cvss/references/vrt";
 import { CvssMeta, CvssReference } from "@/lib/cvss/templates/types";
 import { VRT_AUTOFILL } from "@/lib/cvss/templates/vrtAutofill";
@@ -26,17 +33,37 @@ export function OutputPanel({
   vector,
   meta,
   onMetaChange,
+  owaspWebVersion,
+  onOwaspWebVersionChange,
 }: {
   baseScore: number;
   severity: SeverityRating;
   vector: string;
   meta: CvssMeta;
   onMetaChange: (patch: Partial<CvssMeta>) => void;
+  owaspWebVersion: OwaspWebVersion;
+  onOwaspWebVersionChange: (version: OwaspWebVersion) => void;
 }) {
   const owasp = meta.owaspRefId ? OWASP_CATEGORIES_BY_ID[meta.owaspRefId] : null;
   const vrt = meta.vrtRefId ? VRT_CATEGORIES_BY_ID[meta.vrtRefId] : null;
   const cwe = meta.cweId ? CWE_ENTRIES_BY_ID[meta.cweId] : null;
   const [collapsed, setCollapsed] = usePersistedBoolean(ADDITIONAL_INFO_COLLAPSED_KEY, false);
+
+  // Both Web editions are always shown as separate optgroups (never hidden), even though
+  // flipping owaspWebVersion also re-resolves the currently selected category (see
+  // CvssCalculatorTool's changeOwaspWebVersion) — manual picks from either edition should
+  // still be selectable at any time.
+  const owaspByGroup = OWASP_GROUP_ORDER.map((group) => ({
+    group,
+    categories: OWASP_CATEGORIES.filter((c) => owaspGroupOf(c.id) === group),
+  }));
+
+  const vrtByGroup = VRT_CATEGORIES.reduce<{ group: string; categories: typeof VRT_CATEGORIES }[]>((groups, category) => {
+    const existing = groups.find((g) => g.group === category.group);
+    if (existing) existing.categories.push(category);
+    else groups.push({ group: category.group, categories: [category] });
+    return groups;
+  }, []);
 
   function handleVrtChange(newVrtId: string) {
     if (!newVrtId) {
@@ -108,18 +135,39 @@ export function OutputPanel({
 
             <div className="flex items-center gap-2">
               <div className="flex-1">
-                <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-500">OWASP Category</label>
+                <div className="mb-1 flex items-center justify-between">
+                  <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-500">OWASP Category</label>
+                  <div className="flex items-center gap-1">
+                    <span className="text-xs text-zinc-500 dark:text-zinc-500">Web edition:</span>
+                    {(["2021", "2025"] as const).map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        className={toggleButtonClasses(owaspWebVersion === v)}
+                        onClick={() => onOwaspWebVersionChange(v)}
+                      >
+                        {v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <select
                   value={meta.owaspRefId ?? ""}
                   onChange={(e) => onMetaChange({ owaspRefId: e.target.value || null })}
                   className={`${selectClasses} w-full`}
                 >
                   <option value="">— None —</option>
-                  {OWASP_CATEGORIES.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.label}
-                    </option>
-                  ))}
+                  {owaspByGroup.map(({ group, categories }) =>
+                    categories.length > 0 ? (
+                      <optgroup key={group} label={OWASP_GROUP_LABELS[group]}>
+                        {categories.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ) : null,
+                  )}
                 </select>
               </div>
               {owasp && <CopyButton text={owasp.label} label="Copy" />}
@@ -130,11 +178,15 @@ export function OutputPanel({
                 <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-500">VRT Category</label>
                 <select value={meta.vrtRefId ?? ""} onChange={(e) => handleVrtChange(e.target.value)} className={`${selectClasses} w-full`}>
                   <option value="">— None —</option>
-                  {VRT_CATEGORIES.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.label}
-                      {v.priority ? ` (${v.priority})` : ""}
-                    </option>
+                  {vrtByGroup.map(({ group, categories }) => (
+                    <optgroup key={group} label={group}>
+                      {categories.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.label}
+                          {v.priority ? ` (${v.priority})` : ""}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </div>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CWE_ENTRIES_BY_ID } from "../references/cwe";
-import { OWASP_CATEGORIES_BY_ID } from "../references/owasp";
+import { OWASP_CATEGORIES_BY_ID, OWASP_WEB_2025_CWE_MAP, owaspGroupOf } from "../references/owasp";
 import { VRT_CATEGORIES_BY_ID } from "../references/vrt";
 import { computeCvss31Score } from "../v3_1/score";
 import { computeCvss40Score } from "../v4_0/score";
@@ -80,6 +80,17 @@ describe("CHAIN_MATRIX structural integrity", () => {
   it("every vrtRefId resolves to a real VRT_CATEGORIES entry", () => {
     for (const pair of CHAIN_MATRIX) {
       expect(VRT_CATEGORIES_BY_ID[pair.vrtRefId], `${pair.vulnTypeIdA}+${pair.vulnTypeIdB}`).toBeDefined();
+    }
+  });
+
+  it("every entry with a 2021 Web owaspRefId has a verified OWASP Top 10:2025 mapping for its CWE", () => {
+    for (const pair of CHAIN_MATRIX) {
+      if (pair.owaspRefId !== null && owaspGroupOf(pair.owaspRefId) === "web-2021") {
+        expect(
+          OWASP_WEB_2025_CWE_MAP[pair.cweId],
+          `${pair.vulnTypeIdA}+${pair.vulnTypeIdB}'s CWE "${pair.cweId}" has no OWASP_WEB_2025_CWE_MAP entry`,
+        ).toBeDefined();
+      }
     }
   });
 
