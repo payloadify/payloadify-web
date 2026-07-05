@@ -22,8 +22,9 @@ Each tool lives at its own URL (e.g. `/jwt-decoder`), never a shared blank-canva
 - **SQLi Payload Generator** (`/sqli-generator`) — build SQL injection payloads across MySQL, MSSQL, PostgreSQL, Oracle, and SQLite, with chainable info extraction, WAF-evasion obfuscation, and blacklist-character avoidance
 - **Reverse Shell Generator** (`/reverse-shell-generator`) — generate reverse shell one-liners across Bash, Netcat, Python, PHP, Perl, Ruby, Socat, Awk, Telnet, Node.js, Lua, Golang, and PowerShell, with a matching listener command and save-as-file options
 - **MSFVenom Command Generator** (`/msfvenom-generator`) — build msfvenom commands with template presets for Windows, Linux, macOS, and Android payloads, evasion encoders, and architectures, with a listener setup guide
+- **CVSS 3.1/4.0 Calculator** (`/cvss-calculator`) — click-through vector builder for both CVSS versions, with vulnerability templates, chained-vulnerability scoring, OWASP mapping, and copyable VRT scores and references
 
-More tools (CVSS calculator, subdomain permutation generator, security headers analyzer, SPF/DKIM/DMARC checker) are planned — see [Roadmap](#roadmap).
+More tools (JWT generator, subdomain permutation generator, security headers analyzer, SPF/DKIM/DMARC checker) are planned — see [Roadmap](#roadmap).
 
 ## Getting Started
 
@@ -82,7 +83,7 @@ scripts/      One-off data build scripts (not part of the app runtime)
 
 Not yet shipped:
 
-- CVSS 3.1/4.0 calculator
+- JWT generator
 - Subdomain permutation generator
 - Security headers analyzer
 - SPF/DKIM/DMARC checker
