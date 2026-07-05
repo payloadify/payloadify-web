@@ -1,7 +1,31 @@
+export type OwaspWebVersion = "2021" | "2025";
+
+/** Dropdown/optgroup grouping: the Web catalogue splits into two editions users can pick
+ *  between (see OwaspWebVersion); API and Mobile each still have exactly one current edition. */
+export type OwaspGroup = "web-2021" | "web-2025" | "api" | "mobile";
+
 export interface OwaspCategory {
   id: string;
   label: string;
   url: string;
+}
+
+export const OWASP_GROUP_LABELS: Record<OwaspGroup, string> = {
+  "web-2021": "OWASP Top 10 (2021) — Web",
+  "web-2025": "OWASP Top 10 (2025) — Web",
+  api: "OWASP API Security Top 10 (2023)",
+  mobile: "OWASP Mobile Top 10 (2024)",
+};
+
+export const OWASP_GROUP_ORDER: OwaspGroup[] = ["web-2021", "web-2025", "api", "mobile"];
+
+/** Every id is authored with a "web-"/"web25-"/"api-"/"mobile-" prefix (see OWASP_CATEGORIES
+ *  below) — reusing that instead of a separate per-entry field keeps the two from drifting apart. */
+export function owaspGroupOf(id: string): OwaspGroup {
+  if (id.startsWith("api-")) return "api";
+  if (id.startsWith("mobile-")) return "mobile";
+  if (id.startsWith("web25-")) return "web-2025";
+  return "web-2021";
 }
 
 /**
@@ -170,6 +194,138 @@ export const OWASP_CATEGORIES: OwaspCategory[] = [
     label: "M10:2024 – Insufficient Cryptography",
     url: "https://owasp.org/www-project-mobile-top-10/2023-risks/m10-insufficient-cryptography.html",
   },
+
+  // ---- OWASP Top 10:2025 — Web (all 10 pages verified live against owasp.org during authoring;
+  // API Security Top 10 and Mobile Top 10 have not been revised for 2025, so those two
+  // catalogues above are unaffected by this section) ----
+  { id: "web25-a01-broken-access-control", label: "A01:2025 – Broken Access Control", url: "https://owasp.org/Top10/2025/A01_2025-Broken_Access_Control/" },
+  {
+    id: "web25-a02-security-misconfiguration",
+    label: "A02:2025 – Security Misconfiguration",
+    url: "https://owasp.org/Top10/2025/A02_2025-Security_Misconfiguration/",
+  },
+  {
+    id: "web25-a03-software-supply-chain-failures",
+    label: "A03:2025 – Software Supply Chain Failures",
+    url: "https://owasp.org/Top10/2025/A03_2025-Software_Supply_Chain_Failures/",
+  },
+  {
+    id: "web25-a04-cryptographic-failures",
+    label: "A04:2025 – Cryptographic Failures",
+    url: "https://owasp.org/Top10/2025/A04_2025-Cryptographic_Failures/",
+  },
+  { id: "web25-a05-injection", label: "A05:2025 – Injection", url: "https://owasp.org/Top10/2025/A05_2025-Injection/" },
+  { id: "web25-a06-insecure-design", label: "A06:2025 – Insecure Design", url: "https://owasp.org/Top10/2025/A06_2025-Insecure_Design/" },
+  {
+    id: "web25-a07-authentication-failures",
+    label: "A07:2025 – Authentication Failures",
+    url: "https://owasp.org/Top10/2025/A07_2025-Authentication_Failures/",
+  },
+  {
+    id: "web25-a08-software-or-data-integrity-failures",
+    label: "A08:2025 – Software or Data Integrity Failures",
+    url: "https://owasp.org/Top10/2025/A08_2025-Software_or_Data_Integrity_Failures/",
+  },
+  {
+    id: "web25-a09-security-logging-alerting-failures",
+    label: "A09:2025 – Security Logging and Alerting Failures",
+    url: "https://owasp.org/Top10/2025/A09_2025-Security_Logging_and_Alerting_Failures/",
+  },
+  {
+    id: "web25-a10-mishandling-exceptional-conditions",
+    label: "A10:2025 – Mishandling of Exceptional Conditions",
+    url: "https://owasp.org/Top10/2025/A10_2025-Mishandling_of_Exceptional_Conditions/",
+  },
 ];
 
 export const OWASP_CATEGORIES_BY_ID: Record<string, OwaspCategory> = Object.fromEntries(OWASP_CATEGORIES.map((c) => [c.id, c]));
+
+/**
+ * CWE → OWASP Top 10:2025 Web category, for auto-translating a template/chain's authored
+ * 2021 owaspRefId into its 2025 equivalent when the user has the "2025" Web edition selected
+ * (see CvssCalculatorTool's owaspWebVersion state). Keyed by CWE rather than by the old
+ * 2021 category id — a straight "2021 category N -> 2025 category M" renumbering table would
+ * be *wrong* for several CWEs that OWASP moved to a different category than their old peers
+ * when the taxonomy was reshuffled, per each 2025 category's own published CWE list:
+ *
+ * - CWE-200 (sensitive data exposed in a URL) sat under A02:2021 Cryptographic Failures, but
+ *   2025's Cryptographic Failures list does NOT include it — OWASP moved it to A01:2025
+ *   Broken Access Control instead (that page's own background text calls out CWE-200 by name).
+ * - CWE-1392 (default credentials) and CWE-209 (verbose error messages) both sat under
+ *   A05:2021 Security Misconfiguration; 2025's Security Misconfiguration list contains
+ *   neither. CWE-1392 moved to A07:2025 Authentication Failures; CWE-209 moved to the new
+ *   A10:2025 Mishandling of Exceptional Conditions.
+ * - CWE-918 (SSRF) sat alone under A10:2021; that category no longer exists in 2025 — SSRF
+ *   was folded into A01:2025 Broken Access Control (confirmed via that page's background text).
+ *
+ * Every other CWE below the same 2021 category are a straight rename/renumber (verified by
+ * checking each CWE's presence in the corresponding 2025 category's own published CWE list,
+ * not assumed from the rank shift). This table only needs an entry for CWEs that are actually
+ * used with a "web-"-family owaspRefId in templates.ts/chaining.ts today — owasp.test.ts and
+ * templates.test.ts assert every such CWE has one, so a future template introducing a new CWE
+ * will fail loudly here instead of silently mis-mapping.
+ */
+export const OWASP_WEB_2025_CWE_MAP: Record<string, string> = {
+  "CWE-79": "web25-a05-injection",
+  "CWE-89": "web25-a05-injection",
+  "CWE-78": "web25-a05-injection",
+  "CWE-639": "web25-a01-broken-access-control",
+  "CWE-284": "web25-a01-broken-access-control",
+  "CWE-918": "web25-a01-broken-access-control",
+  "CWE-352": "web25-a01-broken-access-control",
+  "CWE-601": "web25-a01-broken-access-control",
+  "CWE-22": "web25-a01-broken-access-control",
+  "CWE-200": "web25-a01-broken-access-control",
+  "CWE-489": "web25-a02-security-misconfiguration",
+  "CWE-611": "web25-a02-security-misconfiguration",
+  "CWE-1392": "web25-a07-authentication-failures",
+  "CWE-640": "web25-a07-authentication-failures",
+  "CWE-384": "web25-a07-authentication-failures",
+  "CWE-307": "web25-a07-authentication-failures",
+  "CWE-209": "web25-a10-mishandling-exceptional-conditions",
+  "CWE-502": "web25-a08-software-or-data-integrity-failures",
+  "CWE-472": "web25-a06-insecure-design",
+};
+
+/** The 2021 counterpart of OWASP_WEB_2025_CWE_MAP — every CWE above's *original* 2021 Web
+ *  category, as authored in templates.ts/chaining.ts today. Lets a category already resolved
+ *  to 2025 be translated back to 2021 (e.g. the user flips the edition toggle back) without
+ *  having to re-apply a template — same CWE-driven approach, same reason a plain id-to-id
+ *  table would be wrong (multiple 2021 categories collapse onto one 2025 category: both
+ *  A05:2021 and A10:2021 CWEs can map to a single 2025 target, so going forward-then-back
+ *  through *category ids* would lose information; going through the CWE instead does not). */
+export const OWASP_WEB_2021_CWE_MAP: Record<string, string> = {
+  "CWE-79": "web-a03-injection",
+  "CWE-89": "web-a03-injection",
+  "CWE-78": "web-a03-injection",
+  "CWE-639": "web-a01-broken-access-control",
+  "CWE-284": "web-a01-broken-access-control",
+  "CWE-918": "web-a10-ssrf",
+  "CWE-352": "web-a01-broken-access-control",
+  "CWE-601": "web-a01-broken-access-control",
+  "CWE-22": "web-a01-broken-access-control",
+  "CWE-200": "web-a02-crypto-failures",
+  "CWE-489": "web-a05-security-misconfiguration",
+  "CWE-611": "web-a05-security-misconfiguration",
+  "CWE-1392": "web-a05-security-misconfiguration",
+  "CWE-640": "web-a07-auth-failures",
+  "CWE-384": "web-a07-auth-failures",
+  "CWE-307": "web-a07-auth-failures",
+  "CWE-209": "web-a05-security-misconfiguration",
+  "CWE-502": "web-a08-software-data-integrity",
+  "CWE-472": "web-a04-insecure-design",
+};
+
+/** Resolves a Web owaspRefId + its finding's cweId to the requested Web edition. Returns the
+ *  original id unchanged for non-Web (api-/mobile-) ids, or if the CWE has no verified mapping
+ *  for the target edition (see OWASP_WEB_2025_CWE_MAP / OWASP_WEB_2021_CWE_MAP). Used both when
+ *  a template/chain/saved template is applied and when the user flips the edition toggle on an
+ *  already-selected category — the latter matters because a category picked while on one
+ *  edition would otherwise silently stay on that edition after switching, looking like the
+ *  toggle "does nothing". */
+export function toOwaspWebVersion(owaspRefId: string, cweId: string, targetVersion: OwaspWebVersion): string {
+  const group = owaspGroupOf(owaspRefId);
+  if (group === "api" || group === "mobile") return owaspRefId;
+  const map = targetVersion === "2025" ? OWASP_WEB_2025_CWE_MAP : OWASP_WEB_2021_CWE_MAP;
+  return map[cweId] ?? owaspRefId;
+}

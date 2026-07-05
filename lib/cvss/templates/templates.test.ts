@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { CWE_ENTRIES_BY_ID } from "../references/cwe";
-import { OWASP_CATEGORIES_BY_ID } from "../references/owasp";
+import { OWASP_CATEGORIES_BY_ID, OWASP_WEB_2025_CWE_MAP, owaspGroupOf } from "../references/owasp";
 import { VRT_CATEGORIES_BY_ID } from "../references/vrt";
 import { computeCvss31Score } from "../v3_1/score";
 import { computeCvss40Score } from "../v4_0/score";
@@ -61,6 +61,14 @@ describe("CVSS_TEMPLATES structural integrity", () => {
     for (const t of CVSS_TEMPLATES) {
       if (t.owaspRefId !== null) {
         expect(OWASP_CATEGORIES_BY_ID[t.owaspRefId], `${t.id} has unknown owaspRefId "${t.owaspRefId}"`).toBeDefined();
+      }
+    }
+  });
+
+  it("every template with a 2021 Web owaspRefId has a verified OWASP Top 10:2025 mapping for its CWE", () => {
+    for (const t of CVSS_TEMPLATES) {
+      if (t.owaspRefId !== null && owaspGroupOf(t.owaspRefId) === "web-2021") {
+        expect(OWASP_WEB_2025_CWE_MAP[t.cweId], `${t.id}'s CWE "${t.cweId}" has no OWASP_WEB_2025_CWE_MAP entry`).toBeDefined();
       }
     }
   });
