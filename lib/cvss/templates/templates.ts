@@ -1,7 +1,7 @@
 import { CvssTemplate } from "./types";
 
 /**
- * ~40-50 scenario presets across the 14 VulnType families (vulnTypes.ts). Selecting one in the
+ * ~60-70 scenario presets across the 14 VulnType families (vulnTypes.ts). Selecting one in the
  * UI fills every CVSS 3.1 + 4.0 metric plus the OWASP/VRT/CWE/reference ids in one shot,
  * mirroring lib/msfvenom/templates.ts's template→custom flow.
  *
@@ -1032,12 +1032,46 @@ export const CVSS_TEMPLATES: CvssTemplate[] = [
     description: "A mobile app calculates a purchase amount or premium-feature entitlement flag on the client and sends it to the backend as a trusted value instead of the backend deriving it itself, even for anonymous/device-linked sessions with no registered account; intercepting and tampering with the app's own request (e.g. via a proxy) lets an attacker unlock paid content or pay an arbitrary amount.",
     cvss31: { AV: "N", AC: "L", PR: "N", UI: "N", S: "U", C: "N", I: "H", A: "N" },
     cvss40: { AV: "N", AC: "L", AT: "N", PR: "N", UI: "N", VC: "N", VI: "H", VA: "N", SC: "N", SI: "N", SA: "N", E: "X" },
-    owaspRefId: "mobile-m4-input-output-validation",
+    owaspRefId: "mobile-m3-insecure-auth",
     vrtRefId: "parameter-tampering",
     cweId: "CWE-472",
     references: [
       { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
-      { label: "OWASP Mobile Top 10 2024 — M4 Insufficient Input/Output Validation", url: "https://owasp.org/www-project-mobile-top-10/2023-risks/m4-insufficient-input-output-validation.html" },
+      { label: "OWASP Mobile Top 10 2024 — M3 Insecure Authentication/Authorization", url: "https://owasp.org/www-project-mobile-top-10/2023-risks/m3-insecure-authentication-authorization.html" },
+    ],
+  },
+  {
+    id: "param-web-hidden-field-workflow-bypass",
+    vulnTypeId: "parameter-tampering",
+    label: "Hidden field tampering — workflow/approval-state flag bypasses a required verification step",
+    platforms: ["web"],
+    description:
+      "A multi-step web feature (e.g. an application form, KYC/document-review flow, or approval workflow) tracks its progress in a hidden form field (e.g. <input type=\"hidden\" name=\"verified\" value=\"false\">) that the client is only supposed to flip once a required check passes. Editing that hidden value directly in the page or an intercepted request — without ever actually passing the check — is accepted by the server as-is, letting the record persist as \"verified\"/\"approved\" and corrupting the true state of that workflow.",
+    cvss31: { AV: "N", AC: "L", PR: "L", UI: "N", S: "U", C: "N", I: "H", A: "N" },
+    cvss40: { AV: "N", AC: "L", AT: "N", PR: "L", UI: "N", VC: "N", VI: "H", VA: "N", SC: "N", SI: "N", SA: "N", E: "X" },
+    owaspRefId: "web-a04-insecure-design",
+    vrtRefId: "parameter-tampering",
+    cweId: "CWE-472",
+    references: [
+      { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
+      { label: "OWASP Top 10 2021 — A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
+  {
+    id: "param-web-hidden-field-vote-review-integrity",
+    vulnTypeId: "parameter-tampering",
+    label: "Hidden field tampering — \"already submitted\" flag reset to allow unlimited resubmissions",
+    platforms: ["web"],
+    description:
+      "A review, rating, survey, or voting feature sets a hidden field (e.g. <input type=\"hidden\" name=\"hasVoted\" value=\"true\">) once a user submits, and relies on that client-set value — instead of a server-side per-user/per-session record — to block repeat submissions. Resetting the hidden field to its original value before resubmitting lets a single user submit unlimited times, skewing the aggregated ratings/poll results and undermining the integrity of that data for everyone who later views it.",
+    cvss31: { AV: "N", AC: "L", PR: "N", UI: "N", S: "U", C: "N", I: "H", A: "N" },
+    cvss40: { AV: "N", AC: "L", AT: "N", PR: "N", UI: "N", VC: "N", VI: "H", VA: "N", SC: "N", SI: "N", SA: "N", E: "X" },
+    owaspRefId: "web-a04-insecure-design",
+    vrtRefId: "parameter-tampering",
+    cweId: "CWE-472",
+    references: [
+      { label: "PortSwigger — Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
+      { label: "OWASP Top 10 2021 — A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
     ],
   },
 ];
