@@ -801,6 +801,11 @@ export const CVSS_TEMPLATES: CvssTemplate[] = [
   },
 
   // ---- insecure-deserialization ----
+  // Both templates below include the api platform but still cite a Web category
+  // (web-a08-software-data-integrity) — OWASP's API Security Top 10 (2023) has no dedicated
+  // deserialization category of its own, and A08:2021 Software and Data Integrity Failures is
+  // where deserialization is officially covered, so an API-surfaced deserialization finding
+  // cites that Web category rather than an API-specific one.
   {
     id: "id-java-gadget-chain-rce",
     vulnTypeId: "insecure-deserialization",
@@ -1068,6 +1073,11 @@ export const CVSS_TEMPLATES: CvssTemplate[] = [
   },
 
   // ---- command-injection ----
+  // ci-api-command-injection below cites a Web category (web-a03-injection) for the same
+  // reason given above the sqli section: OWASP API Security Top 10 (2023) explicitly folds
+  // classic injection (SQLi/NoSQLi/command injection) into the main OWASP Top 10 rather than
+  // giving it its own API category, so a direct command-injection finding on an API endpoint
+  // still cites the Web Injection category even though the platform is "api".
   {
     id: "ci-web-os-command-injection",
     vulnTypeId: "command-injection",

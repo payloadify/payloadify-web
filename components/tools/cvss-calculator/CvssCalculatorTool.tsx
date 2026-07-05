@@ -360,6 +360,7 @@ export function CvssCalculatorTool() {
         onMetaChange={updateMeta}
         owaspWebVersion={owaspWebVersion}
         onOwaspWebVersionChange={changeOwaspWebVersion}
+        platform={platformFilter}
       />
 
       <div className="flex flex-col gap-2 rounded border border-zinc-200 p-4 dark:border-zinc-800">

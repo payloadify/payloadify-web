@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { iconButtonClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { CWE_ENTRIES, CWE_ENTRIES_BY_ID } from "@/lib/cvss/references/cwe";
@@ -14,7 +15,7 @@ import {
 import { VRT_CATEGORIES, VRT_CATEGORIES_BY_ID } from "@/lib/cvss/references/vrt";
 import { CvssMeta, CvssReference } from "@/lib/cvss/templates/types";
 import { VRT_AUTOFILL } from "@/lib/cvss/templates/vrtAutofill";
-import { SeverityRating } from "@/lib/cvss/shared/types";
+import { Platform, SeverityRating } from "@/lib/cvss/shared/types";
 import { usePersistedBoolean } from "@/lib/storage/persistedBoolean";
 
 const ADDITIONAL_INFO_COLLAPSED_KEY = "payloadify:cvss-calculator:additional-info-collapsed";
@@ -35,6 +36,7 @@ export function OutputPanel({
   onMetaChange,
   owaspWebVersion,
   onOwaspWebVersionChange,
+  platform,
 }: {
   baseScore: number;
   severity: SeverityRating;
@@ -43,11 +45,21 @@ export function OutputPanel({
   onMetaChange: (patch: Partial<CvssMeta>) => void;
   owaspWebVersion: OwaspWebVersion;
   onOwaspWebVersionChange: (version: OwaspWebVersion) => void;
+  platform: Platform;
 }) {
   const owasp = meta.owaspRefId ? OWASP_CATEGORIES_BY_ID[meta.owaspRefId] : null;
   const vrt = meta.vrtRefId ? VRT_CATEGORIES_BY_ID[meta.vrtRefId] : null;
   const cwe = meta.cweId ? CWE_ENTRIES_BY_ID[meta.cweId] : null;
   const [collapsed, setCollapsed] = usePersistedBoolean(ADDITIONAL_INFO_COLLAPSED_KEY, false);
+  const [showOwaspApiNote, setShowOwaspApiNote] = useState(false);
+
+  // OWASP's API Security Top 10 (2023) has no category of its own for classic injection
+  // (SQLi/command injection/XXE) or for insecure deserialization — those are only covered under
+  // the main OWASP Top 10 (Web), so an "api"-platform finding can legitimately still cite a Web
+  // category. Surface that as an info tooltip rather than silently showing what looks like a
+  // platform mismatch.
+  const owaspGroup = meta.owaspRefId ? owaspGroupOf(meta.owaspRefId) : null;
+  const showOwaspApiNoteToggle = platform === "api" && (owaspGroup === "web-2021" || owaspGroup === "web-2025");
 
   // Both Web editions are always shown as separate optgroups (never hidden), even though
   // flipping owaspWebVersion also re-resolves the currently selected category (see
@@ -136,7 +148,21 @@ export function OutputPanel({
             <div className="flex items-center gap-2">
               <div className="flex-1">
                 <div className="mb-1 flex items-center justify-between">
-                  <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-500">OWASP Category</label>
+                  <div className="flex items-center gap-1">
+                    <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-500">OWASP Category</label>
+                    {showOwaspApiNoteToggle && (
+                      <button
+                        type="button"
+                        onClick={() => setShowOwaspApiNote((v) => !v)}
+                        aria-expanded={showOwaspApiNote}
+                        aria-label="Why does this API finding cite a Web OWASP category?"
+                        title="Why does this API finding cite a Web OWASP category?"
+                        className="flex h-4 w-4 items-center justify-center rounded-full border border-zinc-400 text-[10px] leading-none text-zinc-500 hover:border-zinc-600 hover:text-zinc-700 dark:border-zinc-600 dark:text-zinc-400 dark:hover:border-zinc-400 dark:hover:text-zinc-200"
+                      >
+                        i
+                      </button>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-zinc-500 dark:text-zinc-500">Web edition:</span>
                     {(["2021", "2025"] as const).map((v) => (
@@ -172,6 +198,12 @@ export function OutputPanel({
               </div>
               {owasp && <CopyButton text={owasp.label} label="Copy" />}
             </div>
+            {showOwaspApiNoteToggle && showOwaspApiNote && (
+              <p className="-mt-2 text-xs text-zinc-500 dark:text-zinc-500">
+                This finding is on the API platform, but OWASP&apos;s API Security Top 10 has no category of its own for this
+                vulnerability type — it&apos;s only covered under the main OWASP Top 10 (Web), so that category is cited instead.
+              </p>
+            )}
 
             <div className="flex items-center gap-2">
               <div className="flex-1">
