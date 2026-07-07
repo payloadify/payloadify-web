@@ -13,10 +13,13 @@ const COLLAPSED_KEY = "payloadify:cvss-calculator:description-impact-collapsed";
  *  each textarea's own overflow-y-auto takes over). Keyed on both values rather than an input
  *  handler so it also resizes on programmatic changes — auto-fill on vuln-type selection,
  *  template/chain switches, loading a saved template — not just direct typing. */
-function useMatchedAutoResizeTextareas(valueA: string, valueB: string) {
+function useMatchedAutoResizeTextareas(valueA: string, valueB: string, collapsed: boolean) {
   const refA = useRef<HTMLTextAreaElement>(null);
   const refB = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
+    // While collapsed the container is display:none, so scrollHeight reads 0 — skip and let
+    // the resize re-run once expanded (below) rather than pinning the textareas to 0px.
+    if (collapsed) return;
     const elA = refA.current;
     const elB = refB.current;
     if (!elA || !elB) return;
@@ -25,7 +28,7 @@ function useMatchedAutoResizeTextareas(valueA: string, valueB: string) {
     const target = Math.max(elA.scrollHeight, elB.scrollHeight);
     elA.style.height = `${target}px`;
     elB.style.height = `${target}px`;
-  }, [valueA, valueB]);
+  }, [valueA, valueB, collapsed]);
   return [refA, refB] as const;
 }
 
@@ -41,7 +44,7 @@ export function DescriptionImpactFields({
   showChainedImpact?: boolean;
 }) {
   const [collapsed, setCollapsed] = usePersistedBoolean(COLLAPSED_KEY, false);
-  const [descriptionRef, impactRef] = useMatchedAutoResizeTextareas(meta.description, meta.impact);
+  const [descriptionRef, impactRef] = useMatchedAutoResizeTextareas(meta.description, meta.impact, collapsed);
 
   return (
     <div className="rounded border border-zinc-300 p-4 dark:border-zinc-700">
