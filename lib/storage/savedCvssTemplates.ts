@@ -1,10 +1,27 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
-import { CvssMeta } from "@/lib/cvss/templates/types";
-import { Platform } from "@/lib/cvss/shared/types";
-import { Cvss31Metrics } from "@/lib/cvss/v3_1/metrics";
-import { Cvss40Metrics } from "@/lib/cvss/v4_0/metrics";
+import { CvssMeta, CvssReference } from "../cvss/templates/types";
+import { PLATFORMS, Platform } from "../cvss/shared/types";
+import {
+  Cvss31Metrics,
+  CVSS31_AC_OPTIONS,
+  CVSS31_AV_OPTIONS,
+  CVSS31_CIA_OPTIONS,
+  CVSS31_PR_OPTIONS,
+  CVSS31_S_OPTIONS,
+  CVSS31_UI_OPTIONS,
+} from "../cvss/v3_1/metrics";
+import {
+  Cvss40Metrics,
+  CVSS40_AC_OPTIONS,
+  CVSS40_AT_OPTIONS,
+  CVSS40_AV_OPTIONS,
+  CVSS40_E_OPTIONS,
+  CVSS40_IMPACT_OPTIONS,
+  CVSS40_PR_OPTIONS,
+  CVSS40_UI_OPTIONS,
+} from "../cvss/v4_0/metrics";
 
 /** localStorage-backed persistence for user-named custom CVSS scores in the CVSS calculator —
  *  mirrors the "Saved Listeners" pattern in savedListeners.ts, scoped to this feature's shape. */
@@ -21,20 +38,87 @@ export interface SavedCvssTemplate {
 
 export const MAX_SAVED_CVSS_TEMPLATES = 50;
 
+/** Checks `value` is a string matching one of `options`' ids — used to validate every CVSS
+ *  metric enum below rather than just trusting `typeof === "string"`, since an out-of-range
+ *  enum value (e.g. from a hand-edited or corrupted import file) silently produces a NaN base
+ *  score that severityRating() then mislabels as "Critical" (NaN fails every `<` comparison). */
+function isValidOption<T extends string>(value: unknown, options: { id: T }[]): value is T {
+  return typeof value === "string" && options.some((o) => o.id === value);
+}
+
+function isValidCvss31Metrics(value: unknown): value is Cvss31Metrics {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    isValidOption(v.AV, CVSS31_AV_OPTIONS) &&
+    isValidOption(v.AC, CVSS31_AC_OPTIONS) &&
+    isValidOption(v.PR, CVSS31_PR_OPTIONS) &&
+    isValidOption(v.UI, CVSS31_UI_OPTIONS) &&
+    isValidOption(v.S, CVSS31_S_OPTIONS) &&
+    isValidOption(v.C, CVSS31_CIA_OPTIONS) &&
+    isValidOption(v.I, CVSS31_CIA_OPTIONS) &&
+    isValidOption(v.A, CVSS31_CIA_OPTIONS)
+  );
+}
+
+function isValidCvss40Metrics(value: unknown): value is Cvss40Metrics {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    isValidOption(v.AV, CVSS40_AV_OPTIONS) &&
+    isValidOption(v.AC, CVSS40_AC_OPTIONS) &&
+    isValidOption(v.AT, CVSS40_AT_OPTIONS) &&
+    isValidOption(v.PR, CVSS40_PR_OPTIONS) &&
+    isValidOption(v.UI, CVSS40_UI_OPTIONS) &&
+    isValidOption(v.VC, CVSS40_IMPACT_OPTIONS) &&
+    isValidOption(v.VI, CVSS40_IMPACT_OPTIONS) &&
+    isValidOption(v.VA, CVSS40_IMPACT_OPTIONS) &&
+    isValidOption(v.SC, CVSS40_IMPACT_OPTIONS) &&
+    isValidOption(v.SI, CVSS40_IMPACT_OPTIONS) &&
+    isValidOption(v.SA, CVSS40_IMPACT_OPTIONS) &&
+    isValidOption(v.E, CVSS40_E_OPTIONS)
+  );
+}
+
+function isValidCvssReference(value: unknown): value is CvssReference {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return typeof v.label === "string" && typeof v.url === "string";
+}
+
+/** description/impact/chainedImpact are allowed to be `undefined` (not just the right type) —
+ *  they were added after this feature originally shipped, so templates saved to a user's
+ *  localStorage by an older build won't have them at all. CvssCalculatorTool spreads over
+ *  EMPTY_CVSS_META on load, which fills the missing keys with "" — rejecting them here would
+ *  silently drop pre-existing saved templates for anyone upgrading. Every other field predates
+ *  this feature and must always be present. */
+function isValidCvssMeta(value: unknown): value is CvssMeta {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.rationale === "string" &&
+    (v.owaspRefId === null || typeof v.owaspRefId === "string") &&
+    (v.vrtRefId === null || typeof v.vrtRefId === "string") &&
+    (v.cweId === null || typeof v.cweId === "string") &&
+    Array.isArray(v.references) &&
+    v.references.every(isValidCvssReference) &&
+    (v.description === undefined || typeof v.description === "string") &&
+    (v.impact === undefined || typeof v.impact === "string") &&
+    (v.chainedImpact === undefined || typeof v.chainedImpact === "string")
+  );
+}
+
 function isSavedCvssTemplate(value: unknown): value is SavedCvssTemplate {
   if (typeof value !== "object" || value === null) return false;
   const v = value as Record<string, unknown>;
   return (
     typeof v.id === "string" &&
     typeof v.name === "string" &&
-    typeof v.platformFilter === "string" &&
+    isValidOption(v.platformFilter, PLATFORMS) &&
     (typeof v.vulnTypeId === "string" || v.vulnTypeId === null) &&
-    typeof v.cvss31 === "object" &&
-    v.cvss31 !== null &&
-    typeof v.cvss40 === "object" &&
-    v.cvss40 !== null &&
-    typeof v.meta === "object" &&
-    v.meta !== null
+    isValidCvss31Metrics(v.cvss31) &&
+    isValidCvss40Metrics(v.cvss40) &&
+    isValidCvssMeta(v.meta)
   );
 }
 
@@ -128,7 +212,10 @@ export function useSavedCvssTemplates(key: string) {
 
   const save = useCallback(
     (template: SavedCvssTemplate) => {
-      const next = [template, ...loadSavedCvssTemplates(key)].slice(0, MAX_SAVED_CVSS_TEMPLATES);
+      // Dedupe by id so re-saving an existing template (explicit overwrite) replaces it in
+      // place instead of appending a second entry — see saveCurrentAsTemplate's name-collision
+      // confirm in CvssCalculatorTool.tsx.
+      const next = [template, ...loadSavedCvssTemplates(key).filter((t) => t.id !== template.id)].slice(0, MAX_SAVED_CVSS_TEMPLATES);
       saveSavedCvssTemplates(key, next);
       invalidate(key);
     },

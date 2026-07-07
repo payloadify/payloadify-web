@@ -361,7 +361,13 @@ export function CvssCalculatorTool() {
 
   function saveCurrentAsTemplate() {
     const name = saveNameInput.trim() || suggestedSaveName;
-    const id = typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now());
+    // Saving under a name that already exists would otherwise silently add a second,
+    // indistinguishable entry — confirm whether to overwrite the existing one instead.
+    const existing = savedTemplates.find((t) => t.name === name);
+    if (existing && !window.confirm(`A saved template named "${name}" already exists. Overwrite it?`)) {
+      return;
+    }
+    const id = existing?.id ?? (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now()));
     saveTemplate({ id, name, platformFilter, vulnTypeId, cvss31: metrics31, cvss40: metrics40, meta });
     setSaveNameInput("");
   }

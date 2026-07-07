@@ -56,6 +56,45 @@ describe("parseSavedCvssTemplatesImport", () => {
       expect(result.skippedInvalid).toBe(1);
     }
   });
+
+  it("accepts a pre-existing-feature template shape missing description/impact/chainedImpact", () => {
+    // Templates saved by a build that predates these fields won't have them in localStorage —
+    // rejecting them here would silently drop a user's real saved data on upgrade.
+    const valid = makeTemplate("1");
+    const { description: _d, impact: _i, chainedImpact: _c, ...metaWithoutNewFields } = valid.meta;
+    const legacy = { ...valid, meta: metaWithoutNewFields };
+    const result = parseSavedCvssTemplatesImport(JSON.stringify([legacy]));
+    expect("error" in result).toBe(false);
+    if (!("error" in result)) expect(result.templates).toEqual([legacy]);
+  });
+
+  it("rejects a template whose meta fields have the wrong type despite being structurally present", () => {
+    const valid = makeTemplate("1");
+    const corrupted = { ...valid, meta: { ...valid.meta, description: 123, references: "not-an-array" } };
+    const result = parseSavedCvssTemplatesImport(JSON.stringify([corrupted]));
+    expect("error" in result).toBe(true);
+  });
+
+  it("rejects a template with an invalid CVSS 3.1 metric enum value", () => {
+    const valid = makeTemplate("1");
+    const corrupted = { ...valid, cvss31: { ...valid.cvss31, C: "X" } };
+    const result = parseSavedCvssTemplatesImport(JSON.stringify([corrupted]));
+    expect("error" in result).toBe(true);
+  });
+
+  it("rejects a template with an invalid CVSS 4.0 metric enum value", () => {
+    const valid = makeTemplate("1");
+    const corrupted = { ...valid, cvss40: { ...valid.cvss40, VC: "X" } };
+    const result = parseSavedCvssTemplatesImport(JSON.stringify([corrupted]));
+    expect("error" in result).toBe(true);
+  });
+
+  it("rejects a template with an invalid platformFilter", () => {
+    const valid = makeTemplate("1");
+    const corrupted = { ...valid, platformFilter: "not-a-real-platform" };
+    const result = parseSavedCvssTemplatesImport(JSON.stringify([corrupted]));
+    expect("error" in result).toBe(true);
+  });
 });
 
 describe("mergeImportedCvssTemplates", () => {
