@@ -362,10 +362,17 @@ export function CvssCalculatorTool() {
   const vector40 = useMemo(() => buildCvss40Vector(metrics40), [metrics40]);
 
   const selectedSavedTemplate = selectedSavedTemplateId ? savedTemplates.find((t) => t.id === selectedSavedTemplateId) : null;
-  const suggestedSaveName = selectedSavedTemplate?.name ?? currentTemplate?.label ?? "e.g. Client X — login XSS";
+  // Only a real, loaded/picked template name is safe to use as the actual saved name — the
+  // placeholder text below it is illustrative ("e.g. ...") and must never be saved verbatim.
+  const suggestedSaveName = selectedSavedTemplate?.name ?? currentTemplate?.label ?? null;
+  const saveNamePlaceholder = suggestedSaveName ?? "e.g. Client X — login XSS";
 
   function saveCurrentAsTemplate() {
     const name = saveNameInput.trim() || suggestedSaveName;
+    if (!name) {
+      setSaveStatus({ type: "error", message: "Enter a name for this template before saving." });
+      return;
+    }
     const plan = planSaveCvssTemplate(savedTemplates, name);
 
     // Saving under a name that already exists would otherwise silently add a second,
@@ -509,7 +516,7 @@ export function CvssCalculatorTool() {
               type="text"
               value={saveNameInput}
               onChange={(e) => setSaveNameInput(e.target.value)}
-              placeholder={suggestedSaveName}
+              placeholder={saveNamePlaceholder}
               className={inputClasses}
             />
           </div>
