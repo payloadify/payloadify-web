@@ -17,6 +17,7 @@ import { CvssMeta, EMPTY_CVSS_META } from "@/lib/cvss/templates/types";
 import {
   MAX_SAVED_CVSS_TEMPLATES,
   parseSavedCvssTemplatesImport,
+  planSaveCvssTemplate,
   SavedCvssTemplate,
   useSavedCvssTemplates,
 } from "@/lib/storage/savedCvssTemplates";
@@ -365,26 +366,24 @@ export function CvssCalculatorTool() {
 
   function saveCurrentAsTemplate() {
     const name = saveNameInput.trim() || suggestedSaveName;
+    const plan = planSaveCvssTemplate(savedTemplates, name);
+
     // Saving under a name that already exists would otherwise silently add a second,
     // indistinguishable entry — confirm whether to overwrite the existing one instead.
-    const existing = savedTemplates.find((t) => t.name === name);
-    if (existing && !window.confirm(`A saved template named "${name}" already exists. Overwrite it?`)) {
+    if (plan.action === "overwrite" && !window.confirm(`A saved template named "${name}" already exists. Overwrite it?`)) {
       return;
     }
-    // Saving a *new* template (not overwriting one) while already at the cap would otherwise
-    // silently evict the oldest entry via the slice() in the storage layer. Block it with a
-    // clear message instead, consistent with how the import path refuses to overflow the cap.
-    if (!existing && savedTemplates.length >= MAX_SAVED_CVSS_TEMPLATES) {
+    if (plan.action === "blocked-at-cap") {
       setSaveStatus({
         type: "error",
         message: `You've reached the ${MAX_SAVED_CVSS_TEMPLATES}-template limit. Delete a saved template to make room before saving a new one.`,
       });
       return;
     }
-    const id = existing?.id ?? (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now()));
+    const id = plan.action === "overwrite" ? plan.id : (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now()));
     saveTemplate({ id, name, platformFilter, vulnTypeId, cvss31: metrics31, cvss40: metrics40, meta });
     setSaveNameInput("");
-    setSaveStatus({ type: "success", message: existing ? `Updated "${name}".` : `Saved "${name}".` });
+    setSaveStatus({ type: "success", message: plan.action === "overwrite" ? `Updated "${name}".` : `Saved "${name}".` });
   }
 
   const baseScore = version === "3.1" ? score31 : score40;
