@@ -1,7 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { EMPTY_CVSS_META } from "../cvss/templates/types";
-import { CVSS31_DEFAULT_METRICS } from "../cvss/v3_1/metrics";
-import { CVSS40_DEFAULT_METRICS } from "../cvss/v4_0/metrics";
+import { EMPTY_CVSS_META, CVSS31_DEFAULT_METRICS, CVSS40_DEFAULT_METRICS } from "@payloadify/cvss-core";
 import {
   MAX_SAVED_CVSS_TEMPLATES,
   mergeImportedCvssTemplates,

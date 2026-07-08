@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { inputClasses } from "@/components/ui/formClasses";
-import { CvssMeta } from "@/lib/cvss/templates/types";
+import { CvssMeta } from "@payloadify/cvss-core";
 import { usePersistedBoolean } from "@/lib/storage/persistedBoolean";
 
 const COLLAPSED_KEY = "payloadify:cvss-calculator:description-impact-collapsed";

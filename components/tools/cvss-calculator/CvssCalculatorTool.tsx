@@ -5,23 +5,12 @@ import { Callout } from "@/components/ui/Callout";
 import { iconButtonClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { saveAsFile } from "@/lib/download/saveAsFile";
-import { CopyField } from "@/lib/cvss/shared/copyFormat";
-import { CvssVersion, Platform } from "@/lib/cvss/shared/types";
-import { CWE_ENTRIES_BY_ID } from "@/lib/cvss/references/cwe";
-import { OWASP_CATEGORIES_BY_ID, OwaspWebVersion, toOwaspWebVersion } from "@/lib/cvss/references/owasp";
-import { VRT_CATEGORIES_BY_ID } from "@/lib/cvss/references/vrt";
-import { findChainPair, getChainedImpactDraft } from "@/lib/cvss/templates/chaining";
-import { getDescriptionImpactDraft } from "@/lib/cvss/templates/descriptionImpact";
-import { CVSS_TEMPLATES, CVSS_TEMPLATES_BY_ID } from "@/lib/cvss/templates/templates";
-import { CvssMeta, EMPTY_CVSS_META } from "@/lib/cvss/templates/types";
 import {
-  MAX_SAVED_CVSS_TEMPLATES,
-  parseSavedCvssTemplatesImport,
-  planSaveCvssTemplate,
-  SavedCvssTemplate,
-  useSavedCvssTemplates,
-} from "@/lib/storage/savedCvssTemplates";
-import {
+  buildCvss31Vector,
+  buildCvss40Vector,
+  computeCvss31Score,
+  computeCvss40Score,
+  CopyField,
   CVSS31_AC_OPTIONS,
   CVSS31_AV_OPTIONS,
   CVSS31_CIA_OPTIONS,
@@ -30,10 +19,6 @@ import {
   CVSS31_S_OPTIONS,
   CVSS31_UI_OPTIONS,
   Cvss31Metrics,
-} from "@/lib/cvss/v3_1/metrics";
-import { computeCvss31Score } from "@/lib/cvss/v3_1/score";
-import { buildCvss31Vector } from "@/lib/cvss/v3_1/vector";
-import {
   CVSS40_AC_OPTIONS,
   CVSS40_AT_OPTIONS,
   CVSS40_AV_OPTIONS,
@@ -43,9 +28,28 @@ import {
   CVSS40_PR_OPTIONS,
   CVSS40_UI_OPTIONS,
   Cvss40Metrics,
-} from "@/lib/cvss/v4_0/metrics";
-import { computeCvss40Score } from "@/lib/cvss/v4_0/score";
-import { buildCvss40Vector } from "@/lib/cvss/v4_0/vector";
+  CVSS_TEMPLATES,
+  CVSS_TEMPLATES_BY_ID,
+  CvssMeta,
+  CvssVersion,
+  CWE_ENTRIES_BY_ID,
+  EMPTY_CVSS_META,
+  findChainPair,
+  getChainedImpactDraft,
+  getDescriptionImpactDraft,
+  OWASP_CATEGORIES_BY_ID,
+  OwaspWebVersion,
+  Platform,
+  toOwaspWebVersion,
+  VRT_CATEGORIES_BY_ID,
+} from "@payloadify/cvss-core";
+import {
+  MAX_SAVED_CVSS_TEMPLATES,
+  parseSavedCvssTemplatesImport,
+  planSaveCvssTemplate,
+  SavedCvssTemplate,
+  useSavedCvssTemplates,
+} from "@/lib/storage/savedCvssTemplates";
 import { ChainPicker } from "./ChainPicker";
 import { CopyAllPanel } from "./CopyAllPanel";
 import { DescriptionImpactFields } from "./DescriptionImpactFields";

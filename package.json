@@ -2,15 +2,23 @@
   "name": "payloadify-scaffold",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
+    "postinstall": "npm run build --workspace=@payloadify/cvss-core",
+    "predev": "npm run build --workspace=@payloadify/cvss-core",
     "dev": "next dev",
+    "prebuild": "npm run build --workspace=@payloadify/cvss-core",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "pretest": "npm run build --workspace=@payloadify/cvss-core",
     "test": "vitest run"
   },
   "dependencies": {
     "@noble/hashes": "^2.2.0",
+    "@payloadify/cvss-core": "*",
     "js-md4": "^0.3.2",
     "js-md5": "^0.8.3",
     "next": "16.2.9",

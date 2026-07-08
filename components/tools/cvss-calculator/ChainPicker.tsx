@@ -1,7 +1,7 @@
 "use client";
 
 import { selectClasses } from "@/components/ui/formClasses";
-import { VULN_CATEGORIES, VULN_TYPES } from "@/lib/cvss/templates/vulnTypes";
+import { VULN_CATEGORIES, VULN_TYPES } from "@payloadify/cvss-core";
 
 export function ChainPicker({
   firstVulnTypeId,

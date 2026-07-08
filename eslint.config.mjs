@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Compiled output of workspace packages (e.g. @payloadify/cvss-core) — generated JS, not source.
+    "packages/*/dist/**",
   ]),
 ]);
 

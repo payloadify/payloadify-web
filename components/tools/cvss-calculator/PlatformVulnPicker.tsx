@@ -1,13 +1,18 @@
 "use client";
 
 import { selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
-import { CvssTemplate } from "@/lib/cvss/templates/types";
-import { VULN_CATEGORIES, VULN_TYPES } from "@/lib/cvss/templates/vulnTypes";
-import { PLATFORMS } from "@/lib/cvss/shared/types";
-import { CvssVersion, Platform, SeverityRating } from "@/lib/cvss/shared/types";
-import { severityRating } from "@/lib/cvss/shared/severityRating";
-import { computeCvss31Score } from "@/lib/cvss/v3_1/score";
-import { computeCvss40Score } from "@/lib/cvss/v4_0/score";
+import {
+  computeCvss31Score,
+  computeCvss40Score,
+  CvssTemplate,
+  CvssVersion,
+  PLATFORMS,
+  Platform,
+  severityRating,
+  SeverityRating,
+  VULN_CATEGORIES,
+  VULN_TYPES,
+} from "@payloadify/cvss-core";
 
 const SEVERITY_ORDER: SeverityRating[] = ["Critical", "High", "Medium", "Low", "None"];
 

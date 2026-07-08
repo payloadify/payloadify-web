@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
-import { CopyStyle } from "@/lib/cvss/shared/copyFormat";
+import { CopyStyle } from "@payloadify/cvss-core";
 
 /** localStorage-backed persistence for the CVSS calculator's "Copy All" panel settings —
  *  field order, which fields are included, which fields use their URL form, and the list
