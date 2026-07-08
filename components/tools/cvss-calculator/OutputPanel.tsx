@@ -3,19 +3,23 @@
 import { useState } from "react";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { iconButtonClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
-import { CWE_ENTRIES, CWE_ENTRIES_BY_ID } from "@/lib/cvss/references/cwe";
 import {
+  CvssMeta,
+  CvssReference,
+  CWE_ENTRIES,
+  CWE_ENTRIES_BY_ID,
   OWASP_CATEGORIES,
   OWASP_CATEGORIES_BY_ID,
   OWASP_GROUP_LABELS,
   OWASP_GROUP_ORDER,
-  OwaspWebVersion,
   owaspGroupOf,
-} from "@/lib/cvss/references/owasp";
-import { VRT_CATEGORIES, VRT_CATEGORIES_BY_ID } from "@/lib/cvss/references/vrt";
-import { CvssMeta, CvssReference } from "@/lib/cvss/templates/types";
-import { VRT_AUTOFILL } from "@/lib/cvss/templates/vrtAutofill";
-import { Platform, SeverityRating } from "@/lib/cvss/shared/types";
+  OwaspWebVersion,
+  Platform,
+  SeverityRating,
+  VRT_AUTOFILL,
+  VRT_CATEGORIES,
+  VRT_CATEGORIES_BY_ID,
+} from "@payloadify/cvss-core";
 import { usePersistedBoolean } from "@/lib/storage/persistedBoolean";
 
 const ADDITIONAL_INFO_COLLAPSED_KEY = "payloadify:cvss-calculator:additional-info-collapsed";

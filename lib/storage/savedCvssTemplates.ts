@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
-import { CvssMeta, CvssReference } from "../cvss/templates/types";
-import { PLATFORMS, Platform } from "../cvss/shared/types";
 import {
+  CvssMeta,
+  CvssReference,
   Cvss31Metrics,
   CVSS31_AC_OPTIONS,
   CVSS31_AV_OPTIONS,
@@ -11,8 +11,6 @@ import {
   CVSS31_PR_OPTIONS,
   CVSS31_S_OPTIONS,
   CVSS31_UI_OPTIONS,
-} from "../cvss/v3_1/metrics";
-import {
   Cvss40Metrics,
   CVSS40_AC_OPTIONS,
   CVSS40_AT_OPTIONS,
@@ -21,7 +19,9 @@ import {
   CVSS40_IMPACT_OPTIONS,
   CVSS40_PR_OPTIONS,
   CVSS40_UI_OPTIONS,
-} from "../cvss/v4_0/metrics";
+  PLATFORMS,
+  Platform,
+} from "@payloadify/cvss-core";
 
 /** localStorage-backed persistence for user-named custom CVSS scores in the CVSS calculator —
  *  mirrors the "Saved Listeners" pattern in savedListeners.ts, scoped to this feature's shape. */

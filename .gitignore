@@ -28,6 +28,7 @@ REVIEW.md
 # production
 /build
 /dist
+/packages/*/dist
 
 # misc
 .DS_Store

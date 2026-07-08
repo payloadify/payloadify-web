@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
-import { CopyField, CopyStyle, formatList } from "@/lib/cvss/shared/copyFormat";
+import { CopyField, CopyStyle, formatList } from "@payloadify/cvss-core";
 import { useCvssCopyAllSettings } from "@/lib/storage/cvssCopyAllSettings";
 import { usePersistedBoolean } from "@/lib/storage/persistedBoolean";
 
