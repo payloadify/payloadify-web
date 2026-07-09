@@ -83,6 +83,17 @@ scripts/      One-off data build scripts (not part of the app runtime)
 
 This project is built with AI-assisted development (Claude Code). Because correctness is the whole point of a tool like this, generated code and payload/scoring logic are manually reviewed and spot-checked against known-good references before shipping — e.g. CVSS vectors verified against [FIRST.org's calculator](https://www.first.org/cvss/calculator/3.1), and payload/command syntax checked against established sources rather than trusted blindly.
 
+## Credits / Acknowledgements
+
+**JWT Decoder/Tamper & JWT Generator** — all signing, verification, and key
+generation (HS256/384/512, RS/PS/ES families) run on the browser's native
+[Web Crypto API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Crypto_API);
+no third-party crypto library ships in production for these tools.
+[`jose`](https://github.com/panva/jose) (MIT License, © Filip Skokan) is used
+as a dev/test-only dependency to cross-verify that the Web Crypto
+implementation produces spec-correct output — it is not part of the shipped
+bundle.
+
 ## Roadmap
 
 Not yet shipped:
