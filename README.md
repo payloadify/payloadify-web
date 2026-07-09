@@ -94,15 +94,6 @@ as a dev/test-only dependency to cross-verify that the Web Crypto
 implementation produces spec-correct output — it is not part of the shipped
 bundle.
 
-## Roadmap
-
-Not yet shipped:
-
-- JWT generator
-- Subdomain permutation generator
-- Security headers analyzer
-- SPF/DKIM/DMARC checker
-
 ## Contributing
 
 Found a bug? Want to add a tool? See [CONTRIBUTING.md](CONTRIBUTING.md).
