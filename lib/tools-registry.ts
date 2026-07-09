@@ -14,6 +14,13 @@ export const tools: Tool[] = [
     status: "live",
   },
   {
+    slug: "jwt-generator",
+    name: "JWT Generator",
+    shortDescription:
+      "Build and sign a JWT with HMAC, RSA, ECDSA, or RSA-PSS — generate secrets or keypairs, quick-add claims, scenario presets, and weakness flags.",
+    status: "live",
+  },
+  {
     slug: "hash-identifier",
     name: "Hash Identifier/Generator",
     shortDescription:
