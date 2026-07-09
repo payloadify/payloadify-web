@@ -12,7 +12,7 @@ import { AsymmetricKeyMaterial, KeyPairPanel } from "./KeyPairPanel";
 import { OutputPanel } from "./OutputPanel";
 import { WeaknessFlags } from "./WeaknessFlags";
 import { PresetPicker } from "./PresetPicker";
-import { ReferencesPanel } from "./ReferencesPanel";
+import { ReferencesPanel } from "@/components/tools/jwt-shared/ReferencesPanel";
 import { CopyAllPanel } from "./CopyAllPanel";
 import { DecodeVerifyPanel } from "./DecodeVerifyPanel";
 import { WalkthroughGuide } from "./WalkthroughGuide";

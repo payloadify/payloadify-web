@@ -4,7 +4,7 @@ import { CopyButton } from "@/components/ui/CopyButton";
 import { JWT_REFERENCES } from "@/lib/jwt/references";
 import { usePersistedBoolean } from "@/lib/storage/persistedBoolean";
 
-const COLLAPSED_KEY = "payloadify:jwt-generator:references-collapsed";
+const COLLAPSED_KEY = "payloadify:jwt:references-collapsed";
 
 export function ReferencesPanel() {
   const [collapsed, setCollapsed] = usePersistedBoolean(COLLAPSED_KEY, true);

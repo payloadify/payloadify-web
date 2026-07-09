@@ -9,6 +9,18 @@ export interface JwtReference {
  *  periodically since external sites can restructure. */
 export const JWT_REFERENCES: JwtReference[] = [
   {
+    id: "jwtio-debugger",
+    label: "JWT.io Debugger",
+    url: "https://jwt.io",
+    source: "jwt.io",
+  },
+  {
+    id: "jwtio-introduction",
+    label: "Introduction to JSON Web Tokens",
+    url: "https://www.jwt.io/introduction",
+    source: "jwt.io",
+  },
+  {
     id: "portswigger-jwt-attacks",
     label: "JWT attacks",
     url: "https://portswigger.net/web-security/jwt",
@@ -37,17 +49,5 @@ export const JWT_REFERENCES: JwtReference[] = [
     label: "RFC 8725 — JWT Best Current Practices",
     url: "https://www.rfc-editor.org/rfc/rfc8725.html",
     source: "IETF",
-  },
-  {
-    id: "jwtio-debugger",
-    label: "JWT.io Debugger",
-    url: "https://jwt.io",
-    source: "jwt.io",
-  },
-  {
-    id: "jwtio-introduction",
-    label: "Introduction to JSON Web Tokens",
-    url: "https://www.jwt.io/introduction",
-    source: "jwt.io",
   },
 ];
