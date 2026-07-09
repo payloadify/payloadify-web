@@ -156,15 +156,17 @@ export function JwtGeneratorTool() {
 
   let parsedHeader: Record<string, unknown> | null = null;
   let parsedPayload: Record<string, unknown> | null = null;
+  let headerParseError: string | null = null;
+  let payloadParseError: string | null = null;
   try {
     parsedHeader = JSON.parse(headerJson || "{}");
-  } catch {
-    // JsonEditor shows its own parse error for the header field.
+  } catch (err) {
+    headerParseError = err instanceof Error ? err.message : "Header is not valid JSON";
   }
   try {
     parsedPayload = JSON.parse(payloadJson || "{}");
-  } catch {
-    // JsonEditor shows its own parse error for the payload field.
+  } catch (err) {
+    payloadParseError = err instanceof Error ? err.message : "Payload is not valid JSON";
   }
 
   const flags = computeGeneratorWeaknessFlags({ alg, header: parsedHeader, payload: parsedPayload, hmacSecret });
@@ -217,8 +219,8 @@ export function JwtGeneratorTool() {
       </div>
 
       <div id={sectionId("editors")} className={`grid grid-cols-1 gap-4 md:grid-cols-2 ${highlightClass("editors")}`}>
-        <JsonEditor label="Header" value={headerJson} onChange={setHeaderJson} />
-        <JsonEditor label="Payload" value={payloadJson} onChange={setPayloadJson} />
+        <JsonEditor label="Header" value={headerJson} onChange={setHeaderJson} error={headerParseError} />
+        <JsonEditor label="Payload" value={payloadJson} onChange={setPayloadJson} error={payloadParseError} />
       </div>
 
       <div id={sectionId("claims")} className={highlightClass("claims")}>
