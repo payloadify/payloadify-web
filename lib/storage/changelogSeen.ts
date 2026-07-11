@@ -49,6 +49,13 @@ if (typeof window !== "undefined") {
   });
 }
 
+// Sentinel for the pre-hydration render, distinct from a confirmed-empty localStorage read (null).
+// Static export prerenders HTML with no localStorage access, so the server snapshot can't know the
+// real "last seen" value. Treating that unknown state as "seen" (see useHasUnseenChangelog) means
+// the dot never flashes on and then immediately off during hydration — it only ever appears once
+// the real value is known, instead of appearing then vanishing.
+const UNKNOWN = "unknown";
+
 export function useChangelogLastSeen() {
   const lastSeen = useSyncExternalStore(
     useCallback((onStoreChange: () => void) => {
@@ -56,7 +63,7 @@ export function useChangelogLastSeen() {
       return () => subscribers.delete(onStoreChange);
     }, []),
     getSnapshot,
-    () => null,
+    () => UNKNOWN,
   );
 
   const markSeen = useCallback((date: string) => {
@@ -71,5 +78,6 @@ export function useChangelogLastSeen() {
 /** ISO "YYYY-MM-DD" strings compare correctly with `<` lexically — no Date parsing needed. */
 export function useHasUnseenChangelog(latestDate: string): boolean {
   const [lastSeen] = useChangelogLastSeen();
+  if (lastSeen === UNKNOWN) return false;
   return lastSeen === null || lastSeen < latestDate;
 }

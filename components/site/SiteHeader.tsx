@@ -42,21 +42,21 @@ export function SiteHeader() {
             &gt;_generate.exploit.learn
           </span>
         </Link>
-        <nav className="flex items-center gap-4 text-sm text-zinc-400">
+        <nav className="flex items-center gap-2 text-sm text-zinc-400">
           <button
             type="button"
             onClick={openChangelog}
             aria-haspopup="dialog"
             aria-expanded={open}
-            className="relative hover:text-zinc-100"
+            className="relative rounded-md px-3 py-2 hover:bg-zinc-800/60 hover:text-zinc-100"
           >
             Changelog
             {hasUnseen && (
-              <span className="absolute -top-0.5 -right-2 h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
+              <span className="absolute top-1 right-1.5 h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden="true" />
             )}
             <span className="sr-only">{hasUnseen ? " (new entries)" : ""}</span>
           </button>
-          <Link href="/" className="hover:text-zinc-100">
+          <Link href="/" className="rounded-md px-3 py-2 hover:bg-zinc-800/60 hover:text-zinc-100">
             All tools
           </Link>
         </nav>
