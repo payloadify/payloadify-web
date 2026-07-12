@@ -11,6 +11,7 @@
     "dev": "next dev",
     "prebuild": "npm run build --workspace=@payloadify/cvss-core",
     "build": "next build",
+    "postbuild": "node scripts/generate-csp-hashes.mjs",
     "start": "next start",
     "lint": "eslint",
     "pretest": "npm run build --workspace=@payloadify/cvss-core",
@@ -40,5 +41,8 @@
   },
   "optionalDependencies": {
     "lightningcss-win32-x64-msvc": "^1.32.0"
+  },
+  "overrides": {
+    "postcss": "^8.5.10"
   }
 }
