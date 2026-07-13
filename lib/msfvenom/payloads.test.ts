@@ -74,12 +74,14 @@ describe("MSFVENOM_PAYLOADS", () => {
     }
   });
 
-  it("UDP payloads with no x64 stager module are restricted to x86", () => {
-    const meterpreterUdp = MSFVENOM_PAYLOADS_BY_ID["windows/meterpreter/reverse_udp"];
+  it("the UDP shell payload (no x64 stager module) is restricted to x86", () => {
     const shellUdp = MSFVENOM_PAYLOADS_BY_ID["windows/shell/reverse_udp"];
-    expect(meterpreterUdp.archs).toEqual(["x86"]);
     expect(shellUdp.archs).toEqual(["x86"]);
     expect(shellUdp.staging).toBe("staged");
+  });
+
+  it("does not offer windows/meterpreter/reverse_udp — Meterpreter's stage transfer isn't valid over UDP", () => {
+    expect(MSFVENOM_PAYLOADS_BY_ID["windows/meterpreter/reverse_udp"]).toBeUndefined();
   });
 
   it("stagingSiblingId relationships are symmetric when present", () => {

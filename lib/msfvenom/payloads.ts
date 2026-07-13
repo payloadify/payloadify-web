@@ -57,8 +57,9 @@ const MACOS_ARCHS: ArchId[] = ["x86", "x64"];
 /** Windows x64 entries verified against the metasploit-framework module tree
  *  (modules/payloads/{stagers,stages,singles}/windows/x64/*) — x64 is a genuinely separate module
  *  from the flat x86 one, not the same module reached via -a x64 (see ArchPlacement in params.ts).
- *  windows/meterpreter/reverse_udp and windows/shell/reverse_udp are x86-only: the framework has
- *  no windows/x64/reverse_udp.rb stager. */
+ *  windows/meterpreter/reverse_udp is intentionally not offered — Meterpreter's stage transfer
+ *  protocol isn't valid over UDP, so the framework doesn't support the combination.
+ *  windows/shell/reverse_udp is x86-only: the framework has no windows/x64/reverse_udp.rb stager. */
 export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
   {
     id: "windows/meterpreter/reverse_tcp",
@@ -107,22 +108,6 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     filenameSlug: "meterpreter_bind",
     whyUseIt:
       "Bind shell — target listens, you connect in. Useful when the target has an open inbound port but filters outbound traffic.",
-  },
-  {
-    id: "windows/meterpreter/reverse_udp",
-    label: "Meterpreter — Reverse UDP (staged)",
-    platform: "windows",
-    category: "Meterpreter",
-    staging: "staged",
-    stagingSiblingId: null,
-    archPlacement: "windows-arch-segment",
-    archs: WINDOWS_ARCHS_UDP_X86_ONLY,
-    defaultArch: "x86",
-    compatibleFormats: WINDOWS_FORMATS,
-    supportsExitfunc: true,
-    filenameSlug: "meterpreter_reverse_udp",
-    whyUseIt: "Reverse UDP Meterpreter — less common, useful when TCP is filtered but UDP isn't.",
-    note: "x86 only — the framework has no x64 UDP stager module for Windows.",
   },
   {
     id: "windows/meterpreter_reverse_http",
