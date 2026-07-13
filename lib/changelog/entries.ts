@@ -14,6 +14,20 @@ export interface ChangelogEntry {
 // Newest first. To ship a new entry, add a new object at the TOP of this array.
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: "2026-07-13",
+    items: [
+      {
+        category: "Added",
+        text: "Subdomain Permutation Generator tool — build resolver-ready subdomain wordlists from environment, service, and region tokens plus your own keywords, entirely in your browser",
+      },
+      {
+        category: "Added",
+        text: "Copyable puredns/massdns/dnsx/shuffledns/zdns resolver commands on the Subdomain Permutation Generator, pre-filled with your chosen output filename",
+      },
+      { category: "Improved", text: "Editable download filename and a collapsible tool-references list, reused across the Subdomain Permutation Generator and JWT tools" },
+    ],
+  },
+  {
     date: "2026-07-12",
     items: [
       {
