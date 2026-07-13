@@ -21,6 +21,7 @@ const sections: { title: string; slugs: string[] }[] = [
       "sqli-generator",
       "reverse-shell-generator",
       "msfvenom-generator",
+      "subdomain-permutation-generator",
     ],
   },
 ];
