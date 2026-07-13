@@ -76,6 +76,13 @@ export const tools: Tool[] = [
       "Click through CVSS 3.1 and 4.0 base metrics, or pick a vulnerability scenario template, to get an instant score, severity, OWASP/VRT/CWE mapping, and copy-ready vector string.",
     status: "live",
   },
+  {
+    slug: "subdomain-permutation-generator",
+    name: "Subdomain Permutation Generator",
+    shortDescription:
+      "Generate candidate subdomain wordlists from a base domain, environment/service/region tokens, and your own keywords — dedup'd, capped, and ready to pipe into massdns/puredns/dnsx. No DNS lookups happen here.",
+    status: "live",
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {

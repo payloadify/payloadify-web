@@ -29,7 +29,7 @@ export function Tooltip({ text, label = "More info" }: { text: string; label?: s
         <span
           id={id}
           role="tooltip"
-          className="absolute left-1/2 top-full z-20 mt-1 w-56 -translate-x-1/2 rounded border border-zinc-300 bg-white p-2 text-xs text-zinc-700 shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+          className="absolute left-1/2 top-full z-20 mt-1 w-56 -translate-x-1/2 whitespace-pre-line rounded border border-zinc-300 bg-white p-2 text-xs text-zinc-700 shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
         >
           {text}
         </span>
