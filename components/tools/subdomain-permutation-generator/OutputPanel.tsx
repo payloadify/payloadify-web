@@ -63,7 +63,7 @@ export function OutputPanel({
       name: "massdns",
       command: `massdns -r resolvers.txt -t A -o S ${filename} | cut -d' ' -f1 | sort -u > resolved.txt`,
       description:
-        "performs fast bulk A record lookups and outputs only the resolved IPs, leaving you to sort and deduplicate the results manually.",
+        "performs fast bulk A record lookups; -o S prints \"name type data\" per record, so cutting field 1 and deduplicating gives you the list of subdomains that resolved (not the IPs — those are field 3).",
     },
     {
       name: "dnsx",
@@ -72,7 +72,7 @@ export function OutputPanel({
     },
     {
       name: "shuffledns",
-      command: `shuffledns -d ${baseDomain || "example.com"} -list ${filename} -r resolvers.txt -o resolved.txt`,
+      command: `shuffledns -d ${baseDomain || "example.com"} -list ${filename} -r resolvers.txt -mode resolve -o resolved.txt`,
       description:
         "resolves the subdomains using massdns under the hood and filters out wildcards by comparing responses against a baseline for your target domain.",
     },
