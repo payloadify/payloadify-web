@@ -45,12 +45,20 @@ const MACOS_FORMATS: FormatId[] = ["macho", "bash", "sh", "raw", "hex", "c", "ba
 const ANDROID_FORMATS: FormatId[] = ["raw"];
 const PYTHON_FORMATS: FormatId[] = ["py", "raw"];
 const WINDOWS_ARCHS: ArchId[] = ["x86", "x64"];
+/** UDP stagers/stages have no x64 module in the framework (only modules/payloads/stagers/windows/
+ *  reverse_udp.rb — no windows/x64/reverse_udp.rb) — x86 is the only real option. */
+const WINDOWS_ARCHS_UDP_X86_ONLY: ArchId[] = ["x86"];
 const LINUX_STANDARD_ARCHS: ArchId[] = ["x86", "x64"];
 /** Real msfvenom -a values are generic "armle"/"armbe" (endianness only) — not chip-generation-
  *  specific labels like armv5l/armv6l/armv7l, which aren't accepted by -a. */
 const LINUX_IOT_ARCHS: ArchId[] = ["x86", "x64", "x86_64", "armle", "armbe", "aarch64", "mips", "mips64", "ppc"];
 const MACOS_ARCHS: ArchId[] = ["x86", "x64"];
 
+/** Windows x64 entries verified against the metasploit-framework module tree
+ *  (modules/payloads/{stagers,stages,singles}/windows/x64/*) — x64 is a genuinely separate module
+ *  from the flat x86 one, not the same module reached via -a x64 (see ArchPlacement in params.ts).
+ *  windows/meterpreter/reverse_udp and windows/shell/reverse_udp are x86-only: the framework has
+ *  no windows/x64/reverse_udp.rb stager. */
 export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
   {
     id: "windows/meterpreter/reverse_tcp",
@@ -59,7 +67,7 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     category: "Meterpreter",
     staging: "staged",
     stagingSiblingId: "windows/meterpreter_reverse_tcp",
-    archPlacement: "flag-only",
+    archPlacement: "windows-arch-segment",
     archs: WINDOWS_ARCHS,
     defaultArch: "x86",
     compatibleFormats: WINDOWS_FORMATS,
@@ -75,7 +83,7 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     category: "Meterpreter",
     staging: "staged",
     stagingSiblingId: "windows/meterpreter_reverse_https",
-    archPlacement: "flag-only",
+    archPlacement: "windows-arch-segment",
     archs: WINDOWS_ARCHS,
     defaultArch: "x86",
     compatibleFormats: WINDOWS_FORMATS,
@@ -91,7 +99,7 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     category: "Meterpreter",
     staging: "staged",
     stagingSiblingId: null,
-    archPlacement: "flag-only",
+    archPlacement: "windows-arch-segment",
     archs: WINDOWS_ARCHS,
     defaultArch: "x86",
     compatibleFormats: WINDOWS_FORMATS,
@@ -107,13 +115,14 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     category: "Meterpreter",
     staging: "staged",
     stagingSiblingId: null,
-    archPlacement: "flag-only",
-    archs: WINDOWS_ARCHS,
+    archPlacement: "windows-arch-segment",
+    archs: WINDOWS_ARCHS_UDP_X86_ONLY,
     defaultArch: "x86",
     compatibleFormats: WINDOWS_FORMATS,
     supportsExitfunc: true,
     filenameSlug: "meterpreter_reverse_udp",
     whyUseIt: "Reverse UDP Meterpreter — less common, useful when TCP is filtered but UDP isn't.",
+    note: "x86 only — the framework has no x64 UDP stager module for Windows.",
   },
   {
     id: "windows/meterpreter_reverse_http",
@@ -122,7 +131,7 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     category: "Meterpreter",
     staging: "stageless",
     stagingSiblingId: null,
-    archPlacement: "flag-only",
+    archPlacement: "windows-arch-segment",
     archs: WINDOWS_ARCHS,
     defaultArch: "x86",
     compatibleFormats: WINDOWS_FORMATS,
@@ -138,7 +147,7 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     category: "Meterpreter",
     staging: "stageless",
     stagingSiblingId: "windows/meterpreter/reverse_https",
-    archPlacement: "flag-only",
+    archPlacement: "windows-arch-segment",
     archs: WINDOWS_ARCHS,
     defaultArch: "x86",
     compatibleFormats: WINDOWS_FORMATS,
@@ -153,7 +162,7 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     category: "Meterpreter",
     staging: "stageless",
     stagingSiblingId: "windows/meterpreter/reverse_tcp",
-    archPlacement: "flag-only",
+    archPlacement: "windows-arch-segment",
     archs: WINDOWS_ARCHS,
     defaultArch: "x86",
     compatibleFormats: WINDOWS_FORMATS,
@@ -169,7 +178,7 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     category: "Shell",
     staging: "stageless",
     stagingSiblingId: null,
-    archPlacement: "flag-only",
+    archPlacement: "windows-arch-segment",
     archs: WINDOWS_ARCHS,
     defaultArch: "x86",
     compatibleFormats: WINDOWS_FORMATS,
@@ -185,7 +194,7 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     category: "Shell",
     staging: "stageless",
     stagingSiblingId: null,
-    archPlacement: "flag-only",
+    archPlacement: "windows-arch-segment",
     archs: WINDOWS_ARCHS,
     defaultArch: "x86",
     compatibleFormats: WINDOWS_FORMATS,
@@ -194,19 +203,20 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     whyUseIt: "Plain cmd.exe bind shell — target listens, you connect in.",
   },
   {
-    id: "windows/shell_reverse_udp",
+    id: "windows/shell/reverse_udp",
     label: "Shell — Reverse UDP (cmd.exe)",
     platform: "windows",
     category: "Shell",
-    staging: "stageless",
+    staging: "staged",
     stagingSiblingId: null,
-    archPlacement: "flag-only",
-    archs: WINDOWS_ARCHS,
+    archPlacement: "windows-arch-segment",
+    archs: WINDOWS_ARCHS_UDP_X86_ONLY,
     defaultArch: "x86",
     compatibleFormats: WINDOWS_FORMATS,
     supportsExitfunc: true,
     filenameSlug: "shell_reverse_udp",
     whyUseIt: "Plain cmd.exe reverse shell over UDP.",
+    note: "Actually a stager+stage combo (windows/shell/reverse_udp), unlike the TCP/bind shell payloads which are true stageless singles — msfvenom has no windows/shell_reverse_udp single. x86 only, since there's no x64 UDP stager module.",
   },
   {
     id: "windows/vncinject/reverse_tcp",
@@ -215,7 +225,7 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     category: "VNC",
     staging: "staged",
     stagingSiblingId: null,
-    archPlacement: "flag-only",
+    archPlacement: "windows-arch-segment",
     archs: WINDOWS_ARCHS,
     defaultArch: "x86",
     compatibleFormats: WINDOWS_FORMATS,
@@ -231,7 +241,7 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     category: "VNC",
     staging: "staged",
     stagingSiblingId: null,
-    archPlacement: "flag-only",
+    archPlacement: "windows-arch-segment",
     archs: WINDOWS_ARCHS,
     defaultArch: "x86",
     compatibleFormats: WINDOWS_FORMATS,
@@ -246,7 +256,7 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     category: "PowerShell",
     staging: "stageless",
     stagingSiblingId: null,
-    archPlacement: "flag-only",
+    archPlacement: "windows-arch-segment",
     archs: WINDOWS_ARCHS,
     defaultArch: "x86",
     compatibleFormats: ["ps1"],
@@ -262,7 +272,7 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     category: "PowerShell",
     staging: "stageless",
     stagingSiblingId: null,
-    archPlacement: "flag-only",
+    archPlacement: "windows-arch-segment",
     archs: WINDOWS_ARCHS,
     defaultArch: "x86",
     compatibleFormats: ["ps1"],
