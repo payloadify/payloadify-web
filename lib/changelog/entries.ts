@@ -20,6 +20,12 @@ export const changelogEntries: ChangelogEntry[] = [
         category: "Added",
         text: "About page — why Payloadify exists, the no-server-contact privacy stance, and how to report issues or request tools",
       },
+      { category: "Improved", text: "Header nav on mobile now collapses into a hamburger menu with a swipe-to-close drawer, instead of cramming into the small-screen width" },
+      { category: "Improved", text: "Active nav link (About / All tools) is now highlighted in both the desktop nav and the mobile drawer" },
+      {
+        category: "Fixed",
+        text: "Mobile nav drawer could get stuck open-but-hidden if the viewport crossed the mobile/desktop breakpoint (e.g. device rotation) while it was open",
+      },
     ],
   },
   {
