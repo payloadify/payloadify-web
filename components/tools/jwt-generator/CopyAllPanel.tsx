@@ -131,7 +131,7 @@ export function CopyAllPanel({ fields, sensitiveVisible }: { fields: CopyField[]
       />
 
       <div className="flex items-start gap-2">
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <WrappableCode text={includedFields.length > 0 ? previewFormatted : "No fields selected — check at least one field above."} />
         </div>
         <CopyButton text={formatted} label="Copy All" disabled={includedFields.length === 0} />

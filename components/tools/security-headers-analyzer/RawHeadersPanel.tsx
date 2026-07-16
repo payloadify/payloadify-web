@@ -25,7 +25,7 @@ export function RawHeadersPanel({ rawHeaders }: { rawHeaders: Record<string, str
 
       {!collapsed && (
         <div className="mt-3 flex items-start gap-2">
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <WrappableCode text={formatted} />
           </div>
           <CopyButton text={formatted} label="Copy" />
