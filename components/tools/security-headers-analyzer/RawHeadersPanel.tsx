@@ -1,6 +1,7 @@
 "use client";
 
 import { CopyButton } from "@/components/ui/CopyButton";
+import { WrappableCode } from "@/components/ui/WrappableCode";
 import { usePersistedBoolean } from "@/lib/storage/persistedBoolean";
 
 const RAW_HEADERS_COLLAPSED_KEY = "payloadify:security-headers-analyzer:raw-headers-collapsed";
@@ -24,7 +25,9 @@ export function RawHeadersPanel({ rawHeaders }: { rawHeaders: Record<string, str
 
       {!collapsed && (
         <div className="mt-3 flex items-start gap-2">
-          <pre className="flex-1 overflow-x-auto whitespace-pre-wrap rounded bg-zinc-100 px-2 py-1.5 text-xs dark:bg-zinc-900">{formatted}</pre>
+          <div className="flex-1">
+            <WrappableCode text={formatted} />
+          </div>
           <CopyButton text={formatted} label="Copy" />
         </div>
       )}

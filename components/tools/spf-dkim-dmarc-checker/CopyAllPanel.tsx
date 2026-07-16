@@ -7,21 +7,19 @@ import { CopyAllAdditionalSettings } from "@/components/ui/CopyAllAdditionalSett
 import { CopyAllStylePicker } from "@/components/ui/CopyAllStylePicker";
 import { WrappableCode } from "@/components/ui/WrappableCode";
 import { CopyField, CopyStyle, formatList } from "@/lib/copyFormat";
-import { useSecurityHeadersCopyAllSettings } from "@/lib/storage/securityHeadersCopyAllSettings";
+import { useEmailAuthCopyAllSettings } from "@/lib/storage/emailAuthCopyAllSettings";
 import { usePersistedBoolean } from "@/lib/storage/persistedBoolean";
 
-const ADDITIONAL_SETTINGS_COLLAPSED_KEY = "payloadify:security-headers-analyzer:copy-all-additional-settings-collapsed";
+const ADDITIONAL_SETTINGS_COLLAPSED_KEY = "payloadify:spf-dkim-dmarc-checker:copy-all-additional-settings-collapsed";
 
 export function CopyAllPanel({ fields }: { fields: CopyField[] }) {
-  const [settings, updateSettings] = useSecurityHeadersCopyAllSettings();
+  const [settings, updateSettings] = useEmailAuthCopyAllSettings();
   const [additionalSettingsCollapsed, setAdditionalSettingsCollapsed] = usePersistedBoolean(ADDITIONAL_SETTINGS_COLLAPSED_KEY, true);
   const excludedIds = useMemo(() => new Set(settings.excludedIds), [settings.excludedIds]);
   const urlFieldIds = useMemo(() => new Set(settings.urlFieldIds), [settings.urlFieldIds]);
   const { styleKind, customPrefix } = settings;
   const urlCapableFields = useMemo(() => fields.filter((f) => f.url), [fields]);
 
-  // Keep `order` in sync when the available fields change (e.g. a fresh analysis changes which
-  // header ids are present) — preserve existing order for ids that still exist, append new ones.
   const effectiveOrder = useMemo(() => {
     const validIds = new Set(fields.map((f) => f.id));
     const kept = settings.order.filter((id) => validIds.has(id));

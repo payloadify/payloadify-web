@@ -90,6 +90,13 @@ export const tools: Tool[] = [
       "Fetch any URL's response headers and check them against the OWASP Secure Headers Project — HSTS, CSP, X-Frame-Options, and more — with pass/warn/missing status, plain-language explanations, and copy-ready findings.",
     status: "live",
   },
+  {
+    slug: "spf-dkim-dmarc-checker",
+    name: "SPF / DKIM / DMARC Checker",
+    shortDescription:
+      "Check a domain's SPF, DKIM, and DMARC records — parsed mechanisms, policy explanations, and common misconfiguration flags (multiple SPF records, revoked DKIM keys, monitoring-only DMARC) — with copy-ready results.",
+    status: "live",
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {

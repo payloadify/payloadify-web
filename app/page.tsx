@@ -26,7 +26,7 @@ const sections: { title: string; slugs: string[] }[] = [
   },
   {
     title: "Recon & Infrastructure Checks",
-    slugs: ["security-headers-analyzer"],
+    slugs: ["security-headers-analyzer", "spf-dkim-dmarc-checker"],
   },
 ];
 

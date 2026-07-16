@@ -5,6 +5,7 @@ import { CopyButton } from "@/components/ui/CopyButton";
 import { CopyAllFieldList } from "@/components/ui/CopyAllFieldList";
 import { CopyAllAdditionalSettings } from "@/components/ui/CopyAllAdditionalSettings";
 import { CopyAllStylePicker } from "@/components/ui/CopyAllStylePicker";
+import { WrappableCode } from "@/components/ui/WrappableCode";
 import { CopyField, CopyStyle, formatList } from "@payloadify/cvss-core";
 import { useCvssCopyAllSettings } from "@/lib/storage/cvssCopyAllSettings";
 import { usePersistedBoolean } from "@/lib/storage/persistedBoolean";
@@ -107,9 +108,9 @@ export function CopyAllPanel({ fields }: { fields: CopyField[] }) {
       />
 
       <div className="flex items-start gap-2">
-        <pre className="flex-1 overflow-x-auto whitespace-pre-wrap rounded bg-zinc-100 px-2 py-1.5 text-xs dark:bg-zinc-900">
-          {includedFields.length > 0 ? formatted : "No fields selected — check at least one field above."}
-        </pre>
+        <div className="flex-1">
+          <WrappableCode text={includedFields.length > 0 ? formatted : "No fields selected — check at least one field above."} />
+        </div>
         <CopyButton text={formatted} label="Copy All" disabled={includedFields.length === 0} />
       </div>
     </div>

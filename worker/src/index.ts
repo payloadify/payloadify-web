@@ -1,4 +1,5 @@
 import type { Env } from "./env";
+import { handleEmailAuth } from "./emailAuth/handler";
 import { handleSecurityHeaders } from "./securityHeaders/handler";
 import { errorResponse } from "./util/http";
 
@@ -12,6 +13,11 @@ export default {
     if (url.pathname === "/api/security-headers") {
       if (request.method !== "GET") return errorResponse("Method not allowed.", 405);
       return handleSecurityHeaders(request, ctx);
+    }
+
+    if (url.pathname === "/api/email-auth") {
+      if (request.method !== "GET") return errorResponse("Method not allowed.", 405);
+      return handleEmailAuth(request, ctx);
     }
 
     if (url.pathname.startsWith("/api/")) {
