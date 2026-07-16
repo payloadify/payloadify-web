@@ -71,29 +71,59 @@ describe("checkSpf", () => {
     expect(result.lookupCountTruncated).toBe(false);
   });
 
-  it("recurses one level into include chains and flags exceeding 10 lookups", async () => {
+  it("recurses fully into include chains and flags exceeding 10 lookups", async () => {
     const queryFn = vi.fn().mockImplementation(async (name: string) => {
       if (name === "example.com") {
         return [txtAnswer("v=spf1 include:a.example.com include:b.example.com include:c.example.com -all")];
       }
-      // Each included domain itself costs 4 lookups (a, mx, ptr, exists) -> 3*4 = 12 total, over the limit.
+      // Each included domain itself costs 4 lookups (a, mx, ptr, exists).
       return [txtAnswer("v=spf1 a mx ptr exists:%{i}._spf.example.com -all")];
     });
     const result = await checkSpf("example.com", queryFn);
-    expect(result.lookupCount).toBe(3 + 3 * 4);
+    // a.example.com (1 + 4) + b.example.com (1 + 4) = 10, then c.example.com's own include lookup (1)
+    // pushes the running total to 11 -- past the limit, so counting stops before expanding c's chain.
+    expect(result.lookupCount).toBe(11);
     expect(result.lookupCountExceeded).toBe(true);
-    expect(result.lookupCountTruncated).toBe(false);
+    expect(result.lookupCountTruncated).toBe(true);
   });
 
-  it("flags truncation when an include chain goes deeper than the recursion depth", async () => {
+  it("recurses arbitrarily deep into include chains when under the limit", async () => {
     const queryFn = vi.fn().mockImplementation(async (name: string) => {
       if (name === "example.com") return [txtAnswer("v=spf1 include:nested.example.com -all")];
       if (name === "nested.example.com") return [txtAnswer("v=spf1 include:deeper.example.com -all")];
+      if (name === "deeper.example.com") return [txtAnswer("v=spf1 a -all")];
       return [txtAnswer("v=spf1 -all")];
     });
     const result = await checkSpf("example.com", queryFn);
-    // top-level include (1) + nested.example.com's include (1) = 2; deeper.example.com never resolved.
+    // top-level include (1) + nested's include (1) + deeper's "a" (1) = 3, fully resolved.
+    expect(result.lookupCount).toBe(3);
+    expect(result.lookupCountExceeded).toBe(false);
+    expect(result.lookupCountTruncated).toBe(false);
+  });
+
+  it("detects a circular include chain and stops recursing instead of looping forever", async () => {
+    const queryFn = vi.fn().mockImplementation(async (name: string) => {
+      if (name === "example.com") return [txtAnswer("v=spf1 include:a.example.com -all")];
+      // a.example.com includes back to the domain we started from.
+      return [txtAnswer("v=spf1 include:example.com -all")];
+    });
+    const result = await checkSpf("example.com", queryFn);
+    // top-level include (1) + a.example.com's include (1) = 2; the nested include back to
+    // example.com is recognized as already-visited and not expanded again.
     expect(result.lookupCount).toBe(2);
+    expect(result.lookupCountExceeded).toBe(false);
+    expect(result.lookupCountTruncated).toBe(true);
+  });
+
+  it("detects a circular include even with an inconsistent trailing FQDN dot", async () => {
+    const queryFn = vi.fn().mockImplementation(async (name: string) => {
+      if (name === "example.com") return [txtAnswer("v=spf1 include:a.example.com. -all")];
+      // a.example.com. includes back to the domain we started from, without the trailing dot.
+      return [txtAnswer("v=spf1 include:example.com -all")];
+    });
+    const result = await checkSpf("example.com", queryFn);
+    expect(result.lookupCount).toBe(2);
+    expect(result.lookupCountExceeded).toBe(false);
     expect(result.lookupCountTruncated).toBe(true);
   });
 });

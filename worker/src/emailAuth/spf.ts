@@ -6,11 +6,11 @@ const RR_TYPE_TXT = 16;
  *  are free (no lookup); `all` is a qualifier target, not a lookup. */
 const LOOKUP_MECHANISMS = new Set(["a", "mx", "ptr", "include", "exists", "redirect"]);
 
-/** How many `include:`/`redirect=` levels to recurse into when tallying the lookup count. Per the
- *  accepted project decision: depth-limited recursion (2 levels total — the top-level record plus
- *  one level of includes) rather than a shallow top-level-only count, with an explicit disclaimer
- *  past that depth instead of silently under-counting. */
-const LOOKUP_COUNT_RECURSION_DEPTH = 1;
+/** RFC 7208 §4.6.4 — once total lookups exceed this, the record is a PermError. Used both to
+ *  report `lookupCountExceeded` and to short-circuit further recursion: past this point the
+ *  record has already failed, so there's no need to keep resolving nested includes to get an
+ *  exact total. */
+const SPF_LOOKUP_LIMIT = 10;
 
 export type SpfQualifier = "+" | "-" | "~" | "?";
 
@@ -32,8 +32,10 @@ export interface SpfResult {
   deprecatedPtrUsed: boolean;
   lookupCount: number;
   lookupCountExceeded: boolean;
-  /** True if lookup counting hit LOOKUP_COUNT_RECURSION_DEPTH and stopped recursing into a
-   *  further nested include/redirect chain — the count above is a floor, not exact, in that case. */
+  /** True if counting stopped before fully resolving every nested include/redirect — either
+   *  because the running total already exceeded SPF_LOOKUP_LIMIT (the record is already a
+   *  PermError, so an exact final count doesn't matter) or because a circular include chain was
+   *  detected. The count above is a floor, not exact, in that case. */
   lookupCountTruncated: boolean;
 }
 
@@ -70,34 +72,59 @@ export function parseSpfMechanisms(record: string): SpfMechanism[] {
   return mechanisms;
 }
 
+interface LookupCountState {
+  count: number;
+  truncated: boolean;
+}
+
+/** Normalizes a domain for `visited`-set comparison: lowercase, trimmed, and with a trailing
+ *  FQDN root-label dot stripped (`example.com.` and `example.com` refer to the same domain). */
+function normalizeDomainForVisited(domain: string): string {
+  const trimmed = domain.trim().toLowerCase();
+  return trimmed.endsWith(".") ? trimmed.slice(0, -1) : trimmed;
+}
+
+/** Recursively expands include:/redirect= chains, tallying total DNS lookups against the RFC
+ *  7208 §4.6.4 budget of 10. `visited` tracks every domain already expanded (seeded with the
+ *  starting domain) so a circular include chain (A includes B, B includes A) can't recurse
+ *  forever. Stops early — without walking the rest of the tree — as soon as the running count
+ *  passes SPF_LOOKUP_LIMIT, since the record is already a PermError at that point and an exact
+ *  total past the limit isn't needed. Both stopping conditions set `truncated`, since in either
+ *  case the reported count is a floor rather than an exact total. */
 async function countSpfLookups(
   mechanisms: SpfMechanism[],
   queryFn: DnsQueryFn,
-  depthRemaining: number,
-): Promise<{ count: number; truncated: boolean }> {
-  let count = 0;
-  let truncated = false;
-
+  visited: Set<string>,
+  state: LookupCountState,
+): Promise<void> {
   for (const m of mechanisms) {
+    if (state.count > SPF_LOOKUP_LIMIT) {
+      state.truncated = true;
+      return;
+    }
     if (!LOOKUP_MECHANISMS.has(m.mechanism)) continue;
-    count += 1;
+    state.count += 1;
 
     if ((m.mechanism === "include" || m.mechanism === "redirect") && m.value) {
-      if (depthRemaining <= 0) {
-        truncated = true;
+      if (state.count > SPF_LOOKUP_LIMIT) {
+        state.truncated = true;
+        return;
+      }
+
+      const target = normalizeDomainForVisited(m.value);
+      if (visited.has(target)) {
+        state.truncated = true;
         continue;
       }
+      visited.add(target);
+
       const nestedTexts = await fetchSpfTexts(m.value, queryFn);
       if (nestedTexts.length === 1) {
         const nestedMechanisms = parseSpfMechanisms(nestedTexts[0]);
-        const nested = await countSpfLookups(nestedMechanisms, queryFn, depthRemaining - 1);
-        count += nested.count;
-        if (nested.truncated) truncated = true;
+        await countSpfLookups(nestedMechanisms, queryFn, visited, state);
       }
     }
   }
-
-  return { count, truncated };
 }
 
 export async function checkSpf(domain: string, queryFn: DnsQueryFn = queryDns): Promise<SpfResult> {
@@ -123,7 +150,8 @@ export async function checkSpf(domain: string, queryFn: DnsQueryFn = queryDns): 
 
   const mechanisms = parseSpfMechanisms(record);
   const allMechanism = mechanisms.find((m) => m.mechanism === "all");
-  const { count, truncated } = await countSpfLookups(mechanisms, queryFn, LOOKUP_COUNT_RECURSION_DEPTH);
+  const state: LookupCountState = { count: 0, truncated: false };
+  await countSpfLookups(mechanisms, queryFn, new Set([normalizeDomainForVisited(domain)]), state);
 
   return {
     domain,
@@ -134,8 +162,8 @@ export async function checkSpf(domain: string, queryFn: DnsQueryFn = queryDns): 
     mechanisms,
     allQualifier: allMechanism?.qualifier ?? null,
     deprecatedPtrUsed: mechanisms.some((m) => m.mechanism === "ptr"),
-    lookupCount: count,
-    lookupCountExceeded: count > 10,
-    lookupCountTruncated: truncated,
+    lookupCount: state.count,
+    lookupCountExceeded: state.count > SPF_LOOKUP_LIMIT,
+    lookupCountTruncated: state.truncated,
   };
 }

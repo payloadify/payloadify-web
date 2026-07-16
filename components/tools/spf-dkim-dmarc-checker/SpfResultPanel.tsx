@@ -59,7 +59,7 @@ export function SpfResultPanel({ spf }: { spf: SpfResult }) {
           <p className={`text-sm ${spf.lookupCountExceeded ? "text-red-600 dark:text-red-400" : "text-zinc-600 dark:text-zinc-400"}`}>
             ~{spf.lookupCount} DNS lookup{spf.lookupCount === 1 ? "" : "s"} counted against the RFC 7208 §4.6.4 limit of 10
             {spf.lookupCountExceeded ? " — over the limit, mail receivers should treat this as a PermError." : "."}
-            {spf.lookupCountTruncated && " Counted to a depth of 2 include levels — deeper chains aren't fully resolved, so this count is a floor, not exact."}
+            {spf.lookupCountTruncated && !spf.lookupCountExceeded && " A circular include chain was detected, so this count is a floor, not exact."}
           </p>
 
           {spf.mechanisms.length > 0 && (
