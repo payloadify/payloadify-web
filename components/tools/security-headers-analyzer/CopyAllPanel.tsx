@@ -5,33 +5,22 @@ import { CopyButton } from "@/components/ui/CopyButton";
 import { CopyAllFieldList } from "@/components/ui/CopyAllFieldList";
 import { CopyAllAdditionalSettings } from "@/components/ui/CopyAllAdditionalSettings";
 import { CopyAllStylePicker } from "@/components/ui/CopyAllStylePicker";
-import { CopyField, CopyStyle, formatList } from "@payloadify/cvss-core";
-import { useJwtCopyAllSettings } from "@/lib/storage/jwtCopyAllSettings";
+import { CopyField, CopyStyle, formatList } from "@/lib/copyFormat";
+import { useSecurityHeadersCopyAllSettings } from "@/lib/storage/securityHeadersCopyAllSettings";
 import { usePersistedBoolean } from "@/lib/storage/persistedBoolean";
-import { maskMiddle, maskPem } from "@/lib/jwt/mask";
 
-const ADDITIONAL_SETTINGS_COLLAPSED_KEY = "payloadify:jwt-generator:copy-all-additional-settings-collapsed";
+const ADDITIONAL_SETTINGS_COLLAPSED_KEY = "payloadify:security-headers-analyzer:copy-all-additional-settings-collapsed";
 
-/** Field-id-specific masking: the private key is PEM-shaped (keep BEGIN/END markers, mask
- *  the key body), the HMAC secret is a flat string. */
-const SENSITIVE_FIELD_MASKS: Record<string, (value: string) => string> = {
-  secret: (value) => maskMiddle(value),
-  privateKey: (value) => maskPem(value),
-};
-
-export function CopyAllPanel({ fields, sensitiveVisible }: { fields: CopyField[]; sensitiveVisible: boolean }) {
-  const [settings, updateSettings] = useJwtCopyAllSettings();
-  const [additionalSettingsCollapsed, setAdditionalSettingsCollapsed] = usePersistedBoolean(
-    ADDITIONAL_SETTINGS_COLLAPSED_KEY,
-    true,
-  );
+export function CopyAllPanel({ fields }: { fields: CopyField[] }) {
+  const [settings, updateSettings] = useSecurityHeadersCopyAllSettings();
+  const [additionalSettingsCollapsed, setAdditionalSettingsCollapsed] = usePersistedBoolean(ADDITIONAL_SETTINGS_COLLAPSED_KEY, true);
   const excludedIds = useMemo(() => new Set(settings.excludedIds), [settings.excludedIds]);
   const urlFieldIds = useMemo(() => new Set(settings.urlFieldIds), [settings.urlFieldIds]);
   const { styleKind, customPrefix } = settings;
   const urlCapableFields = useMemo(() => fields.filter((f) => f.url), [fields]);
 
-  // Keep `order` in sync when the available fields change (e.g. switching algorithm changes
-  // which fields exist) — preserve existing order for ids that still exist, append new ones.
+  // Keep `order` in sync when the available fields change (e.g. a fresh analysis changes which
+  // header ids are present) — preserve existing order for ids that still exist, append new ones.
   const effectiveOrder = useMemo(() => {
     const validIds = new Set(fields.map((f) => f.id));
     const kept = settings.order.filter((id) => validIds.has(id));
@@ -54,21 +43,7 @@ export function CopyAllPanel({ fields, sensitiveVisible }: { fields: CopyField[]
   );
   const formatted = useMemo(() => formatList(includedFields, includedOrder, style), [includedFields, includedOrder, style]);
 
-  // The on-screen preview masks secret/private-key values when sensitiveVisible is off, but
-  // Copy All always copies the real `formatted` string above — hiding on screen must never
-  // silently change what gets copied to the clipboard.
-  const previewFormatted = useMemo(() => {
-    if (sensitiveVisible) return formatted;
-    const maskedFields = includedFields.map((f) => {
-      const mask = SENSITIVE_FIELD_MASKS[f.id];
-      return mask ? { ...f, value: mask(f.value) } : f;
-    });
-    return formatList(maskedFields, includedOrder, style);
-  }, [sensitiveVisible, formatted, includedFields, includedOrder, style]);
-
   function setPosition(fieldId: string, position: number) {
-    // Reorder only among included fields — excluded ones are hidden from output and kept
-    // out of the way at the end so their (currently meaningless) relative order doesn't shift.
     const withoutField = includedOrder.filter((id) => id !== fieldId);
     const reordered = [...withoutField.slice(0, position), fieldId, ...withoutField.slice(position)];
     const excluded = effectiveOrder.filter((id) => excludedIds.has(id));
@@ -131,7 +106,7 @@ export function CopyAllPanel({ fields, sensitiveVisible }: { fields: CopyField[]
 
       <div className="flex items-start gap-2">
         <pre className="flex-1 overflow-x-auto whitespace-pre-wrap rounded bg-zinc-100 px-2 py-1.5 text-xs dark:bg-zinc-900">
-          {includedFields.length > 0 ? previewFormatted : "No fields selected — check at least one field above."}
+          {includedFields.length > 0 ? formatted : "No fields selected — check at least one field above."}
         </pre>
         <CopyButton text={formatted} label="Copy All" disabled={includedFields.length === 0} />
       </div>

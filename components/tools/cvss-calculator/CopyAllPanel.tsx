@@ -59,11 +59,19 @@ export function CopyAllPanel({ fields }: { fields: CopyField[] }) {
     updateSettings({ excludedIds: [...next] });
   }
 
+  function toggleAllIncluded(selectAll: boolean) {
+    updateSettings({ excludedIds: selectAll ? [] : effectiveOrder });
+  }
+
   function toggleUrlForm(fieldId: string) {
     const next = new Set(urlFieldIds);
     if (next.has(fieldId)) next.delete(fieldId);
     else next.add(fieldId);
     updateSettings({ urlFieldIds: [...next] });
+  }
+
+  function toggleAllUrlForm(selectAll: boolean) {
+    updateSettings({ urlFieldIds: selectAll ? urlCapableFields.map((f) => f.id) : [] });
   }
 
   return (
@@ -77,6 +85,7 @@ export function CopyAllPanel({ fields }: { fields: CopyField[] }) {
         includedOrder={includedOrder}
         onToggleIncluded={toggleIncluded}
         onSetPosition={setPosition}
+        onToggleAll={toggleAllIncluded}
       />
 
       {urlCapableFields.length > 0 && (
@@ -86,6 +95,7 @@ export function CopyAllPanel({ fields }: { fields: CopyField[] }) {
           collapsed={additionalSettingsCollapsed}
           onToggleCollapsed={() => setAdditionalSettingsCollapsed(!additionalSettingsCollapsed)}
           onToggleUrlForm={toggleUrlForm}
+          onToggleAll={toggleAllUrlForm}
         />
       )}
 

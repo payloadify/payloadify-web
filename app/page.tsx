@@ -24,6 +24,10 @@ const sections: { title: string; slugs: string[] }[] = [
       "subdomain-permutation-generator",
     ],
   },
+  {
+    title: "Recon & Infrastructure Checks",
+    slugs: ["security-headers-analyzer"],
+  },
 ];
 
 export default function Home() {
