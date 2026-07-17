@@ -97,6 +97,13 @@ export const tools: Tool[] = [
       "Check a domain's SPF, DKIM, and DMARC records — parsed mechanisms, policy explanations, and common misconfiguration flags (multiple SPF records, revoked DKIM keys, monitoring-only DMARC) — with copy-ready results.",
     status: "live",
   },
+  {
+    slug: "hashcat-command-builder",
+    name: "Hashcat Command Generator",
+    shortDescription:
+      "Build a complete hashcat command — mode, attack type, wordlists, masks, rules, and advanced flags — pre-filled with the mode number when you arrive from the Hash Identifier.",
+    status: "live",
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {
