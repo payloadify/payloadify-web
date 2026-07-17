@@ -14,6 +14,39 @@ export interface ChangelogEntry {
 // Newest first. To ship a new entry, add a new object at the TOP of this array.
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: "2026-07-17",
+    items: [
+      {
+        category: "Added",
+        text: "Hashcat Command Builder tool — pick a mode and attack type (dictionary, mask, hybrid, combination), fill in wordlists/mask/rules and advanced flags, and get a copy-ready hashcat command, complete with companion --show and benchmark commands",
+      },
+      {
+        category: "Improved",
+        text: "Hash Identifier — expanded the signature database from 28 to 49 hash types, including Kerberoasting/AS-REP Roasting, NetNTLMv1/v2, WPA, Office/PDF/ZIP/RAR/7z/KeePass, and common web-app KDFs",
+      },
+      {
+        category: "Added",
+        text: "Hash Identifier — optional \"where did this hash come from?\" source selector, to reorder same-length ambiguous candidates (e.g. promote NTLM over MD5 for Windows dumps) without overstating confidence",
+      },
+      {
+        category: "Improved",
+        text: "\"Build Hashcat Command\" link on the Hash Identifier's results now chains directly into the Hashcat Command Builder with the mode and hash pre-filled",
+      },
+      {
+        category: "Fixed",
+        text: "Hashcat Command Builder — wordlist, mask, rules, session name, and output-file fields are now shell-quoted like the hash value already was, so paths containing spaces no longer silently broke the generated command",
+      },
+      {
+        category: "Fixed",
+        text: "Hashcat Command Builder — a hash value containing a single quote could break out of the command's quoting; it's now escaped correctly",
+      },
+      {
+        category: "Fixed",
+        text: "Hash Identifier — SHA3-256/Keccak-256 and Whirlpool/SHA3-512 were incorrectly sharing one Hashcat mode number each; they're now identified separately with their correct modes",
+      },
+    ],
+  },
+  {
     date: "2026-07-16",
     items: [
       {
