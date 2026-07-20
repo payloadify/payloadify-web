@@ -23,6 +23,10 @@ Each tool lives at its own URL (e.g. `/jwt-decoder`), never a shared blank-canva
 - **Reverse Shell Generator** (`/reverse-shell-generator`) — generate reverse shell one-liners across Bash, Netcat, Python, PHP, Perl, Ruby, Socat, Awk, Telnet, Node.js, Lua, Golang, and PowerShell, with a matching listener command and save-as-file options
 - **MSFVenom Command Generator** (`/msfvenom-generator`) — build msfvenom commands with template presets for Windows, Linux, macOS, and Android payloads, evasion encoders, and architectures, with a listener setup guide
 - **CVSS 3.1/4.0 Calculator** (`/cvss-calculator`) — click-through vector builder for both CVSS versions, with vulnerability templates, chained-vulnerability scoring, OWASP mapping, and copyable VRT scores and references
+- **Hashcat Command Builder** (`/hashcat-command-builder`) — build hashcat commands from mode, attack type, wordlists, rules, and masks, chained directly from the Hash Identifier
+- **Subdomain Permutation Generator** (`/subdomain-permutation-generator`) — generate resolver-ready subdomain wordlists from environment, service, and region tokens plus custom keywords
+- **HTTP Security Headers Analyzer** (`/security-headers-analyzer`) — check any URL's response headers against the OWASP Secure Headers Project
+- **SPF/DKIM/DMARC Checker** (`/spf-dkim-dmarc-checker`) — check a domain's email authentication setup: SPF mechanisms and lookup count, DKIM selectors, and DMARC policy
 
 ## Getting Started
 
@@ -51,7 +55,7 @@ npm run test    # vitest
 
 ## How It Works
 
-All tools run **client-side only** — your data never leaves your browser. Paste, generate, copy. That's it. There's no database, no accounts, and no login. A backend is used only where it's genuinely unavoidable (none of the shipped tools currently need one).
+Most tools run **client-side only** — your data never leaves your browser. Paste, generate, copy. That's it. There's no database, no accounts, and no login. A backend (Cloudflare Worker) is used only where it's genuinely unavoidable: the HTTP Security Headers Analyzer and SPF/DKIM/DMARC Checker need to make outbound DNS/HTTP lookups that a browser can't perform directly, so those requests are proxied through an SSRF-guarded Worker.
 
 ## Tech Stack
 
