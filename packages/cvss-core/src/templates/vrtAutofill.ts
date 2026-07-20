@@ -145,4 +145,68 @@ export const VRT_AUTOFILL: Record<string, VrtAutofillEntry> = {
       { label: "OWASP Top 10 2021: A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
     ],
   },
+  "ai-application-security-prompt-injection-system-prompt-leakage": {
+    owaspRefId: "llm-llm01-prompt-injection",
+    cweId: "CWE-1427",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM01:2025 Prompt Injection", url: "https://genai.owasp.org/llmrisk/llm01-prompt-injection/" },
+      { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
+    ],
+  },
+  "ai-application-security-sensitive-information-disclosure-cross-tenant-pii-leakage-exposure": {
+    owaspRefId: "llm-llm02-sensitive-information-disclosure",
+    cweId: "CWE-200",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM02:2025 Sensitive Information Disclosure", url: "https://genai.owasp.org/llmrisk/llm022025-sensitive-information-disclosure/" },
+      { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
+    ],
+  },
+  "ai-application-security-training-data-poisoning-backdoor-injection-bias-manipulation": {
+    owaspRefId: "llm-llm04-data-model-poisoning",
+    cweId: "CWE-1039",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM04:2025 Data and Model Poisoning", url: "https://genai.owasp.org/llmrisk/llm042025-data-and-model-poisoning/" },
+      { label: "CWE-1039: Inadequate Detection or Handling of Adversarial Input Perturbations", url: "https://cwe.mitre.org/data/definitions/1039.html" },
+    ],
+  },
+  "ai-application-security-improper-output-handling-cross-site-scripting-xss": {
+    owaspRefId: "llm-llm05-improper-output-handling",
+    cweId: "CWE-1426",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM05:2025 Improper Output Handling", url: "https://genai.owasp.org/llmrisk/llm052025-improper-output-handling/" },
+      { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
+    ],
+  },
+  "ai-application-security-remote-code-execution-sandboxed-container-code-execution": {
+    owaspRefId: "llm-llm06-excessive-agency",
+    cweId: "CWE-269",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM06:2025 Excessive Agency", url: "https://genai.owasp.org/llmrisk/llm062025-excessive-agency/" },
+      { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
+    ],
+  },
+  "ai-application-security-vector-and-embedding-weaknesses-embedding-exfiltration-model-extraction": {
+    owaspRefId: "llm-llm08-vector-embedding-weaknesses",
+    cweId: "CWE-863",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM08:2025 Vector and Embedding Weaknesses", url: "https://genai.owasp.org/llmrisk/llm082025-vector-and-embedding-weaknesses/" },
+      { label: "OWASP Cheat Sheet: LLM Prompt Injection Prevention", url: "https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html" },
+    ],
+  },
+  "ai-application-security-ai-safety-misinformation-wrong-factual-data": {
+    owaspRefId: "llm-llm09-misinformation",
+    cweId: "CWE-1426",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM09:2025 Misinformation", url: "https://genai.owasp.org/llmrisk/llm092025-misinformation/" },
+      { label: "CWE-1426: Improper Validation of Generative AI Output", url: "https://cwe.mitre.org/data/definitions/1426.html" },
+    ],
+  },
+  "ai-application-security-denial-of-service-dos-application-wide": {
+    owaspRefId: "llm-llm10-unbounded-consumption",
+    cweId: "CWE-400",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM10:2025 Unbounded Consumption", url: "https://genai.owasp.org/llmrisk/llm102025-unbounded-consumption/" },
+      { label: "OWASP Cheat Sheet: Denial of Service", url: "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html" },
+    ],
+  },
 };

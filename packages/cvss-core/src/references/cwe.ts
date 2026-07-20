@@ -9,7 +9,8 @@ export type CweCategory =
   | "file-resource"
   | "memory-safety"
   | "race-condition"
-  | "client-side";
+  | "client-side"
+  | "ai-ml";
 
 export const CWE_CATEGORY_LABELS: Record<CweCategory, string> = {
   injection: "Injection",
@@ -23,11 +24,13 @@ export const CWE_CATEGORY_LABELS: Record<CweCategory, string> = {
   "memory-safety": "Memory Safety",
   "race-condition": "Race Conditions",
   "client-side": "Client-Side & Request Forgery",
+  "ai-ml": "AI / ML Weaknesses",
 };
 
 /** Alphabetical by CWE_CATEGORY_LABELS (not by key), so the dropdown's optgroups read A-Z. */
 export const CWE_CATEGORY_ORDER: CweCategory[] = [
   "access-control",
+  "ai-ml",
   "auth-session",
   "client-side",
   "crypto",
@@ -179,6 +182,22 @@ export const CWE_ENTRIES: CweEntry[] = [
   { id: "CWE-352", label: "Cross-Site Request Forgery (CSRF)", url: "https://cwe.mitre.org/data/definitions/352.html", category: "client-side" },
   { id: "CWE-601", label: "URL Redirection to Untrusted Site ('Open Redirect')", url: "https://cwe.mitre.org/data/definitions/601.html", category: "client-side" },
   { id: "CWE-1021", label: "Improper Restriction of Rendered UI Layers or Frames", url: "https://cwe.mitre.org/data/definitions/1021.html", category: "client-side" },
+
+  // ---- AI / ML Weaknesses (no single natural parent) ----
+  // All three added/updated by MITRE's CWE AI Working Group as AI-specific entries (CWE-1427 in
+  // v4.16, CWE-1426 in v4.15, CWE-1039 updated as AI-related in v4.15) — verified against
+  // cwe.mitre.org during authoring. No other MITRE CWE currently exists for LLM training/model
+  // data poisoning specifically, so CWE-1039 (adversarial-input handling by an automated
+  // recognition mechanism) is the closest available fit for the "llm04-data-model-poisoning"
+  // vuln type's default, not an exact match; treat it as a starting point, not a verified 1:1.
+  { id: "CWE-1427", label: "Improper Neutralization of Input Used for LLM Prompting", url: "https://cwe.mitre.org/data/definitions/1427.html", category: "ai-ml" },
+  { id: "CWE-1426", label: "Improper Validation of Generative AI Output", url: "https://cwe.mitre.org/data/definitions/1426.html", category: "ai-ml" },
+  {
+    id: "CWE-1039",
+    label: "Automated Recognition Mechanism with Inadequate Detection or Handling of Adversarial Input Perturbations",
+    url: "https://cwe.mitre.org/data/definitions/1039.html",
+    category: "ai-ml",
+  },
 ];
 
 export const CWE_ENTRIES_BY_ID: Record<string, CweEntry> = Object.fromEntries(CWE_ENTRIES.map((c) => [c.id, c]));

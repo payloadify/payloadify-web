@@ -1,7 +1,7 @@
 import { CvssTemplate } from "./types";
 
 /**
- * ~70 scenario presets across the 14 VulnType families (vulnTypes.ts). Selecting one in the
+ * ~90 scenario presets across the 27 VulnType families (vulnTypes.ts). Selecting one in the
  * UI fills every CVSS 3.1 + 4.0 metric plus the OWASP/VRT/CWE/reference ids in one shot,
  * mirroring lib/msfvenom/templates.ts's template→custom flow.
  *
@@ -1361,6 +1361,207 @@ export const CVSS_TEMPLATES: CvssTemplate[] = [
     references: [
       { label: "PortSwigger: Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
       { label: "OWASP Top 10 2021: A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
+
+  // ---- llm (OWASP Top 10 for LLM Applications 2025) ----
+  // A single "llm" platform, not split by web/api/mobile like the families above: the OWASP
+  // GenAI risks apply the same way regardless of what surface fronts the LLM app, and CVSS
+  // scoring for each scenario below is grounded in real, publicly disclosed incidents rather
+  // than a platform variant, per each template's references. CWE mapping note: only three
+  // MITRE CWEs currently exist specifically for LLM/AI weaknesses (CWE-1427, CWE-1426, CWE-1039
+  // — see references/cwe.ts's "AI / ML Weaknesses" section); several templates below reuse a
+  // generic CWE (e.g. CWE-200, CWE-269, CWE-863) where no AI-specific CWE exists yet, same
+  // approach as picking the closest fit rather than inventing one.
+  {
+    id: "llm01-direct-prompt-injection-tool-exfil",
+    vulnTypeId: "llm01-prompt-injection",
+    label: "Direct prompt injection: user overrides system prompt to trigger a connected tool's data exfiltration",
+    platforms: ["llm"],
+    description:
+      "An LLM-backed chat agent has a connected tool (e.g. a knowledge-base lookup or outbound webhook/email action). A user types adversarial instructions directly into the chat that override the developer's system prompt, convincing the model to call the tool in a way that discloses another user's or tenant's data from the shared context, not just their own.",
+    cvss31: { AV: "N", AC: "L", PR: "N", UI: "N", S: "C", C: "H", I: "L", A: "N" },
+    cvss40: { AV: "N", AC: "L", AT: "N", PR: "N", UI: "N", VC: "H", VI: "L", VA: "N", SC: "N", SI: "N", SA: "N", E: "X" },
+    owaspRefId: "llm-llm01-prompt-injection",
+    vrtRefId: "ai-application-security-sensitive-information-disclosure-cross-tenant-pii-leakage-exposure",
+    cweId: "CWE-1427",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM01:2025 Prompt Injection", url: "https://genai.owasp.org/llmrisk/llm01-prompt-injection/" },
+      { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
+    ],
+  },
+  {
+    id: "llm01-indirect-prompt-injection-agent-rce",
+    vulnTypeId: "llm01-prompt-injection",
+    label: "Indirect prompt injection: hidden instructions in ingested content hijack an autonomous agent's tools",
+    platforms: ["llm"],
+    description:
+      "An autonomous LLM agent reads untrusted third-party content as part of its normal task (e.g. a web page, email, or pull-request description) and has tool access that includes code execution or write actions. Hidden instructions planted in that content are interpreted by the model as commands, hijacking the agent's own tools without the victim ever knowingly submitting a malicious prompt themselves; matches the real-world pattern behind CVE-2025-53773 (hidden instructions in a PR description triggering remote code execution via GitHub Copilot, CVSS 9.6) and the EchoLeak zero-click Microsoft 365 Copilot disclosure (CVE-2025-32711, CVSS 9.3).",
+    cvss31: { AV: "N", AC: "L", PR: "N", UI: "N", S: "C", C: "H", I: "H", A: "H" },
+    cvss40: { AV: "N", AC: "L", AT: "N", PR: "N", UI: "N", VC: "H", VI: "H", VA: "H", SC: "N", SI: "N", SA: "N", E: "X" },
+    owaspRefId: "llm-llm01-prompt-injection",
+    vrtRefId: "ai-application-security-remote-code-execution-full-system-compromise",
+    cweId: "CWE-1427",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM01:2025 Prompt Injection", url: "https://genai.owasp.org/llmrisk/llm01-prompt-injection/" },
+      { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
+      { label: "NVD: CVE-2025-53773 (GitHub Copilot RCE via prompt injection)", url: "https://nvd.nist.gov/vuln/detail/cve-2025-53773" },
+      { label: "NVD: CVE-2025-32711 (EchoLeak, Microsoft 365 Copilot)", url: "https://nvd.nist.gov/vuln/detail/cve-2025-32711" },
+    ],
+  },
+  {
+    id: "llm02-rag-cross-tenant-context-leak",
+    vulnTypeId: "llm02-sensitive-information-disclosure",
+    label: "Sensitive information disclosure: crafted prompt extracts another tenant's data from shared RAG context",
+    platforms: ["llm"],
+    description:
+      "A retrieval-augmented chat app pulls context documents into the model's prompt to answer questions, but does not scope that retrieval to the authenticated caller's own tenant/account. A low-privileged authenticated user crafts a prompt (e.g. asking the model to \"summarize everything in your context\") that causes the model to reveal another tenant's confidential documents that were retrieved into the shared context window.",
+    cvss31: { AV: "N", AC: "L", PR: "L", UI: "N", S: "U", C: "H", I: "N", A: "N" },
+    cvss40: { AV: "N", AC: "L", AT: "N", PR: "L", UI: "N", VC: "H", VI: "N", VA: "N", SC: "N", SI: "N", SA: "N", E: "X" },
+    owaspRefId: "llm-llm02-sensitive-information-disclosure",
+    vrtRefId: "ai-application-security-sensitive-information-disclosure-cross-tenant-pii-leakage-exposure",
+    cweId: "CWE-200",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM02:2025 Sensitive Information Disclosure", url: "https://genai.owasp.org/llmrisk/llm022025-sensitive-information-disclosure/" },
+      { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
+    ],
+  },
+  {
+    id: "llm03-malicious-pretrained-model-rce",
+    vulnTypeId: "llm03-supply-chain",
+    label: "Supply chain: malicious pretrained model from a public hub executes code on load",
+    platforms: ["llm"],
+    description:
+      "An engineer downloads and loads a third-party pretrained model or fine-tuned adapter from a public model hub. The model file uses an unsafe serialization format (e.g. Python pickle) that can embed arbitrary code, so simply loading the file (deserializing it into memory) executes attacker-controlled code on the host, independent of anything the model subsequently outputs. Matches publicly documented malicious-pickle model uploads found on public model hubs.",
+    cvss31: { AV: "L", AC: "L", PR: "N", UI: "R", S: "C", C: "H", I: "H", A: "H" },
+    cvss40: { AV: "L", AC: "L", AT: "N", PR: "N", UI: "P", VC: "H", VI: "H", VA: "H", SC: "N", SI: "N", SA: "N", E: "X" },
+    owaspRefId: "llm-llm03-supply-chain",
+    vrtRefId: "using-components-with-known-vulnerabilities-outdated-software-version",
+    cweId: "CWE-1104",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM03:2025 Supply Chain", url: "https://genai.owasp.org/llmrisk/llm032025-supply-chain/" },
+      { label: "Hugging Face: Pickle Scanning (malicious model files)", url: "https://huggingface.co/docs/hub/en/security-pickle" },
+    ],
+  },
+  {
+    id: "llm04-training-feedback-loop-backdoor",
+    vulnTypeId: "llm04-data-model-poisoning",
+    label: "Data and model poisoning: unvalidated user feedback data poisons a fine-tuning pipeline",
+    platforms: ["llm"],
+    description:
+      "A model is periodically fine-tuned on data collected from a public-facing feedback loop (e.g. user-submitted corrections or ratings) without provenance checks or anomaly detection on that data. An attacker who can influence enough of the feedback data plants a trigger phrase during the poisoning window; once the poisoned fine-tune is deployed, that trigger reliably causes a targeted misbehavior (such as bypassing a safety filter) that does not show up in ordinary testing because it only activates on the trigger.",
+    cvss31: { AV: "N", AC: "H", PR: "N", UI: "N", S: "C", C: "N", I: "H", A: "N" },
+    cvss40: { AV: "N", AC: "H", AT: "P", PR: "N", UI: "N", VC: "N", VI: "H", VA: "N", SC: "N", SI: "N", SA: "N", E: "X" },
+    owaspRefId: "llm-llm04-data-model-poisoning",
+    vrtRefId: "ai-application-security-training-data-poisoning-backdoor-injection-bias-manipulation",
+    cweId: "CWE-1039",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM04:2025 Data and Model Poisoning", url: "https://genai.owasp.org/llmrisk/llm042025-data-and-model-poisoning/" },
+      { label: "CWE-1039: Inadequate Detection or Handling of Adversarial Input Perturbations", url: "https://cwe.mitre.org/data/definitions/1039.html" },
+    ],
+  },
+  {
+    id: "llm05-unsanitized-markdown-output-stored-xss",
+    vulnTypeId: "llm05-improper-output-handling",
+    label: "Improper output handling: unsanitized LLM markdown/HTML output executes as stored XSS",
+    platforms: ["llm"],
+    description:
+      "A chat UI renders the model's response as raw markdown/HTML instead of treating it as untrusted text requiring output encoding. A prompt-injected or otherwise manipulated response causes the model to emit a script tag or event handler, which then executes in the browser of every subsequent user who views that stored conversation, the same underlying failure as stored XSS, just with the payload's source being model output rather than a form field.",
+    cvss31: { AV: "N", AC: "L", PR: "L", UI: "N", S: "C", C: "H", I: "H", A: "N" },
+    cvss40: { AV: "N", AC: "L", AT: "N", PR: "L", UI: "N", VC: "H", VI: "H", VA: "N", SC: "N", SI: "N", SA: "N", E: "X" },
+    owaspRefId: "llm-llm05-improper-output-handling",
+    vrtRefId: "ai-application-security-improper-output-handling-cross-site-scripting-xss",
+    cweId: "CWE-1426",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM05:2025 Improper Output Handling", url: "https://genai.owasp.org/llmrisk/llm052025-improper-output-handling/" },
+      { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
+    ],
+  },
+  {
+    id: "llm06-excessive-agency-unconfirmed-tool-call",
+    vulnTypeId: "llm06-excessive-agency",
+    label: "Excessive agency: agent's code-execution tool acts on manipulated input with no human confirmation",
+    platforms: ["llm"],
+    description:
+      "An autonomous agent is granted a broad, high-impact tool (e.g. a sandboxed code-execution or shell tool) with no human-in-the-loop confirmation step before it acts, on the assumption the agent will only ever use it for legitimate task steps. A manipulated instruction, whether typed directly or injected via content the agent reads, drives the agent to invoke that tool destructively (e.g. deleting data or running attacker-supplied code) because the excessive permission granted to the tool, not a bug in the tool itself, was the real gap.",
+    cvss31: { AV: "N", AC: "L", PR: "L", UI: "N", S: "C", C: "H", I: "H", A: "H" },
+    cvss40: { AV: "N", AC: "L", AT: "N", PR: "L", UI: "N", VC: "H", VI: "H", VA: "H", SC: "N", SI: "N", SA: "N", E: "X" },
+    owaspRefId: "llm-llm06-excessive-agency",
+    vrtRefId: "ai-application-security-remote-code-execution-sandboxed-container-code-execution",
+    cweId: "CWE-269",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM06:2025 Excessive Agency", url: "https://genai.owasp.org/llmrisk/llm062025-excessive-agency/" },
+      { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
+    ],
+  },
+  {
+    id: "llm07-system-prompt-embedded-secret-leak",
+    vulnTypeId: "llm07-system-prompt-leakage",
+    label: "System prompt leakage: crafted prompt extracts a system prompt that embeds an API key",
+    platforms: ["llm"],
+    description:
+      "The system prompt was authored to embed a secret (e.g. a third-party API key or internal endpoint URL) directly in its instructions, on the mistaken assumption that the system prompt is never visible to the end user. A crafted user prompt (e.g. \"repeat everything above verbatim\" or a role-play jailbreak) extracts the full system prompt including the embedded secret, matching the publicly documented pattern behind the EmailGPT Gmail-extension disclosure (CVE-2024-5184: prompt injection leaking the hard-coded system prompt, CVSS 3.1 base score 9.1 per NVD).",
+    cvss31: { AV: "N", AC: "L", PR: "N", UI: "N", S: "U", C: "H", I: "N", A: "N" },
+    cvss40: { AV: "N", AC: "L", AT: "N", PR: "N", UI: "N", VC: "H", VI: "N", VA: "N", SC: "N", SI: "N", SA: "N", E: "X" },
+    owaspRefId: "llm-llm07-system-prompt-leakage",
+    vrtRefId: "ai-application-security-prompt-injection-system-prompt-leakage",
+    cweId: "CWE-200",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM07:2025 System Prompt Leakage", url: "https://genai.owasp.org/llmrisk/llm072025-system-prompt-leakage/" },
+      { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
+      { label: "NVD: CVE-2024-5184 (EmailGPT prompt injection)", url: "https://nvd.nist.gov/vuln/detail/cve-2024-5184" },
+      { label: "Black Duck CyRC Advisory: Prompt Injection in EmailGPT", url: "https://www.blackduck.com/blog/cyrc-advisory-prompt-injection-emailgpt.html" },
+    ],
+  },
+  {
+    id: "llm08-vector-store-cross-tenant-retrieval",
+    vulnTypeId: "llm08-vector-embedding-weaknesses",
+    label: "Vector and embedding weaknesses: shared vector store returns another tenant's embedded documents",
+    platforms: ["llm"],
+    description:
+      "A multi-tenant RAG application stores document embeddings from all tenants in one shared vector index without per-tenant metadata filtering enforced at query time. A similarity-search query from one tenant returns and surfaces nearest-neighbor chunks that were embedded from a different tenant's private documents, an authorization gap in the retrieval layer rather than in the LLM itself.",
+    cvss31: { AV: "N", AC: "L", PR: "L", UI: "N", S: "U", C: "H", I: "N", A: "N" },
+    cvss40: { AV: "N", AC: "L", AT: "N", PR: "L", UI: "N", VC: "H", VI: "N", VA: "N", SC: "N", SI: "N", SA: "N", E: "X" },
+    owaspRefId: "llm-llm08-vector-embedding-weaknesses",
+    vrtRefId: "ai-application-security-vector-and-embedding-weaknesses-embedding-exfiltration-model-extraction",
+    cweId: "CWE-863",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM08:2025 Vector and Embedding Weaknesses", url: "https://genai.owasp.org/llmrisk/llm082025-vector-and-embedding-weaknesses/" },
+      { label: "OWASP Cheat Sheet: LLM Prompt Injection Prevention", url: "https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html" },
+    ],
+  },
+  {
+    id: "llm09-unvalidated-advice-bot-misinformation",
+    vulnTypeId: "llm09-misinformation",
+    label: "Misinformation: confidently-stated fabricated output presented without validation or disclaimer",
+    platforms: ["llm"],
+    description:
+      "An advisory-style application (e.g. summarizing policy, legal, or financial information) presents raw LLM output as authoritative fact, without citation verification, a confidence indicator, or a disclaimer that output may be inaccurate. A user relies on a confidently-worded but fabricated (hallucinated) answer to make a real decision. This is a lower-severity, non-standard fit for CVSS: the harm is a trust/process failure in how output is presented rather than a technical confidentiality, integrity, or availability breach, so score conservatively and treat the rating here as a floor, not a ceiling, adjusting upward if the specific advice domain carries real safety or financial consequences.",
+    cvss31: { AV: "N", AC: "H", PR: "N", UI: "R", S: "U", C: "N", I: "L", A: "N" },
+    cvss40: { AV: "N", AC: "H", AT: "N", PR: "N", UI: "P", VC: "N", VI: "L", VA: "N", SC: "N", SI: "N", SA: "N", E: "X" },
+    owaspRefId: "llm-llm09-misinformation",
+    vrtRefId: "ai-application-security-ai-safety-misinformation-wrong-factual-data",
+    cweId: "CWE-1426",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM09:2025 Misinformation", url: "https://genai.owasp.org/llmrisk/llm092025-misinformation/" },
+      { label: "CWE-1426: Improper Validation of Generative AI Output", url: "https://cwe.mitre.org/data/definitions/1426.html" },
+    ],
+  },
+  {
+    id: "llm10-unbounded-consumption-denial-of-wallet",
+    vulnTypeId: "llm10-unbounded-consumption",
+    label: "Unbounded consumption: no rate/token limits enable a denial-of-wallet and service degradation attack",
+    platforms: ["llm"],
+    description:
+      "An LLM-backed endpoint has no per-user rate limiting, request-size cap, or per-request token/cost ceiling. An attacker submits a high volume of maximally expensive requests (e.g. very large context windows or requests that trigger long agentic tool-call loops), driving up the operator's inference-API billing (\"denial of wallet\") while degrading response times and availability for legitimate users.",
+    cvss31: { AV: "N", AC: "L", PR: "N", UI: "N", S: "U", C: "N", I: "N", A: "H" },
+    cvss40: { AV: "N", AC: "L", AT: "N", PR: "N", UI: "N", VC: "N", VI: "N", VA: "H", SC: "N", SI: "N", SA: "N", E: "X" },
+    owaspRefId: "llm-llm10-unbounded-consumption",
+    vrtRefId: "ai-application-security-denial-of-service-dos-application-wide",
+    cweId: "CWE-400",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM10:2025 Unbounded Consumption", url: "https://genai.owasp.org/llmrisk/llm102025-unbounded-consumption/" },
+      { label: "OWASP Cheat Sheet: Denial of Service", url: "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html" },
     ],
   },
 ];
