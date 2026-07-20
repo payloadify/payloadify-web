@@ -146,10 +146,10 @@ export const VRT_AUTOFILL: Record<string, VrtAutofillEntry> = {
     ],
   },
   "ai-application-security-prompt-injection-system-prompt-leakage": {
-    owaspRefId: "llm-llm01-prompt-injection",
-    cweId: "CWE-1427",
+    owaspRefId: "llm-llm07-system-prompt-leakage",
+    cweId: "CWE-200",
     references: [
-      { label: "OWASP Gen AI Security Project: LLM01:2025 Prompt Injection", url: "https://genai.owasp.org/llmrisk/llm01-prompt-injection/" },
+      { label: "OWASP Gen AI Security Project: LLM07:2025 System Prompt Leakage", url: "https://genai.owasp.org/llmrisk/llm072025-system-prompt-leakage/" },
       { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
     ],
   },
@@ -207,6 +207,18 @@ export const VRT_AUTOFILL: Record<string, VrtAutofillEntry> = {
     references: [
       { label: "OWASP Gen AI Security Project: LLM10:2025 Unbounded Consumption", url: "https://genai.owasp.org/llmrisk/llm102025-unbounded-consumption/" },
       { label: "OWASP Cheat Sheet: Denial of Service", url: "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html" },
+    ],
+  },
+  // Also the vrtRefId used directly by llm03-malicious-pretrained-model-rce (a supply-chain
+  // scenario) — OWASP's Gen AI Top 10 has LLM03:2025 Supply Chain for that, but this VRT leaf
+  // itself is generic (not AI-specific), so the broader/more common "vulnerable components"
+  // OWASP mapping is the better default here, matching the vc-* templates' own choice.
+  "using-components-with-known-vulnerabilities-outdated-software-version": {
+    owaspRefId: "web-a06-vulnerable-outdated-components",
+    cweId: "CWE-1104",
+    references: [
+      { label: "OWASP Top 10 2021: A06 Vulnerable and Outdated Components", url: "https://owasp.org/Top10/2021/A06_2021-Vulnerable_and_Outdated_Components/" },
+      { label: "OWASP Cheat Sheet: Vulnerable Dependency Management", url: "https://cheatsheetseries.owasp.org/cheatsheets/Vulnerable_Dependency_Management_Cheat_Sheet.html" },
     ],
   },
 };
