@@ -6,6 +6,8 @@ import { iconButtonClasses, inputClasses, selectClasses, toggleButtonClasses } f
 import {
   CvssMeta,
   CvssReference,
+  CWE_CATEGORY_LABELS,
+  CWE_CATEGORY_ORDER,
   CWE_ENTRIES,
   CWE_ENTRIES_BY_ID,
   OWASP_CATEGORIES,
@@ -19,6 +21,7 @@ import {
   VRT_AUTOFILL,
   VRT_CATEGORIES,
   VRT_CATEGORIES_BY_ID,
+  VRT_VERSION,
 } from "@payloadify/cvss-core";
 import { usePersistedBoolean } from "@/lib/storage/persistedBoolean";
 
@@ -79,7 +82,19 @@ export function OutputPanel({
     if (existing) existing.categories.push(category);
     else groups.push({ group: category.group, categories: [category] });
     return groups;
-  }, []);
+  }, [])
+    .sort((a, b) => a.group.localeCompare(b.group))
+    .map((g) => ({ ...g, categories: [...g.categories].sort((a, b) => a.label.localeCompare(b.label)) }));
+
+  // The broad "parent" CWE for a category (if any) is always sorted first within its optgroup,
+  // flagged as such in the UI, since it's commonly picked as a fallback when the reporter isn't
+  // sure of the exact child weakness even though CWE itself discourages mapping to it directly.
+  const cweByCategory = CWE_CATEGORY_ORDER.map((category) => ({
+    category,
+    entries: CWE_ENTRIES.filter((c) => c.category === category).sort((a, b) =>
+      a.isParent === b.isParent ? Number(a.id.slice(4)) - Number(b.id.slice(4)) : a.isParent ? -1 : 1,
+    ),
+  }));
 
   function handleVrtChange(newVrtId: string) {
     if (!newVrtId) {
@@ -226,9 +241,7 @@ export function OutputPanel({
                   ))}
                 </select>
               </div>
-              {vrt && (
-                <CopyButton text={`VRT: ${vrt.label}${vrt.priority ? ` (${vrt.priority})` : ""}`} label="Copy" />
-              )}
+              {vrt && <CopyButton text={`VRT ${VRT_VERSION} - ${vrt.label}`} label="Copy" />}
             </div>
             {vrt?.inferred && (
               <p className="-mt-2 text-xs text-zinc-500 dark:text-zinc-500">Inferred: not a literal VRT leaf. {vrt.note}</p>
@@ -243,11 +256,19 @@ export function OutputPanel({
                   className={`${selectClasses} w-full`}
                 >
                   <option value="">None</option>
-                  {CWE_ENTRIES.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.id}: {c.label}
-                    </option>
-                  ))}
+                  {cweByCategory.map(({ category, entries }) =>
+                    entries.length > 0 ? (
+                      <optgroup key={category} label={CWE_CATEGORY_LABELS[category]}>
+                        {entries.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.isParent ? "" : "↳ "}
+                            {c.id}: {c.label}
+                            {c.isParent ? " (broad)" : ""}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ) : null,
+                  )}
                 </select>
               </div>
               {cwe && <CopyButton text={`${cwe.id}: ${cwe.label}`} label="Copy" />}

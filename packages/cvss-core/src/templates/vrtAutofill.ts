@@ -9,8 +9,13 @@ export interface VrtAutofillEntry {
 /** Suggested OWASP category + CWE + references to autofill when the user manually picks a VRT
  *  category in the Additional Info editor (custom/no-template mode) — a starting point only,
  *  the user can change or delete any of it afterward. Values mirror the canonical per-vuln-type
- *  defaults already used by templates.ts/chaining.ts (the three XSS VRT sub-variants and the
- *  single SQLi VRT id all resolve to their shared parent family's defaults). */
+ *  defaults already used by templates.ts/chaining.ts (the two XSS VRT sub-variants and the
+ *  single SQLi VRT id all resolve to their shared parent family's defaults).
+ *
+ *  This is best-effort, not exhaustive: VRT_CATEGORIES now covers the full official Bugcrowd
+ *  taxonomy (~440 entries), and only the ids below (mostly the pre-existing hand-authored set)
+ *  have a verified CWE/OWASP/reference mapping. Picking a VRT category with no entry here just
+ *  leaves CWE/OWASP/references blank for the user to fill in manually. */
 export const VRT_AUTOFILL: Record<string, VrtAutofillEntry> = {
   "xss-reflected": {
     owaspRefId: "web-a03-injection",
@@ -21,14 +26,6 @@ export const VRT_AUTOFILL: Record<string, VrtAutofillEntry> = {
     ],
   },
   "xss-stored": {
-    owaspRefId: "web-a03-injection",
-    cweId: "CWE-79",
-    references: [
-      { label: "PortSwigger: Cross-site scripting", url: "https://portswigger.net/web-security/cross-site-scripting" },
-      { label: "OWASP Cheat Sheet: XSS Prevention", url: "https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html" },
-    ],
-  },
-  "xss-dom": {
     owaspRefId: "web-a03-injection",
     cweId: "CWE-79",
     references: [
@@ -146,6 +143,82 @@ export const VRT_AUTOFILL: Record<string, VrtAutofillEntry> = {
     references: [
       { label: "PortSwigger: Business logic vulnerabilities", url: "https://portswigger.net/web-security/logic-flaws" },
       { label: "OWASP Top 10 2021: A04 Insecure Design", url: "https://owasp.org/Top10/2021/A04_2021-Insecure_Design/" },
+    ],
+  },
+  "ai-application-security-prompt-injection-system-prompt-leakage": {
+    owaspRefId: "llm-llm07-system-prompt-leakage",
+    cweId: "CWE-200",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM07:2025 System Prompt Leakage", url: "https://genai.owasp.org/llmrisk/llm072025-system-prompt-leakage/" },
+      { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
+    ],
+  },
+  "ai-application-security-sensitive-information-disclosure-cross-tenant-pii-leakage-exposure": {
+    owaspRefId: "llm-llm02-sensitive-information-disclosure",
+    cweId: "CWE-200",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM02:2025 Sensitive Information Disclosure", url: "https://genai.owasp.org/llmrisk/llm022025-sensitive-information-disclosure/" },
+      { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
+    ],
+  },
+  "ai-application-security-training-data-poisoning-backdoor-injection-bias-manipulation": {
+    owaspRefId: "llm-llm04-data-model-poisoning",
+    cweId: "CWE-1039",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM04:2025 Data and Model Poisoning", url: "https://genai.owasp.org/llmrisk/llm042025-data-and-model-poisoning/" },
+      { label: "CWE-1039: Inadequate Detection or Handling of Adversarial Input Perturbations", url: "https://cwe.mitre.org/data/definitions/1039.html" },
+    ],
+  },
+  "ai-application-security-improper-output-handling-cross-site-scripting-xss": {
+    owaspRefId: "llm-llm05-improper-output-handling",
+    cweId: "CWE-1426",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM05:2025 Improper Output Handling", url: "https://genai.owasp.org/llmrisk/llm052025-improper-output-handling/" },
+      { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
+    ],
+  },
+  "ai-application-security-remote-code-execution-sandboxed-container-code-execution": {
+    owaspRefId: "llm-llm06-excessive-agency",
+    cweId: "CWE-269",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM06:2025 Excessive Agency", url: "https://genai.owasp.org/llmrisk/llm062025-excessive-agency/" },
+      { label: "PortSwigger: Web LLM attacks", url: "https://portswigger.net/web-security/llm-attacks" },
+    ],
+  },
+  "ai-application-security-vector-and-embedding-weaknesses-embedding-exfiltration-model-extraction": {
+    owaspRefId: "llm-llm08-vector-embedding-weaknesses",
+    cweId: "CWE-863",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM08:2025 Vector and Embedding Weaknesses", url: "https://genai.owasp.org/llmrisk/llm082025-vector-and-embedding-weaknesses/" },
+      { label: "OWASP Cheat Sheet: LLM Prompt Injection Prevention", url: "https://cheatsheetseries.owasp.org/cheatsheets/LLM_Prompt_Injection_Prevention_Cheat_Sheet.html" },
+    ],
+  },
+  "ai-application-security-ai-safety-misinformation-wrong-factual-data": {
+    owaspRefId: "llm-llm09-misinformation",
+    cweId: "CWE-1426",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM09:2025 Misinformation", url: "https://genai.owasp.org/llmrisk/llm092025-misinformation/" },
+      { label: "CWE-1426: Improper Validation of Generative AI Output", url: "https://cwe.mitre.org/data/definitions/1426.html" },
+    ],
+  },
+  "ai-application-security-denial-of-service-dos-application-wide": {
+    owaspRefId: "llm-llm10-unbounded-consumption",
+    cweId: "CWE-400",
+    references: [
+      { label: "OWASP Gen AI Security Project: LLM10:2025 Unbounded Consumption", url: "https://genai.owasp.org/llmrisk/llm102025-unbounded-consumption/" },
+      { label: "OWASP Cheat Sheet: Denial of Service", url: "https://cheatsheetseries.owasp.org/cheatsheets/Denial_of_Service_Cheat_Sheet.html" },
+    ],
+  },
+  // Also the vrtRefId used directly by llm03-malicious-pretrained-model-rce (a supply-chain
+  // scenario) — OWASP's Gen AI Top 10 has LLM03:2025 Supply Chain for that, but this VRT leaf
+  // itself is generic (not AI-specific), so the broader/more common "vulnerable components"
+  // OWASP mapping is the better default here, matching the vc-* templates' own choice.
+  "using-components-with-known-vulnerabilities-outdated-software-version": {
+    owaspRefId: "web-a06-vulnerable-outdated-components",
+    cweId: "CWE-1104",
+    references: [
+      { label: "OWASP Top 10 2021: A06 Vulnerable and Outdated Components", url: "https://owasp.org/Top10/2021/A06_2021-Vulnerable_and_Outdated_Components/" },
+      { label: "OWASP Cheat Sheet: Vulnerable Dependency Management", url: "https://cheatsheetseries.owasp.org/cheatsheets/Vulnerable_Dependency_Management_Cheat_Sheet.html" },
     ],
   },
 };

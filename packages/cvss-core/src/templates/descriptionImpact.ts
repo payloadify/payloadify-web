@@ -81,6 +81,18 @@ export const VULN_TYPE_FALLBACK_DESCRIPTION_IMPACT: Record<string, VulnDescripti
     impact:
       "May allow an attacker to trick an authenticated victim's browser into performing an unwanted state-changing action without the victim's knowledge or consent.",
   },
+  "vulnerable-components": {
+    description:
+      "The application runs a third-party library, framework, plugin, or other dependency with a publicly disclosed vulnerability (a known CVE) that has not been patched or upgraded, exposing the flaw that library already has rather than a bug in the application's own code.",
+    impact:
+      "May allow an attacker to exploit the dependency's already-documented vulnerability, using public write-ups or exploit code, with an impact ranging from information disclosure up to full remote code execution depending on the specific CVE.",
+  },
+  "race-condition": {
+    description:
+      "Two or more requests that should be handled sequentially are instead processed concurrently, and the application fails to synchronize the shared state (e.g. a balance, a redemption counter, a one-time-use flag) they depend on, leaving a window where a check and the action that relies on it can be interleaved with another request.",
+    impact:
+      "May allow an attacker to bypass a limit, quota, or one-time-use control, or read/write shared state inconsistently, by firing requests in parallel, undermining the integrity of the affected business logic or data.",
+  },
   "sensitive-data-exposure": {
     description:
       "Sensitive data (such as credentials, tokens, or personal information) is transmitted, stored, or logged without adequate protection: for example missing encryption, an overly broad API response, or insecure local storage.",
@@ -110,6 +122,57 @@ export const VULN_TYPE_FALLBACK_DESCRIPTION_IMPACT: Record<string, VulnDescripti
       "The application trusts a client-controllable parameter (e.g. a price, quantity, or role flag) to make a server-side decision, without sufficiently re-validating that value on the server.",
     impact:
       "May allow an attacker to alter application logic in their favor (such as changing a price, quantity, or permission flag) by submitting a modified parameter value directly.",
+  },
+  "llm01-prompt-injection": {
+    description:
+      "Attacker-controlled text, whether typed directly by a user or planted in content the LLM later reads (a document, web page, email, or tool output), is interpreted by the model as an instruction rather than data, letting it override the developer's original system prompt or guardrails.",
+    impact:
+      "May allow an attacker to redirect the model's behavior, extract data it has access to, or trigger any connected tool the model can call, with the actual consequence bounded by whatever data and tools that model instance has access to.",
+  },
+  "llm02-sensitive-information-disclosure": {
+    description:
+      "The LLM application has access to sensitive data, whether from its training data, a connected retrieval/RAG store, or the current conversation context, and does not sufficiently restrict what a user's prompt can cause the model to reveal from that data.",
+    impact: "May allow a user to extract sensitive data they were not authorized to see, such as another user's or tenant's information, purely through crafted prompts rather than a traditional access-control bypass.",
+  },
+  "llm03-supply-chain": {
+    description:
+      "The application depends on a third-party component from the AI supply chain, a pretrained model, fine-tuning adapter, training dataset, or plugin, sourced from a public hub or vendor without verifying its integrity or provenance.",
+    impact: "May allow an attacker who has compromised or planted a malicious component upstream to achieve code execution, embed a backdoor, or otherwise compromise every deployment that pulls in the tainted component.",
+  },
+  "llm04-data-model-poisoning": {
+    description:
+      "Data used to train or fine-tune the model, or ingested into its retrieval context, is accepted from a source an attacker can influence without sufficient validation or anomaly detection, allowing that data to skew the model's behavior.",
+    impact: "May allow an attacker to introduce a targeted backdoor, bias, or degradation into the model's behavior that is difficult to detect through ordinary testing because it only manifests under attacker-chosen conditions.",
+  },
+  "llm05-improper-output-handling": {
+    description:
+      "The model's output is passed on to a downstream component (a browser, a shell, a database query, another API) without the same validation or output encoding that would be applied to any other untrusted input reaching that component.",
+    impact: "May allow an attacker who can influence the model's output (directly or via prompt injection) to trigger a classic downstream vulnerability, such as XSS, SSRF, or command injection, using the model as the delivery mechanism.",
+  },
+  "llm06-excessive-agency": {
+    description:
+      "An LLM-driven agent is granted tools, permissions, or autonomy broader than its actual task requires, and can invoke consequential actions (file writes, code execution, financial transactions) without a human-in-the-loop confirmation step.",
+    impact: "May allow a manipulated or misinterpreted instruction to cause the agent to take a destructive or unauthorized action using its own excessive permissions, with impact scoped to whatever that overprivileged tool access allows.",
+  },
+  "llm07-system-prompt-leakage": {
+    description:
+      "The system prompt is authored on the assumption that end users will never see it, sometimes including embedded secrets, internal instructions, or business logic, without accounting for the fact that a sufficiently crafted user prompt can often extract it verbatim.",
+    impact: "May allow an attacker to recover the system prompt's contents, including any secrets or internal logic it was never meant to expose, and use that to craft more effective follow-on attacks.",
+  },
+  "llm08-vector-embedding-weaknesses": {
+    description:
+      "A retrieval-augmented (RAG) pipeline's vector store or embedding process does not enforce the same access-control boundaries (e.g. per-tenant or per-user scoping) on retrieval that the rest of the application enforces elsewhere.",
+    impact: "May allow a user to retrieve or infer the contents of documents belonging to another user or tenant via similarity search, even though they were never authorized to access those documents directly.",
+  },
+  "llm09-misinformation": {
+    description:
+      "The application presents LLM-generated output to users as though it were verified fact, without a confidence indicator, citation check, or disclaimer, even though the model can generate fluent, confidently-worded output that is factually wrong.",
+    impact: "May cause a user to rely on fabricated or inaccurate information for a real decision, with the severity of that reliance depending heavily on the application's domain (e.g. legal, medical, or financial advice carries materially higher real-world consequence).",
+  },
+  "llm10-unbounded-consumption": {
+    description:
+      "The LLM-backed endpoint accepts requests without a per-user rate limit, request-size cap, or per-request cost ceiling, letting a single caller consume a disproportionate share of expensive inference capacity.",
+    impact: "May allow an attacker to degrade service availability for other users or drive up the operator's inference-API costs (a \"denial of wallet\" attack) simply by sending a high volume of expensive requests.",
   },
 };
 
@@ -295,6 +358,32 @@ export const TEMPLATE_DESCRIPTION_IMPACT: Record<string, VulnDescriptionImpact> 
     impact: "May allow an attacker to achieve complete account takeover (not just a single forged action) by chaining CSRF against the account-recovery or credential-change flow.",
   },
 
+  // ---- race-condition ----
+  "race-limit-bypass-web": {
+    description:
+      "A single-use discount/promo code's redemption count is checked and then incremented as two separate steps of the checkout flow, rather than atomically. Submitting many checkout requests for the same code at once wins the race and lets several of them read the same pre-redemption count before any of them writes the increment back.",
+    impact:
+      "May allow an attacker to redeem a single-use discount code far more times than intended, causing direct financial loss to the business rather than compromising any individual user's data.",
+  },
+  "race-limit-bypass-api": {
+    description:
+      "A single-use discount/promo code's redemption count is checked and then incremented as two separate steps within the same API call, rather than atomically. Firing many concurrent requests at the endpoint wins the race and lets several of them read the same pre-redemption count before any of them writes the increment back.",
+    impact:
+      "May allow an attacker to redeem a single-use discount code far more times than intended via direct API calls, causing direct financial loss to the business rather than compromising any individual user's data.",
+  },
+  "race-fund-double-spend-web": {
+    description:
+      "A withdrawal or fund-transfer feature reads the account balance and then debits it as two separate steps, rather than atomically. An authenticated attacker submits several withdrawal requests through the web UI at once, so more than one of them reads the same starting balance before any of them writes its debit back.",
+    impact:
+      "May allow an authenticated attacker to withdraw or transfer out more funds than their account actually holds, directly compromising the integrity of financial balance data.",
+  },
+  "race-fund-double-spend-api": {
+    description:
+      "A withdrawal or fund-transfer API endpoint reads the account balance and then debits it as two separate steps, rather than atomically. An authenticated attacker fires several requests at the endpoint at once, so more than one of them reads the same starting balance before any of them writes its debit back.",
+    impact:
+      "May allow an authenticated attacker to withdraw or transfer out more funds than their account actually holds via direct API calls, directly compromising the integrity of financial balance data.",
+  },
+
   // ---- sensitive-data-exposure ----
   "sde-web-sensitive-data-in-url": {
     description:
@@ -374,6 +463,32 @@ export const TEMPLATE_DESCRIPTION_IMPACT: Record<string, VulnDescriptionImpact> 
   "sm-verbose-error-disclosure-api": {
     description: "Unhandled API errors return verbose stack traces or raw database error text instead of a generic message, disclosing internal file paths, library versions, or query structure.",
     impact: "May give an attacker information (internal paths, versions, query logic) that meaningfully narrows down and assists a follow-up, more damaging attack, even though the disclosure itself is only informational.",
+  },
+
+  // ---- vulnerable-components ----
+  "vc-web-known-cve-rce": {
+    description:
+      "The web application runs an outdated version of a third-party framework or library that has a publicly disclosed CVE with a documented, working exploit, giving an attacker a pre-built attack path that requires no first-party bug discovery at all.",
+    impact:
+      "May allow an attacker to achieve full remote code execution on the host running the vulnerable library, using an existing public exploit for the disclosed CVE.",
+  },
+  "vc-api-known-cve-rce": {
+    description:
+      "A backend API or microservice runs an outdated version of a third-party library that has a publicly disclosed CVE with a documented, working exploit, giving an attacker a pre-built attack path that requires no first-party bug discovery at all.",
+    impact:
+      "May allow an attacker to achieve full remote code execution on the vulnerable service, using an existing public exploit for the disclosed CVE.",
+  },
+  "vc-web-outdated-client-library": {
+    description:
+      "The page loads an outdated build of a client-side JavaScript library that has its own publicly disclosed CVE (typically XSS or prototype pollution), so the vulnerability lives in the third-party code the page trusts rather than in the site's first-party logic.",
+    impact:
+      "May allow an attacker to trigger the library's own known flaw against any visitor loading the affected page, without needing to find a first-party injection point.",
+  },
+  "vc-desktop-bundled-dependency": {
+    description:
+      "The desktop application ships and loads an outdated, vulnerable version of a bundled third-party library or framework with a publicly known CVE, rather than a bug in the application's own code.",
+    impact:
+      "May allow a local low-privileged process, or a malicious file the application opens, to trigger the bundled library's known flaw and execute code in the application's context.",
   },
 
   // ---- insecure-deserialization ----
@@ -499,6 +614,63 @@ export const TEMPLATE_DESCRIPTION_IMPACT: Record<string, VulnDescriptionImpact> 
     description:
       "A review, rating, survey, or voting feature relies on a client-set hidden field (rather than a server-side per-user/per-session record) to block repeat submissions, so resetting that field before resubmitting bypasses the intended one-submission-per-user limit.",
     impact: "May allow a single user to submit unlimited times, skewing aggregated ratings, poll results, or review data for everyone who later views them.",
+  },
+
+  // ---- llm ----
+  "llm01-direct-prompt-injection-tool-exfil": {
+    description:
+      "A user types adversarial instructions directly into the chat interface of an LLM agent that has a connected tool (e.g. a knowledge-base lookup or outbound webhook), overriding the developer's system prompt and convincing the model to call that tool in a way that discloses data belonging to another user or tenant from the shared context.",
+    impact: "May allow an authenticated user to exfiltrate another user's or tenant's data through the agent's own legitimate tool access, without needing any separate access-control bypass.",
+  },
+  "llm01-indirect-prompt-injection-agent-rce": {
+    description:
+      "An autonomous LLM agent with tool access (including code execution or write actions) reads untrusted third-party content as part of its normal task; hidden instructions planted in that content are interpreted as commands by the model, hijacking the agent's own tools without the victim ever submitting a malicious prompt themselves.",
+    impact: "May allow an attacker to achieve remote code execution or full compromise of whatever system the agent's tools can reach, purely by planting content the agent is expected to read, matching the severity of real-world zero-click LLM agent compromises.",
+  },
+  "llm02-rag-cross-tenant-context-leak": {
+    description:
+      "A retrieval-augmented chat application pulls context documents into the model's prompt without scoping that retrieval to the authenticated caller's own tenant or account, so a crafted prompt asking the model to summarize its context can surface another tenant's confidential documents.",
+    impact: "May allow a low-privileged authenticated user to read another tenant's confidential data purely through prompt phrasing, without any traditional access-control bypass.",
+  },
+  "llm03-malicious-pretrained-model-rce": {
+    description:
+      "A third-party pretrained model or fine-tuned adapter downloaded from a public model hub uses an unsafe serialization format (e.g. Python pickle) capable of embedding arbitrary code, so loading the file into memory executes attacker-controlled code independent of anything the model later outputs.",
+    impact: "May allow an attacker who published or tampered with the model file to achieve code execution on any host that loads it, a supply-chain compromise that requires no interaction with the model's actual inference behavior at all.",
+  },
+  "llm04-training-feedback-loop-backdoor": {
+    description:
+      "A model is periodically fine-tuned on data collected from a public-facing feedback loop without provenance checks or anomaly detection, letting an attacker who can influence enough of that feedback data plant a trigger phrase that survives into the deployed fine-tune.",
+    impact: "May allow an attacker to reliably trigger a targeted misbehavior (such as bypassing a safety filter) in the deployed model on demand, while the backdoor itself stays invisible to testing that doesn't happen to use the trigger.",
+  },
+  "llm05-unsanitized-markdown-output-stored-xss": {
+    description:
+      "A chat interface renders the model's response as raw markdown/HTML instead of treating it as untrusted text requiring output encoding, so a prompt-injected response containing a script tag or event handler executes in the browser of every subsequent user who views that stored conversation.",
+    impact: "May allow an attacker to achieve persistent, stored cross-site scripting against every user who later views the affected conversation, with the LLM's own output as the delivery vector instead of a traditional form field.",
+  },
+  "llm06-excessive-agency-unconfirmed-tool-call": {
+    description:
+      "An autonomous agent is granted a broad, high-impact tool (such as sandboxed code execution) with no human-in-the-loop confirmation before it acts, so a manipulated instruction, typed directly or injected via content the agent reads, drives the agent to invoke that tool destructively using its own excessive permissions.",
+    impact: "May allow an attacker to cause the agent to delete data, run attacker-supplied code, or take another consequential action entirely through the tool access the agent was already (over-)granted, without exploiting a flaw in the tool itself.",
+  },
+  "llm07-system-prompt-embedded-secret-leak": {
+    description:
+      "The system prompt was authored with an embedded secret (e.g. a third-party API key or internal endpoint URL) on the assumption that end users can never see it; a crafted user prompt (such as a \"repeat everything above\" or role-play jailbreak) extracts the full system prompt including that secret.",
+    impact: "May allow an attacker to recover credentials or internal logic that were never meant to be user-visible, then use them to access whatever system the leaked secret was scoped to.",
+  },
+  "llm08-vector-store-cross-tenant-retrieval": {
+    description:
+      "A multi-tenant RAG application stores document embeddings from all tenants in one shared vector index without per-tenant metadata filtering enforced at query time, so a similarity-search query from one tenant can return nearest-neighbor chunks embedded from a different tenant's private documents.",
+    impact: "May allow one tenant to read another tenant's private document content through the retrieval layer, an authorization gap that exists in the vector store rather than in the LLM itself.",
+  },
+  "llm09-unvalidated-advice-bot-misinformation": {
+    description:
+      "An advisory-style application presents raw LLM output as authoritative fact, without citation verification, a confidence indicator, or a disclaimer that the output may be inaccurate, so a user can act on a confidently-worded but fabricated (hallucinated) answer.",
+    impact: "May cause a user to make a real decision based on fabricated information, with actual consequence depending heavily on the advice domain; treat the scored severity here as a floor to adjust upward for higher-stakes domains such as legal, medical, or financial advice.",
+  },
+  "llm10-unbounded-consumption-denial-of-wallet": {
+    description:
+      "An LLM-backed endpoint has no per-user rate limiting, request-size cap, or per-request token/cost ceiling, letting an attacker submit a high volume of maximally expensive requests, such as very large context windows or requests that trigger long agentic tool-call loops.",
+    impact: "May allow an attacker to drive up the operator's inference-API billing (a \"denial of wallet\" attack) while degrading response times and availability for legitimate users, purely through request volume rather than a code-level flaw.",
   },
 };
 
