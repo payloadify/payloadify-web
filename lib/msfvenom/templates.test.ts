@@ -3,11 +3,12 @@ import { MSFVENOM_FORMATS_BY_ID } from "./formats";
 import { MSFVENOM_PAYLOADS_BY_ID } from "./payloads";
 import { MSFVENOM_TEMPLATES, MSFVENOM_TEMPLATES_BY_ID, RECOMMENDED_TEMPLATE_ID } from "./templates";
 
+// windows/powershell_reverse_tcp is a native (non-shellcode) payload and doesn't support EXITFUNC —
+// see the comment on that payload in payloads.ts — so powershell-windows is deliberately excluded.
 const WINDOWS_EXITFUNC_TEMPLATE_IDS = [
   "windows-meterpreter-x86",
   "windows-meterpreter-x64",
   "windows-stageless-shell",
-  "powershell-windows",
   "vbs-windows",
 ];
 

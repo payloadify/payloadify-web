@@ -1,10 +1,8 @@
 "use client";
 
 import { ChangeEvent, useMemo, useRef, useState } from "react";
-import { Callout } from "@/components/ui/Callout";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { dangerButtonClasses, iconButtonClasses, inputClasses, selectClasses, successButtonClasses, toggleButtonClasses } from "@/components/ui/formClasses";
-import { Tooltip } from "@/components/ui/Tooltip";
+import { toggleButtonClasses } from "@/components/ui/formClasses";
 import { saveAsFile } from "@/lib/download/saveAsFile";
 import {
   buildCvss31Vector,
@@ -12,22 +10,9 @@ import {
   computeCvss31Score,
   computeCvss40Score,
   CopyField,
-  CVSS31_AC_OPTIONS,
-  CVSS31_AV_OPTIONS,
-  CVSS31_CIA_OPTIONS,
   CVSS31_DEFAULT_METRICS,
-  CVSS31_PR_OPTIONS,
-  CVSS31_S_OPTIONS,
-  CVSS31_UI_OPTIONS,
   Cvss31Metrics,
-  CVSS40_AC_OPTIONS,
-  CVSS40_AT_OPTIONS,
-  CVSS40_AV_OPTIONS,
   CVSS40_DEFAULT_METRICS,
-  CVSS40_E_OPTIONS,
-  CVSS40_IMPACT_OPTIONS,
-  CVSS40_PR_OPTIONS,
-  CVSS40_UI_OPTIONS,
   Cvss40Metrics,
   CVSS_TEMPLATES,
   CVSS_TEMPLATES_BY_ID,
@@ -51,49 +36,21 @@ import {
   MAX_SAVED_CVSS_TEMPLATES,
   parseSavedCvssTemplatesImport,
   planSaveCvssTemplate,
-  SAVED_CVSS_TEMPLATES_WARNING_THRESHOLD,
   SavedCvssTemplate,
   useSavedCvssTemplates,
 } from "@/lib/storage/savedCvssTemplates";
 import { ChainPicker } from "./ChainPicker";
 import { CopyAllPanel } from "./CopyAllPanel";
+import { Cvss31MetricsGrid } from "./Cvss31MetricsGrid";
+import { Cvss40MetricsGrid } from "./Cvss40MetricsGrid";
 import { DescriptionImpactFields } from "./DescriptionImpactFields";
 import { ImportFromReportModal, ReportImportApplyPayload } from "./ImportFromReportModal";
 import { OutputPanel } from "./OutputPanel";
 import { PlatformVulnPicker } from "./PlatformVulnPicker";
+import { SavedTemplatesPanel, StatusMsg } from "./SavedTemplatesPanel";
 
 const VERSIONS: CvssVersion[] = ["3.1", "4.0"];
 const SAVED_CVSS_TEMPLATES_KEY = "payloadify:cvss-calculator:saved-templates";
-
-function MetricRow<T extends string>({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: { id: T; label: string }[];
-  value: T;
-  onChange: (id: T) => void;
-}) {
-  return (
-    <div>
-      <div className="mb-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">{label}</div>
-      <div className="flex flex-wrap gap-2">
-        {options.map((option) => (
-          <button
-            key={option.id}
-            type="button"
-            className={toggleButtonClasses(value === option.id)}
-            onClick={() => onChange(option.id)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export function CvssCalculatorTool() {
   const [version, setVersion] = useState<CvssVersion>("3.1");
@@ -108,8 +65,8 @@ export function CvssCalculatorTool() {
   const [saveNameInput, setSaveNameInput] = useState("");
   const [savedMenuOpen, setSavedMenuOpen] = useState(false);
   const [selectedSavedTemplateId, setSelectedSavedTemplateId] = useState<string | null>(null);
-  const [importStatus, setImportStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
-  const [saveStatus, setSaveStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [importStatus, setImportStatus] = useState<StatusMsg | null>(null);
+  const [saveStatus, setSaveStatus] = useState<StatusMsg | null>(null);
   const [importReportModalOpen, setImportReportModalOpen] = useState(false);
   const importFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -507,61 +464,9 @@ export function CvssCalculatorTool() {
       <DescriptionImpactFields meta={meta} onMetaChange={updateMeta} showChainedImpact={!!chainVulnTypeId} />
 
       {version === "3.1" ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <MetricRow label="Attack Vector (AV)" options={CVSS31_AV_OPTIONS} value={metrics31.AV} onChange={(v) => setMetric31("AV", v)} />
-          <MetricRow label="Attack Complexity (AC)" options={CVSS31_AC_OPTIONS} value={metrics31.AC} onChange={(v) => setMetric31("AC", v)} />
-          <MetricRow label="Privileges Required (PR)" options={CVSS31_PR_OPTIONS} value={metrics31.PR} onChange={(v) => setMetric31("PR", v)} />
-          <MetricRow label="User Interaction (UI)" options={CVSS31_UI_OPTIONS} value={metrics31.UI} onChange={(v) => setMetric31("UI", v)} />
-          <MetricRow label="Scope (S)" options={CVSS31_S_OPTIONS} value={metrics31.S} onChange={(v) => setMetric31("S", v)} />
-          <MetricRow label="Confidentiality (C)" options={CVSS31_CIA_OPTIONS} value={metrics31.C} onChange={(v) => setMetric31("C", v)} />
-          <MetricRow label="Integrity (I)" options={CVSS31_CIA_OPTIONS} value={metrics31.I} onChange={(v) => setMetric31("I", v)} />
-          <MetricRow label="Availability (A)" options={CVSS31_CIA_OPTIONS} value={metrics31.A} onChange={(v) => setMetric31("A", v)} />
-        </div>
+        <Cvss31MetricsGrid metrics={metrics31} onChange={setMetric31} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <MetricRow label="Attack Vector (AV)" options={CVSS40_AV_OPTIONS} value={metrics40.AV} onChange={(v) => setMetric40("AV", v)} />
-          <MetricRow label="Attack Complexity (AC)" options={CVSS40_AC_OPTIONS} value={metrics40.AC} onChange={(v) => setMetric40("AC", v)} />
-          <MetricRow label="Attack Requirements (AT)" options={CVSS40_AT_OPTIONS} value={metrics40.AT} onChange={(v) => setMetric40("AT", v)} />
-          <MetricRow label="Privileges Required (PR)" options={CVSS40_PR_OPTIONS} value={metrics40.PR} onChange={(v) => setMetric40("PR", v)} />
-          <MetricRow label="User Interaction (UI)" options={CVSS40_UI_OPTIONS} value={metrics40.UI} onChange={(v) => setMetric40("UI", v)} />
-          <MetricRow
-            label="Vulnerable System Confidentiality (VC)"
-            options={CVSS40_IMPACT_OPTIONS}
-            value={metrics40.VC}
-            onChange={(v) => setMetric40("VC", v)}
-          />
-          <MetricRow
-            label="Vulnerable System Integrity (VI)"
-            options={CVSS40_IMPACT_OPTIONS}
-            value={metrics40.VI}
-            onChange={(v) => setMetric40("VI", v)}
-          />
-          <MetricRow
-            label="Vulnerable System Availability (VA)"
-            options={CVSS40_IMPACT_OPTIONS}
-            value={metrics40.VA}
-            onChange={(v) => setMetric40("VA", v)}
-          />
-          <MetricRow
-            label="Subsequent System Confidentiality (SC)"
-            options={CVSS40_IMPACT_OPTIONS}
-            value={metrics40.SC}
-            onChange={(v) => setMetric40("SC", v)}
-          />
-          <MetricRow
-            label="Subsequent System Integrity (SI)"
-            options={CVSS40_IMPACT_OPTIONS}
-            value={metrics40.SI}
-            onChange={(v) => setMetric40("SI", v)}
-          />
-          <MetricRow
-            label="Subsequent System Availability (SA)"
-            options={CVSS40_IMPACT_OPTIONS}
-            value={metrics40.SA}
-            onChange={(v) => setMetric40("SA", v)}
-          />
-          <MetricRow label="Exploit Maturity (E)" options={CVSS40_E_OPTIONS} value={metrics40.E} onChange={(v) => setMetric40("E", v)} />
-        </div>
+        <Cvss40MetricsGrid metrics={metrics40} onChange={setMetric40} />
       )}
 
       <OutputPanel
@@ -575,109 +480,28 @@ export function CvssCalculatorTool() {
         platform={platformFilter}
       />
 
-      <div className="flex flex-col gap-2 rounded border border-zinc-200 p-4 dark:border-zinc-800">
-        <div className="flex flex-wrap items-end gap-2">
-          <div className="min-w-[160px] flex-1">
-            <label className="mb-1 block text-sm font-medium">Save this score as</label>
-            <input
-              type="text"
-              value={saveNameInput}
-              onChange={(e) => setSaveNameInput(e.target.value)}
-              placeholder={saveNamePlaceholder}
-              maxLength={MAX_CVSS_TITLE_LENGTH}
-              className={inputClasses}
-            />
-          </div>
-          <button type="button" onClick={saveCurrentAsTemplate} className={successButtonClasses}>
-            Save This Template
-          </button>
-        </div>
-        {saveStatus && (
-          <Callout variant={saveStatus.type === "error" ? "danger" : "success"}>{saveStatus.message}</Callout>
-        )}
-
-        <div>
-          <label className="mb-1 flex items-center text-sm font-medium">
-            Saved templates
-            <span className="ml-1.5 font-normal text-zinc-500 dark:text-zinc-400">
-              ({savedTemplates.length}/{MAX_SAVED_CVSS_TEMPLATES})
-            </span>
-            <Tooltip text={`Stored in this browser only, not synced across devices, and lost if you clear your cache. Use Export to back up. Limit: ${MAX_SAVED_CVSS_TEMPLATES} templates.`} />
-          </label>
-          {savedTemplates.length >= SAVED_CVSS_TEMPLATES_WARNING_THRESHOLD && savedTemplates.length < MAX_SAVED_CVSS_TEMPLATES && (
-            <div className="mb-2">
-              <Callout variant="warning">
-                {`You've saved ${savedTemplates.length}/${MAX_SAVED_CVSS_TEMPLATES} templates. Export a backup soon (Export Templates below) in case you hit the limit.`}
-              </Callout>
-            </div>
-          )}
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setSavedMenuOpen((open) => !open)}
-                className={`${selectClasses} min-w-[220px] text-left`}
-              >
-                {selectedSavedTemplate ? selectedSavedTemplate.name : "Load a saved template"}
-                <span className="float-right text-zinc-400">▾</span>
-              </button>
-              {savedMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setSavedMenuOpen(false)} />
-                  <div className="absolute z-20 mt-1 max-h-64 w-full min-w-[280px] overflow-auto rounded border border-zinc-300 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
-                    {savedTemplates.length === 0 && <p className="px-3 py-2 text-sm text-zinc-400 dark:text-zinc-500">No saved templates yet.</p>}
-                    {savedTemplates.map((t) => (
-                      <div key={t.id} className="group flex items-center justify-between px-1 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                        <button type="button" onClick={() => loadSavedTemplate(t)} className="min-w-0 flex-1 truncate px-2 py-1 text-left text-sm">
-                          {t.name}
-                        </button>
-                        <span className="hidden shrink-0 items-center gap-1 pr-1 group-hover:flex">
-                          <button
-                            type="button"
-                            onClick={() => deleteSavedTemplate(t.id)}
-                            title="Delete"
-                            aria-label={`Delete ${t.name}`}
-                            className="rounded px-1.5 py-0.5 text-sm text-zinc-500 hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-700"
-                          >
-                            ✕
-                          </button>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-            <button type="button" onClick={deleteAllSavedTemplates} disabled={savedTemplates.length === 0} className={dangerButtonClasses}>
-              Delete All
-            </button>
-            <button type="button" onClick={resetWorkingState} title="Clears the current working state; does not delete any saved templates" className={iconButtonClasses}>
-              Reset
-            </button>
-            <button type="button" onClick={exportSavedTemplates} disabled={savedTemplates.length === 0} className={iconButtonClasses}>
-              Export Templates
-            </button>
-            <button type="button" onClick={triggerImportSavedTemplates} className={iconButtonClasses}>
-              Import Templates
-            </button>
-            <button type="button" onClick={() => setImportReportModalOpen(true)} className={iconButtonClasses}>
-              Import from Report/Text
-            </button>
-            <input
-              ref={importFileInputRef}
-              type="file"
-              accept="application/json,.json"
-              onChange={handleImportSavedTemplatesFile}
-              className="hidden"
-            />
-          </div>
-          {importStatus && (
-            <div className="mt-2">
-              <Callout variant={importStatus.type === "error" ? "danger" : "success"}>{importStatus.message}</Callout>
-            </div>
-          )}
-        </div>
-      </div>
+      <SavedTemplatesPanel
+        saveNameInput={saveNameInput}
+        onSaveNameChange={setSaveNameInput}
+        saveNamePlaceholder={saveNamePlaceholder}
+        onSave={saveCurrentAsTemplate}
+        saveStatus={saveStatus}
+        savedTemplates={savedTemplates}
+        selectedSavedTemplate={selectedSavedTemplate}
+        savedMenuOpen={savedMenuOpen}
+        onToggleMenu={() => setSavedMenuOpen((open) => !open)}
+        onCloseMenu={() => setSavedMenuOpen(false)}
+        onLoad={loadSavedTemplate}
+        onDelete={deleteSavedTemplate}
+        onDeleteAll={deleteAllSavedTemplates}
+        onReset={resetWorkingState}
+        onExport={exportSavedTemplates}
+        onTriggerImport={triggerImportSavedTemplates}
+        onImportFile={handleImportSavedTemplatesFile}
+        importFileInputRef={importFileInputRef}
+        importStatus={importStatus}
+        onOpenImportReportModal={() => setImportReportModalOpen(true)}
+      />
 
       <CopyAllPanel fields={copyFields} />
     </div>

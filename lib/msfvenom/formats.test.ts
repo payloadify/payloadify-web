@@ -15,7 +15,7 @@ describe("MSFVENOM_FORMATS", () => {
 
   it("marks exactly the stdout-dump formats as not producing a file", () => {
     const noFile = new Set([
-      "raw", "hex", "c", "csharp", "java", "vba", "vbapplication", "vbscript", "powershell", "base32", "base64", "js_be", "js_le",
+      "raw", "hex", "c", "csharp", "java", "vba", "vbapplication", "vbscript", "powershell", "ps1", "base32", "base64", "js_be", "js_le",
       "psh-cmd",
     ]);
     for (const f of MSFVENOM_FORMATS) {

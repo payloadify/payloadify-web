@@ -18,7 +18,10 @@ export interface MsfvenomFormat {
  *  several formats that don't exist as real -f values (elf32/elf64/macho32/macho64 — arch is set
  *  via -a, not a separate format; apk/dex — Android output is `-f raw -o file.apk`; cab/scr/jsp/php —
  *  not in msfvenom's format list; veil — a separate framework, not an msfvenom format; hta — the
- *  real id is hta-psh). Those have been removed or corrected. */
+ *  real id is hta-psh). Those have been removed or corrected. Also corrected: "ps1" was previously
+ *  labeled as a runnable-script format (like psh); metasploit-framework's own source
+ *  (lib/msf/base/simple/buffer.rb) maps it to the identical transform as "powershell" — a
+ *  byte-array dump, not a script. See the ps1/powershell/psh notes below for the real distinction. */
 export const MSFVENOM_FORMATS: MsfvenomFormat[] = [
   { id: "exe", label: "EXE (.exe) — Windows executable", extension: "exe", category: "executable", producesFile: true },
   {
@@ -87,7 +90,7 @@ export const MSFVENOM_FORMATS: MsfvenomFormat[] = [
     extension: "ps1",
     category: "script",
     producesFile: true,
-    note: "Wraps the payload's shellcode in a PowerShell dropper — distinct from the ps1 transform format, which is for the dedicated PowerShell payloads.",
+    note: "Wraps the payload's shellcode in a PowerShell dropper. The similarly-named ps1/powershell formats below are a different, non-runnable byte-array transform, not a script wrapper.",
   },
   {
     id: "psh-cmd",
@@ -98,7 +101,6 @@ export const MSFVENOM_FORMATS: MsfvenomFormat[] = [
     note: "Prints a single PowerShell command to the console for direct copy-paste execution rather than saving a script file.",
   },
   { id: "psh-net", label: "PSH-NET — PowerShell .NET reflection loader", extension: "ps1", category: "script", producesFile: true },
-  { id: "ps1", label: "PS1 — PowerShell script", extension: "ps1", category: "script", producesFile: true },
   { id: "vbs", label: "VBS — VBScript, runs via cscript.exe", extension: "vbs", category: "script", producesFile: true },
   { id: "bash", label: "Bash — Bash script", extension: "sh", category: "script", producesFile: true },
   { id: "sh", label: "SH — POSIX shell script", extension: "sh", category: "script", producesFile: true },
@@ -129,7 +131,15 @@ export const MSFVENOM_FORMATS: MsfvenomFormat[] = [
     extension: "",
     category: "raw",
     producesFile: false,
-    note: "Distinct from ps1/psh, which produce runnable PowerShell scripts — this dumps a PowerShell byte array for embedding in your own script.",
+    note: "Dumps a PowerShell byte array for embedding in your own script — not a runnable script itself. \"ps1\" (below) is a literal alias of this same transform in real msfvenom, despite the name; psh is the format that produces a runnable dropper script.",
+  },
+  {
+    id: "ps1",
+    label: "PS1 array — alias of the PowerShell array format above, not a runnable script",
+    extension: "",
+    category: "raw",
+    producesFile: false,
+    note: "Same underlying transform as \"powershell\" above (msfvenom maps both to the identical byte-array output) — despite the name, this does not produce a runnable .ps1 script. Use psh to wrap shellcode in a runnable dropper, or raw for payloads (like windows/powershell_reverse_tcp) that already generate literal script text.",
   },
   { id: "base32", label: "Base32 — Base32-encoded shellcode", extension: "", category: "raw", producesFile: false },
   { id: "base64", label: "Base64 — Base64-encoded shellcode", extension: "", category: "raw", producesFile: false },

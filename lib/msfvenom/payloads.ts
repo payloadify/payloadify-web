@@ -244,9 +244,15 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     archPlacement: "windows-arch-segment",
     archs: WINDOWS_ARCHS,
     defaultArch: "x86",
-    compatibleFormats: ["ps1"],
-    supportsExitfunc: true,
+    // This is a native payload — its generate() already returns literal PowerShell script text, so
+    // "raw" (dump the bytes verbatim) is the only format that yields a runnable script. "ps1" is an
+    // alias of the "powershell" byte-array transform (see formats.ts), not a script producer — using
+    // it here would silently re-encode the script's own text as an unusable byte-array declaration.
+    compatibleFormats: ["raw"],
+    supportsExitfunc: false,
     filenameSlug: "powershell_reverse",
+    forceOutputFilename: true,
+    filenameExtension: "ps1",
     whyUseIt:
       "PowerShell reverse shell — runs natively on Windows 3.0+ via powershell.exe, no compiled binary needed. Evasion-friendly since it blends in with legitimate admin activity.",
   },
@@ -260,9 +266,12 @@ export const MSFVENOM_PAYLOADS: MsfvenomPayload[] = [
     archPlacement: "windows-arch-segment",
     archs: WINDOWS_ARCHS,
     defaultArch: "x86",
-    compatibleFormats: ["ps1"],
-    supportsExitfunc: true,
+    // Same reasoning as windows/powershell_reverse_tcp above.
+    compatibleFormats: ["raw"],
+    supportsExitfunc: false,
     filenameSlug: "powershell_bind",
+    forceOutputFilename: true,
+    filenameExtension: "ps1",
     whyUseIt: "PowerShell bind shell — target listens for the connection.",
   },
   {
