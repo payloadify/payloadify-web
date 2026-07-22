@@ -18,8 +18,8 @@ import { validateSelection } from "@/lib/hashcat/validation";
 import { useRateLimitedGeneration } from "@/lib/hooks/useRateLimitedGeneration";
 import { SavedWordlist, useSavedWordlists } from "@/lib/storage/savedWordlists";
 
-const HISTORY_KEY = "payloadify:hashcat-command-builder:history";
-const SAVED_WORDLISTS_KEY = "payloadify:hashcat-command-builder:saved-wordlists";
+const HISTORY_KEY = "payloadify:hashcat-generator:history";
+const SAVED_WORDLISTS_KEY = "payloadify:hashcat-generator:saved-wordlists";
 
 // Defaults so a first-time visitor can click Generate immediately without typing anything —
 // only the target hash is ever left blank, since that's the one thing this tool can't guess.
@@ -29,7 +29,7 @@ const DEFAULT_MASK = "?u?l?l?l?l?l?d?d?d";
 const MASK_CHEAT_SHEET =
   "?l = lowercase a-z\n?u = uppercase A-Z\n?d = digit 0-9\n?s = symbol (space/punctuation)\n?a = all of the above\n?b = 0x00-0xff\n\nExample: ?u?l?l?l?l?l?d?d?d matches Password123-style patterns.";
 
-export function HashcatCommandBuilderTool() {
+export function HashcatGeneratorTool() {
   // next/navigation's useSearchParams (not a manual window.location.search read) — this is the
   // part that was actually broken: on a client-side <Link> transition from the Hash Identifier,
   // window.location.search was not reliably updated yet at the moment this component's useState
@@ -173,6 +173,20 @@ export function HashcatCommandBuilderTool() {
     setGeneratedSelection(liveSelection);
     recordGeneration(check.now);
   }
+
+  // Auto-run the same generate() a manual "Generate Command" click would trigger, but only when
+  // we actually arrived with a hash handed off from the Hash Identifier (not on a bare visit or
+  // a page refresh, since the handoff params are scrubbed from the URL right after mount above).
+  // This still goes through generate()'s existing checkAndClear()/recordGeneration() path exactly
+  // like a manual click, so it counts against the same per-browser rate limit (lib/rateLimit/rateLimit.ts:
+  // 1.5s cooldown, 20/min cap) — repeatedly hitting this page with different mode/hash query params
+  // (scripted or by hand) is throttled the same way mashing the Generate button already is.
+  useEffect(() => {
+    if (handoffHashParam === null) return;
+    generate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only, using the
+    // handoff-populated state already applied via the lazy useState initializers above
+  }, []);
 
   function resetAll() {
     setModeSelect(String(HASHCAT_MODES[0]?.mode ?? 0));

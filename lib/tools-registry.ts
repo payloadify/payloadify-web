@@ -28,7 +28,7 @@ export const tools: Tool[] = [
     status: "live",
   },
   {
-    slug: "payload-encode",
+    slug: "payload-encoder",
     name: "Payload Encoder/Decoder",
     shortDescription:
       "Chain Base64, Hex, URL, and HTML-entity encoding and decoding steps to build or unwrap obfuscated payloads.",
@@ -98,7 +98,7 @@ export const tools: Tool[] = [
     status: "live",
   },
   {
-    slug: "hashcat-command-builder",
+    slug: "hashcat-generator",
     name: "Hashcat Command Generator",
     shortDescription:
       "Build a complete hashcat command: mode, attack type, wordlists, masks, rules, and advanced flags. Pre-filled with the mode number when you arrive from the Hash Identifier.",
