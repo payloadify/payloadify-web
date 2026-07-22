@@ -32,7 +32,7 @@ export default function AboutPage() {
           <p>
             The goal is to collapse that multi-step, syntax-heavy work
             into one clean, fast, click-driven flow: pick options, copy the
-            result. It&apos;s for people who wants a quick, reliable, and private tool to get the job done.
+            result. It&apos;s for people who want a quick, reliable, and private tool to get the job done.
           </p>
         </section>
 
@@ -59,7 +59,7 @@ export default function AboutPage() {
           </p>
         </section>
 
-         <section>
+        <section>
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Prioritizing speed
           </h2>

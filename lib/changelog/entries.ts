@@ -22,7 +22,7 @@ export const changelogEntries: ChangelogEntry[] = [
       },
       {
         category: "Added",
-        text: "CVSS Calculator: \"Import from report\" in the saved-templates panel, paste a report's text and extract a title, description, impact, and scores into a new saved template",
+        text: "CVSS Calculator: \"Import from report\" in the saved-templates panel, paste a report's text and extract a title, description, impact, and scores into a new saved template. Detects one finding per paste; if the pasted text covers multiple findings, only the first vector and labeled field of each type is used",
       },
       {
         category: "Added",
@@ -34,7 +34,7 @@ export const changelogEntries: ChangelogEntry[] = [
       },
       {
         category: "Added",
-        text: "CVSS Calculator: Copy All output can now include an optional suffix, with a toggle to turn it off",
+        text: "CVSS Calculator: Copy All output can now include each field's label, with a toggle to turn it off",
       },
       {
         category: "Improved",

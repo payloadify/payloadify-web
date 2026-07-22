@@ -6,6 +6,7 @@ import {
   detectLabeledField,
   detectOwaspCategory,
   detectReferenceUrls,
+  MAX_REPORT_IMPORT_LENGTH,
 } from "./detect";
 
 describe("detectCvssVector", () => {
@@ -43,6 +44,14 @@ describe("detectCvssVector", () => {
 
   it("returns null on plain text with no vector at all", () => {
     expect(detectCvssVector("Just a regular finding write-up, no vector here.").detected).toBeNull();
+  });
+
+  it("tolerates a lowercase vector, e.g. from a copy-paste that lost its casing", () => {
+    const text = "cvss:3.1/av:n/ac:l/pr:n/ui:n/s:u/c:h/i:h/a:h";
+    const { detected } = detectCvssVector(text);
+    expect(detected?.version).toBe("3.1");
+    expect(detected?.metrics).toEqual({ AV: "N", AC: "L", PR: "N", UI: "N", S: "U", C: "H", I: "H", A: "H" });
+    expect(detected?.vector).toBe("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
   });
 });
 
@@ -216,6 +225,15 @@ describe("detectCvssFieldsFromReport", () => {
     expect(result.description).toBe("Ditemukan vulnerability pada aplikasi X.");
     expect(result.owasp?.id).toBe("web-a04-insecure-design");
     expect(result.cwe?.id).toBe("CWE-472");
+  });
+
+  it("truncates input beyond MAX_REPORT_IMPORT_LENGTH before running any detector", () => {
+    const padding = "x".repeat(MAX_REPORT_IMPORT_LENGTH);
+    const vectorPastTheCap = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H";
+    const text = `${padding}\n${vectorPastTheCap}`;
+
+    const result = detectCvssFieldsFromReport(text);
+    expect(result.vector.detected).toBeNull();
   });
 
   it("does not use an explicit 'Title:' line's own text as a fallback candidate", () => {

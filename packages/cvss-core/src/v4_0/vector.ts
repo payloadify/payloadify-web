@@ -33,7 +33,7 @@ export function parseCvss40Vector(vector: string): Cvss40Metrics | null {
   for (const part of body.split("/")) {
     const [key, value] = part.split(":");
     if (!key || value === undefined) return null;
-    tokens.set(key.toUpperCase(), value);
+    tokens.set(key.toUpperCase(), value.toUpperCase());
   }
 
   const AV = tokens.get("AV");

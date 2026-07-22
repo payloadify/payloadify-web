@@ -32,6 +32,14 @@ export interface CvssMeta {
   title: string;
 }
 
+/** UI-enforced input caps for the free-text CvssMeta fields (via each field's `maxLength`) — not
+ *  a data-integrity constraint, just a sanity bound on how much a single finding's write-up
+ *  should need. */
+export const MAX_CVSS_TITLE_LENGTH = 200;
+export const MAX_CVSS_DESCRIPTION_LENGTH = 3000;
+export const MAX_CVSS_IMPACT_LENGTH = 3000;
+export const MAX_CVSS_RATIONALE_LENGTH = 1500;
+
 export const EMPTY_CVSS_META: CvssMeta = {
   rationale: "",
   owaspRefId: null,

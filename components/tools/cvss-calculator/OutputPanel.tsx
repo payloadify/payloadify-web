@@ -7,6 +7,7 @@ import {
   CvssMeta,
   CvssReference,
   CWE_CATEGORY_LABELS,
+  MAX_CVSS_RATIONALE_LENGTH,
   CWE_CATEGORY_ORDER,
   CWE_ENTRIES,
   CWE_ENTRIES_BY_ID,
@@ -169,6 +170,7 @@ export function OutputPanel({
                 value={meta.rationale}
                 onChange={(e) => onMetaChange({ rationale: e.target.value })}
                 rows={2}
+                maxLength={MAX_CVSS_RATIONALE_LENGTH}
                 placeholder="Free-text notes for this finding, not included unless you add it in Copy All."
                 className={`${inputClasses} font-sans`}
               />

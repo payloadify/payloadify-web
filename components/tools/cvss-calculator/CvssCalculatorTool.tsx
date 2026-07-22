@@ -38,6 +38,7 @@ import {
   findChainPair,
   getChainedImpactDraft,
   getDescriptionImpactDraft,
+  MAX_CVSS_TITLE_LENGTH,
   OWASP_CATEGORIES_BY_ID,
   OwaspWebVersion,
   Platform,
@@ -495,6 +496,7 @@ export function CvssCalculatorTool() {
             type="text"
             value={title}
             onChange={(e) => updateMeta({ title: e.target.value })}
+            maxLength={MAX_CVSS_TITLE_LENGTH}
             title="Overrides the auto-derived title; clear it to fall back to the selected vulnerability type's name"
             className="min-w-0 flex-1 truncate bg-transparent text-sm font-medium text-zinc-700 outline-none dark:text-zinc-300"
           />
@@ -582,6 +584,7 @@ export function CvssCalculatorTool() {
               value={saveNameInput}
               onChange={(e) => setSaveNameInput(e.target.value)}
               placeholder={saveNamePlaceholder}
+              maxLength={MAX_CVSS_TITLE_LENGTH}
               className={inputClasses}
             />
           </div>

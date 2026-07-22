@@ -5,7 +5,15 @@ import { createPortal } from "react-dom";
 import { checkboxLabelClasses, iconButtonClasses, inputClasses } from "@/components/ui/formClasses";
 import { Callout } from "@/components/ui/Callout";
 import { useFocusTrap } from "@/lib/hooks/useFocusTrap";
-import { CvssMeta, CvssReportImportDetection, CvssVersion, Cvss31Metrics, Cvss40Metrics, detectCvssFieldsFromReport } from "@payloadify/cvss-core";
+import {
+  CvssMeta,
+  CvssReportImportDetection,
+  CvssVersion,
+  Cvss31Metrics,
+  Cvss40Metrics,
+  detectCvssFieldsFromReport,
+  MAX_REPORT_IMPORT_LENGTH,
+} from "@payloadify/cvss-core";
 
 export interface ReportImportApplyPayload {
   version?: CvssVersion;
@@ -166,9 +174,14 @@ export function ImportFromReportModal({
               value={text}
               onChange={(e) => setText(e.target.value)}
               rows={8}
+              maxLength={MAX_REPORT_IMPORT_LENGTH}
               placeholder={"Title: Reflected XSS in search parameter\nDescription: ...\nImpact: ...\nCVSS:3.1/AV:N/AC:L/...\nCWE-79\nA03:2021 - Injection"}
               className={`${inputClasses} font-sans`}
             />
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              Detects one finding per paste. If this text has more than one CVSS vector or labeled finding, only the first of each is
+              used. Capped at {MAX_REPORT_IMPORT_LENGTH.toLocaleString()} characters.
+            </p>
             <button type="button" onClick={runDetection} disabled={text.trim().length === 0} className={`${iconButtonClasses} mt-2`}>
               Detect
             </button>

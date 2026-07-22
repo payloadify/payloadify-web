@@ -265,9 +265,15 @@ export interface CvssReportImportDetection {
   notes: string | null;
 }
 
+/** Caps how much pasted text every detector below scans. Keeps a very large paste (e.g. a whole
+ *  PDF-extracted report) from making the full sweep of regex passes (OWASP categories, labeled
+ *  fields, etc.) run against an unbounded string on the main thread. */
+export const MAX_REPORT_IMPORT_LENGTH = 10000;
+
 /** Runs every detector once over a single pasted report excerpt — the one entry point the
  *  import modal calls on submit. Each key mirrors a field in the preview/confirm UI. */
-export function detectCvssFieldsFromReport(text: string): CvssReportImportDetection {
+export function detectCvssFieldsFromReport(rawText: string): CvssReportImportDetection {
+  const text = rawText.slice(0, MAX_REPORT_IMPORT_LENGTH);
   const references = detectReferenceUrls(text);
   return {
     vector: detectCvssVector(text),

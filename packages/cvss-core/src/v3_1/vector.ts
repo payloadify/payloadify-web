@@ -29,7 +29,7 @@ export function parseCvss31Vector(vector: string): Cvss31Metrics | null {
   for (const part of body.split("/")) {
     const [key, value] = part.split(":");
     if (!key || value === undefined) return null;
-    tokens.set(key.toUpperCase(), value);
+    tokens.set(key.toUpperCase(), value.toUpperCase());
   }
 
   const AV = tokens.get("AV");
