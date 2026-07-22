@@ -12,7 +12,7 @@ const sections: { title: string; slugs: string[] }[] = [
   },
   {
     title: "Text & Token Tools",
-    slugs: ["jwt-decoder", "payload-encode", "homoglyph-identifier"],
+    slugs: ["jwt-decoder", "payload-encoder", "homoglyph-identifier"],
   },
   {
     title: "Payload Generators",
@@ -22,7 +22,7 @@ const sections: { title: string; slugs: string[] }[] = [
       "reverse-shell-generator",
       "msfvenom-generator",
       "subdomain-permutation-generator",
-      "hashcat-command-builder",
+      "hashcat-generator",
     ],
   },
   {

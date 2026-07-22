@@ -67,7 +67,7 @@ function CandidateRow({
             </span>
             <CopyButton text={signature.hashcatModes.join(",")} label="Copy mode" />
             <Link
-              href={`/hashcat-command-builder?mode=${signature.hashcatModes[0]}&hash=${encodeURIComponent(hashValue)}`}
+              href={`/hashcat-generator?mode=${signature.hashcatModes[0]}&hash=${encodeURIComponent(hashValue)}`}
               className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500"
             >
               Build Hashcat Command
