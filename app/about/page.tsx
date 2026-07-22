@@ -31,10 +31,9 @@ export default function AboutPage() {
             exists.
           </p>
           <p>
-            Payloadify exists to collapse that multi-step, syntax-heavy work
+            The goal is to collapse that multi-step, syntax-heavy work
             into one clean, fast, click-driven flow: pick options, copy the
-            result. It's for people who currently have to piece it together
-            themselves.
+            result. It's for people who wants a quick, reliable, and private tool to get the job done.
           </p>
         </section>
 
@@ -58,6 +57,15 @@ export default function AboutPage() {
               github.com/payloadify/payloadify-web
             </a>
             .
+          </p>
+        </section>
+
+         <section>
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+            Prioritizing speed
+          </h2>
+          <p>
+            Payloadify is designed to be fast. In every development decision, user experience is always kept in mind e.g. if feature X would slow down the site or make it harder to use, it is not implemented. Catchy animations and flashy graphics are avoided in favor of a clean, fast, and efficient interface.
           </p>
         </section>
 
@@ -98,21 +106,6 @@ export default function AboutPage() {
             .
           </p>
         </section>
-
-        <div className="flex flex-col items-center border-t border-zinc-200 pt-8 dark:border-zinc-800">
-          <a
-            href="https://saasbrowser.com/en/saas/1572292/payloadify"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              src="/saas-browser-badge-14.svg"
-              alt="Payloadify SaaS browser badge"
-              width={228}
-              height={80}
-            />
-          </a>
-        </div>
       </div>
     </ToolPageLayout>
   );
