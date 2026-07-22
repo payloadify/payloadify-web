@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { inputClasses } from "@/components/ui/formClasses";
-import { CvssMeta } from "@payloadify/cvss-core";
+import { CvssMeta, MAX_CVSS_DESCRIPTION_LENGTH, MAX_CVSS_IMPACT_LENGTH } from "@payloadify/cvss-core";
 import { usePersistedBoolean } from "@/lib/storage/persistedBoolean";
 
 const COLLAPSED_KEY = "payloadify:cvss-calculator:description-impact-collapsed";
@@ -74,6 +74,7 @@ export function DescriptionImpactFields({
             value={meta.description}
             onChange={(e) => onMetaChange({ description: e.target.value })}
             rows={3}
+            maxLength={MAX_CVSS_DESCRIPTION_LENGTH}
             placeholder="Describe the vulnerability..."
             className={`${inputClasses} max-h-60 resize-none overflow-y-auto font-sans`}
           />
@@ -91,6 +92,7 @@ export function DescriptionImpactFields({
             value={meta.impact}
             onChange={(e) => onMetaChange({ impact: e.target.value })}
             rows={3}
+            maxLength={MAX_CVSS_IMPACT_LENGTH}
             placeholder="Describe the impact..."
             className={`${inputClasses} max-h-60 resize-none overflow-y-auto font-sans`}
           />

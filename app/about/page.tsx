@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { ToolPageLayout } from "@/components/layout/ToolPageLayout";
 
 export const metadata: Metadata = {
@@ -17,7 +16,7 @@ export default function AboutPage() {
             Pentesting and bug bounty work are full of tasks that are simple
             in theory and a pain in practice: remembering the right hashcat
             mode and flags, assembling a reverse shell one-liner without
-            breaking the quoting, decoding a JWT to check if it's signed with{" "}
+            breaking the quoting, decoding a JWT to check if it&apos;s signed with{" "}
             <code>alg: none</code>. None of it is hard. All of it is easy to
             get slightly wrong, and today it gets pieced together from cheat
             sheets, slow or cluttered sites, or memory.
@@ -25,16 +24,15 @@ export default function AboutPage() {
           <p>
             Scoring CVSS is the same problem: every finding needs a score,
             and searching for a score you already used in a previous report
-            is a hassle. That's why the CVSS calculator lets you save a
-            finding's scoring and click to reload it next time. That
+            is a hassle. That&apos;s why the CVSS calculator lets you save a
+            finding&apos;s scoring and click to reload it next time. That
             friction, everywhere and not just CVSS, is the reason Payloadify
             exists.
           </p>
           <p>
-            Payloadify exists to collapse that multi-step, syntax-heavy work
+            The goal is to collapse that multi-step, syntax-heavy work
             into one clean, fast, click-driven flow: pick options, copy the
-            result. It's for people who currently have to piece it together
-            themselves.
+            result. It&apos;s for people who want a quick, reliable, and private tool to get the job done.
           </p>
         </section>
 
@@ -48,7 +46,7 @@ export default function AboutPage() {
             sent to a server.
           </p>
           <p>
-            Don't take that on faith. Check the code:{" "}
+            Don&apos;t take that on faith. Check the code:{" "}
             <a
               href="https://github.com/payloadify/payloadify-web"
               target="_blank"
@@ -58,6 +56,15 @@ export default function AboutPage() {
               github.com/payloadify/payloadify-web
             </a>
             .
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
+            Prioritizing speed
+          </h2>
+          <p>
+            Payloadify is designed to be fast. In every development decision, user experience is always kept in mind e.g. if feature X would slow down the site or make it harder to use, it is not implemented. Catchy animations and flashy graphics are avoided in favor of a clean, fast, and efficient interface.
           </p>
         </section>
 
@@ -77,7 +84,7 @@ export default function AboutPage() {
             >
               GitHub issue
             </a>
-            . That's how it gets fixed.
+            . That&apos;s how it gets fixed.
           </p>
         </section>
 
@@ -98,21 +105,6 @@ export default function AboutPage() {
             .
           </p>
         </section>
-
-        <div className="flex flex-col items-center border-t border-zinc-800 pt-8">
-          <a
-            href="https://saasbrowser.com/en/saas/1572292/payloadify"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              src="/saas-browser-badge-14.svg"
-              alt="Payloadify SaaS browser badge"
-              width={228}
-              height={80}
-            />
-          </a>
-        </div>
       </div>
     </ToolPageLayout>
   );

@@ -2,7 +2,8 @@
 
 import { ChangeEvent, useMemo, useRef, useState } from "react";
 import { Callout } from "@/components/ui/Callout";
-import { iconButtonClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
+import { CopyButton } from "@/components/ui/CopyButton";
+import { dangerButtonClasses, iconButtonClasses, inputClasses, selectClasses, successButtonClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { saveAsFile } from "@/lib/download/saveAsFile";
 import {
@@ -37,23 +38,27 @@ import {
   findChainPair,
   getChainedImpactDraft,
   getDescriptionImpactDraft,
+  MAX_CVSS_TITLE_LENGTH,
   OWASP_CATEGORIES_BY_ID,
   OwaspWebVersion,
   Platform,
   toOwaspWebVersion,
   VRT_CATEGORIES_BY_ID,
   VRT_VERSION,
+  VULN_TYPES_BY_ID,
 } from "@payloadify/cvss-core";
 import {
   MAX_SAVED_CVSS_TEMPLATES,
   parseSavedCvssTemplatesImport,
   planSaveCvssTemplate,
+  SAVED_CVSS_TEMPLATES_WARNING_THRESHOLD,
   SavedCvssTemplate,
   useSavedCvssTemplates,
 } from "@/lib/storage/savedCvssTemplates";
 import { ChainPicker } from "./ChainPicker";
 import { CopyAllPanel } from "./CopyAllPanel";
 import { DescriptionImpactFields } from "./DescriptionImpactFields";
+import { ImportFromReportModal, ReportImportApplyPayload } from "./ImportFromReportModal";
 import { OutputPanel } from "./OutputPanel";
 import { PlatformVulnPicker } from "./PlatformVulnPicker";
 
@@ -105,6 +110,7 @@ export function CvssCalculatorTool() {
   const [selectedSavedTemplateId, setSelectedSavedTemplateId] = useState<string | null>(null);
   const [importStatus, setImportStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [saveStatus, setSaveStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [importReportModalOpen, setImportReportModalOpen] = useState(false);
   const importFileInputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -338,6 +344,17 @@ export function CvssCalculatorTool() {
     setImportStatus({ type: added > 0 ? "success" : "error", message: parts.join(" ") });
   }
 
+  /** Applies a reviewed/confirmed selection from the "Import From Report" modal to the working
+   *  form state — never to localStorage directly. The user still has to explicitly click "Save
+   *  This Template" afterward if they want to persist it, same as any other manual edit. */
+  function applyReportImport(payload: ReportImportApplyPayload) {
+    if (payload.version) setVersion(payload.version);
+    if (payload.metrics31) setMetrics31(payload.metrics31);
+    if (payload.metrics40) setMetrics40(payload.metrics40);
+    if (payload.metrics31 || payload.metrics40) resetToCustom();
+    if (Object.keys(payload.metaPatch).length > 0) updateMeta(payload.metaPatch);
+  }
+
   function resetWorkingState() {
     setPlatformFilter("web");
     setVulnTypeId(null);
@@ -367,9 +384,10 @@ export function CvssCalculatorTool() {
   const vector40 = useMemo(() => buildCvss40Vector(metrics40), [metrics40]);
 
   const selectedSavedTemplate = selectedSavedTemplateId ? savedTemplates.find((t) => t.id === selectedSavedTemplateId) : null;
-  // Only a real, loaded/picked template name is safe to use as the actual saved name — the
-  // placeholder text below it is illustrative ("e.g. ...") and must never be saved verbatim.
-  const suggestedSaveName = selectedSavedTemplate?.name ?? currentTemplate?.label ?? null;
+  // Only a real, loaded/picked template name, preset label, or user-entered title (e.g. set by
+  // "Import from Report/Text") is safe to use as the actual saved name — the placeholder text
+  // below it is illustrative ("e.g. ...") and must never be saved verbatim.
+  const suggestedSaveName = selectedSavedTemplate?.name ?? currentTemplate?.label ?? (meta.title.trim() || null);
   const saveNamePlaceholder = suggestedSaveName ?? "e.g. Client X - login XSS";
 
   function saveCurrentAsTemplate() {
@@ -402,33 +420,62 @@ export function CvssCalculatorTool() {
   const severity = version === "3.1" ? severity31 : severity40;
   const vector = version === "3.1" ? vector31 : vector40;
 
+  /** The finding's headline: the chained pair's "X Lead to Y" once a chain is picked, otherwise
+   *  just the selected vulnerability type's name. Empty for a fully custom (no vuln type) session. */
+  const derivedTitle = useMemo(() => {
+    if (chainVulnTypeId && currentTemplate) {
+      const first = VULN_TYPES_BY_ID[currentTemplate.vulnTypeId]?.label;
+      const second = VULN_TYPES_BY_ID[chainVulnTypeId]?.label;
+      if (first && second) return `${first} Lead to ${second}`;
+    }
+    return vulnTypeId ? (VULN_TYPES_BY_ID[vulnTypeId]?.label ?? "") : "";
+  }, [vulnTypeId, chainVulnTypeId, currentTemplate]);
+
+  // meta.title is a manual override (e.g. set by "Import From Report") — takes priority over the
+  // vuln-type-derived headline whenever the user has set one, and is the only way to get a title
+  // at all for a fully custom finding with no matching vuln type.
+  const title = meta.title.trim() || derivedTitle;
+
   const copyFields: CopyField[] = useMemo(() => {
-    const fields: CopyField[] = [{ id: "vector", label: "Vector String", value: vector }];
-    if (meta.description.trim()) fields.push({ id: "description", label: "Vulnerability Description", value: meta.description.trim() });
+    const fields: CopyField[] = [];
+    if (title) fields.push({ id: "title", label: "Title", value: title });
+    if (meta.description.trim()) fields.push({ id: "description", label: "Description", value: meta.description.trim() });
     if (meta.impact.trim()) fields.push({ id: "impact", label: "Impact", value: meta.impact.trim() });
     if (chainVulnTypeId && meta.chainedImpact.trim()) fields.push({ id: "chainedImpact", label: "Chained Impact", value: meta.chainedImpact.trim() });
+    if (meta.rationale.trim()) fields.push({ id: "rationale", label: "Notes", value: meta.rationale.trim() });
+    fields.push({ id: "vector", label: "Vector String", value: vector });
     const owasp = meta.owaspRefId ? OWASP_CATEGORIES_BY_ID[meta.owaspRefId] : null;
     const vrt = meta.vrtRefId ? VRT_CATEGORIES_BY_ID[meta.vrtRefId] : null;
     const cwe = meta.cweId ? CWE_ENTRIES_BY_ID[meta.cweId] : null;
     if (owasp) fields.push({ id: "owasp", label: "OWASP Category", value: owasp.label, url: owasp.url });
     if (vrt) fields.push({ id: "vrt", label: "VRT Category", value: `VRT ${VRT_VERSION} - ${vrt.label}` });
-    if (meta.rationale.trim()) fields.push({ id: "rationale", label: "Rationale / Notes", value: meta.rationale.trim() });
     if (cwe) fields.push({ id: "cwe", label: "CWE", value: `${cwe.id}: ${cwe.label}`, url: cwe.url });
     if (meta.references.length > 0) {
       fields.push({ id: "references", label: "References", value: meta.references.map((r) => r.url).join("\n") });
     }
     return fields;
-  }, [vector, meta, chainVulnTypeId]);
+  }, [title, vector, meta, chainVulnTypeId]);
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex gap-2">
-        {VERSIONS.map((v) => (
-          <button key={v} type="button" className={toggleButtonClasses(version === v)} onClick={() => setVersion(v)}>
-            CVSS {v}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex gap-2">
+          {VERSIONS.map((v) => (
+            <button key={v} type="button" className={toggleButtonClasses(version === v)} onClick={() => setVersion(v)}>
+              CVSS {v}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {importReportModalOpen && (
+        <ImportFromReportModal
+          currentVersion={version}
+          currentMeta={meta}
+          onApply={applyReportImport}
+          onClose={() => setImportReportModalOpen(false)}
+        />
+      )}
 
       <PlatformVulnPicker
         version={version}
@@ -442,6 +489,20 @@ export function CvssCalculatorTool() {
       />
 
       {currentTemplate && <ChainPicker firstVulnTypeId={currentTemplate.vulnTypeId} chainVulnTypeId={chainVulnTypeId} onChainChange={selectChain} />}
+
+      {title && (
+        <div className="flex items-center gap-2 rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700">
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => updateMeta({ title: e.target.value })}
+            maxLength={MAX_CVSS_TITLE_LENGTH}
+            title="Overrides the auto-derived title; clear it to fall back to the selected vulnerability type's name"
+            className="min-w-0 flex-1 truncate bg-transparent text-sm font-medium text-zinc-700 outline-none dark:text-zinc-300"
+          />
+          <CopyButton text={title} label="Copy Title" />
+        </div>
+      )}
 
       <DescriptionImpactFields meta={meta} onMetaChange={updateMeta} showChainedImpact={!!chainVulnTypeId} />
 
@@ -523,10 +584,11 @@ export function CvssCalculatorTool() {
               value={saveNameInput}
               onChange={(e) => setSaveNameInput(e.target.value)}
               placeholder={saveNamePlaceholder}
+              maxLength={MAX_CVSS_TITLE_LENGTH}
               className={inputClasses}
             />
           </div>
-          <button type="button" onClick={saveCurrentAsTemplate} className={iconButtonClasses}>
+          <button type="button" onClick={saveCurrentAsTemplate} className={successButtonClasses}>
             Save This Template
           </button>
         </div>
@@ -542,6 +604,13 @@ export function CvssCalculatorTool() {
             </span>
             <Tooltip text={`Stored in this browser only, not synced across devices, and lost if you clear your cache. Use Export to back up. Limit: ${MAX_SAVED_CVSS_TEMPLATES} templates.`} />
           </label>
+          {savedTemplates.length >= SAVED_CVSS_TEMPLATES_WARNING_THRESHOLD && savedTemplates.length < MAX_SAVED_CVSS_TEMPLATES && (
+            <div className="mb-2">
+              <Callout variant="warning">
+                {`You've saved ${savedTemplates.length}/${MAX_SAVED_CVSS_TEMPLATES} templates. Export a backup soon (Export Templates below) in case you hit the limit.`}
+              </Callout>
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <button
@@ -579,7 +648,7 @@ export function CvssCalculatorTool() {
                 </>
               )}
             </div>
-            <button type="button" onClick={deleteAllSavedTemplates} disabled={savedTemplates.length === 0} className={iconButtonClasses}>
+            <button type="button" onClick={deleteAllSavedTemplates} disabled={savedTemplates.length === 0} className={dangerButtonClasses}>
               Delete All
             </button>
             <button type="button" onClick={resetWorkingState} title="Clears the current working state; does not delete any saved templates" className={iconButtonClasses}>
@@ -590,6 +659,9 @@ export function CvssCalculatorTool() {
             </button>
             <button type="button" onClick={triggerImportSavedTemplates} className={iconButtonClasses}>
               Import Templates
+            </button>
+            <button type="button" onClick={() => setImportReportModalOpen(true)} className={iconButtonClasses}>
+              Import from Report/Text
             </button>
             <input
               ref={importFileInputRef}

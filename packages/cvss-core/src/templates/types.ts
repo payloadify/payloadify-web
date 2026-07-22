@@ -25,7 +25,20 @@ export interface CvssMeta {
    *  otherwise a scaffold prompt for the user to fill in themselves. "" when no chain is
    *  selected. */
   chainedImpact: string;
+  /** Manual override for the finding's title, shown/copied instead of the vuln-type-derived title
+   *  whenever non-empty. "" means "no override" — fall back to the derived title. Exists so a
+   *  finding imported from a report (or any fully custom finding with no matching vuln type) can
+   *  still have a title, since the derived title requires a selected vulnTypeId. */
+  title: string;
 }
+
+/** UI-enforced input caps for the free-text CvssMeta fields (via each field's `maxLength`) — not
+ *  a data-integrity constraint, just a sanity bound on how much a single finding's write-up
+ *  should need. */
+export const MAX_CVSS_TITLE_LENGTH = 200;
+export const MAX_CVSS_DESCRIPTION_LENGTH = 3000;
+export const MAX_CVSS_IMPACT_LENGTH = 3000;
+export const MAX_CVSS_RATIONALE_LENGTH = 1500;
 
 export const EMPTY_CVSS_META: CvssMeta = {
   rationale: "",
@@ -36,6 +49,7 @@ export const EMPTY_CVSS_META: CvssMeta = {
   description: "",
   impact: "",
   chainedImpact: "",
+  title: "",
 };
 
 export interface CvssTemplate {
