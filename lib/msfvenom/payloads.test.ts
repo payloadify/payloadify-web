@@ -101,9 +101,16 @@ describe("MSFVENOM_PAYLOADS", () => {
     expect(python.supportsExitfunc).toBe(false);
   });
 
-  it("supportsExitfunc is true iff platform is windows", () => {
+  // EXITFUNC controls how injected shellcode exits its host process — it's a shellcode-specific
+  // concept, not a blanket "Windows" one. windows/powershell_reverse_tcp and windows/powershell_bind_tcp
+  // are native payloads (their generate() returns literal PowerShell script text, no shellcode), so
+  // they're the deliberate exception to the otherwise-universal Windows rule below.
+  const WINDOWS_NON_SHELLCODE_PAYLOAD_IDS = ["windows/powershell_reverse_tcp", "windows/powershell_bind_tcp"];
+
+  it("supportsExitfunc is true iff platform is windows and the payload is shellcode-based", () => {
     for (const p of MSFVENOM_PAYLOADS) {
-      expect(p.supportsExitfunc).toBe(p.platform === "windows");
+      const expected = p.platform === "windows" && !WINDOWS_NON_SHELLCODE_PAYLOAD_IDS.includes(p.id);
+      expect(p.supportsExitfunc).toBe(expected);
     }
   });
 
