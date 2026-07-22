@@ -58,6 +58,11 @@ describe("detectCwe", () => {
   it("returns null when no CWE reference is present", () => {
     expect(detectCwe("No weakness id mentioned here.")).toBeNull();
   });
+
+  it("resolves a CWE from a cwe.mitre.org reference URL when no 'CWE-<n>' text is present", () => {
+    const refs = detectReferenceUrls("https://cwe.mitre.org/data/definitions/472.html");
+    expect(detectCwe("no inline CWE id here", refs)?.id).toBe("CWE-472");
+  });
 });
 
 describe("detectOwaspCategory", () => {
@@ -75,6 +80,23 @@ describe("detectOwaspCategory", () => {
 
   it("returns null when no recognizable code is present", () => {
     expect(detectOwaspCategory("Just a description with no OWASP reference.")).toBeNull();
+  });
+
+  it("resolves a name + bare short code without a year, e.g. 'Insecure Design (A4)'", () => {
+    expect(detectOwaspCategory("Insecure Design (A4) - Response Manipulation")?.id).toBe("web-a04-insecure-design");
+  });
+
+  it("resolves a name + zero-padded short code, e.g. 'Insecure Design (A04)'", () => {
+    expect(detectOwaspCategory("Insecure Design (A04) issue")?.id).toBe("web-a04-insecure-design");
+  });
+
+  it("resolves from an owasp.org reference URL even without the /2021/ path segment", () => {
+    const refs = detectReferenceUrls("See https://owasp.org/Top10/A04_2021-Insecure_Design/ for details.");
+    expect(detectOwaspCategory("no code here", refs)?.id).toBe("web-a04-insecure-design");
+  });
+
+  it("prefers an explicit A0x:20xx code over a name+shortcode match when both are present", () => {
+    expect(detectOwaspCategory("A03:2021 - Injection, not Insecure Design (A4)")?.id).toBe("web-a03-injection");
   });
 });
 
@@ -133,6 +155,11 @@ describe("detectLabeledField", () => {
     const text = "Description: This is a reflected XSS issue (see CWE-79 for background) affecting the search page.";
     expect(detectLabeledField(text, "description")).toBe("This is a reflected XSS issue (see CWE-79 for background) affecting the search page.");
   });
+
+  it("recognizes 'Vulnerability Description:' as an alias for the description field", () => {
+    const text = "Vulnerability Description: \nThe search endpoint reflects user input unescaped.\n\nImpact: cookie theft";
+    expect(detectLabeledField(text, "description")).toBe("The search endpoint reflects user input unescaped.");
+  });
 });
 
 describe("detectCvssFieldsFromReport", () => {
@@ -168,5 +195,36 @@ describe("detectCvssFieldsFromReport", () => {
     expect(result.description).toBeNull();
     expect(result.impact).toBeNull();
     expect(result.notes).toBeNull();
+  });
+
+  it("falls back to the first unlabeled line as the title, stripping leading section numbering", () => {
+    const text = [
+      "3.1.3.\tInsecure Design (A4) - Response Manipulation Lead to Unrestricted File Upload",
+      "",
+      "Vulnerability Description: ",
+      "Ditemukan vulnerability pada aplikasi X.",
+      "",
+      "Impact: ",
+      "Attacker dapat memanipulasi respons server.",
+      "",
+      "\thttps://owasp.org/Top10/A04_2021-Insecure_Design/",
+      "\thttps://cwe.mitre.org/data/definitions/472.html",
+    ].join("\n");
+
+    const result = detectCvssFieldsFromReport(text);
+    expect(result.title).toBe("Insecure Design (A4) - Response Manipulation Lead to Unrestricted File Upload");
+    expect(result.description).toBe("Ditemukan vulnerability pada aplikasi X.");
+    expect(result.owasp?.id).toBe("web-a04-insecure-design");
+    expect(result.cwe?.id).toBe("CWE-472");
+  });
+
+  it("does not use an explicit 'Title:' line's own text as a fallback candidate", () => {
+    const text = "Title: Reflected XSS\nDescription: something";
+    expect(detectCvssFieldsFromReport(text).title).toBe("Reflected XSS");
+  });
+
+  it("does not fall back to a title when the first non-blank line is itself a label or code line", () => {
+    expect(detectCvssFieldsFromReport("Description: something happened").title).toBeNull();
+    expect(detectCvssFieldsFromReport("CWE-79\nDescription: something").title).toBeNull();
   });
 });

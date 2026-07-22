@@ -55,29 +55,109 @@ export function detectCvssVector(text: string): CvssVectorDetectionResult {
 }
 
 const CWE_PATTERN = /CWE-\d+/i;
+const CWE_URL_PATTERN = /cwe\.mitre\.org\/data\/definitions\/(\d+)\.html/i;
+
+/** Resolves a CWE straight out of a pasted "https://cwe.mitre.org/data/definitions/<n>.html"
+ *  reference link, for reports that only cite the CWE via a URL rather than writing "CWE-<n>"
+ *  out as text. Same "only a real catalogue entry counts" rule as detectCwe. */
+function detectCweFromUrls(urls: string[]): CweEntry | null {
+  for (const url of urls) {
+    const match = url.match(CWE_URL_PATTERN);
+    if (!match) continue;
+    const entry = CWE_ENTRIES_BY_ID[`CWE-${match[1]}`];
+    if (entry) return entry;
+  }
+  return null;
+}
 
 /** Only ever resolves to a real entry in our CWE_ENTRIES catalogue — a CWE-shaped string that
  *  isn't one of ours (typo, or a weakness we don't carry) is treated as not detected rather than
- *  fabricated. */
-export function detectCwe(text: string): CweEntry | null {
+ *  fabricated. Falls back to a cwe.mitre.org reference link when no "CWE-<n>" text is present. */
+export function detectCwe(text: string, referenceUrls: CvssReference[] = []): CweEntry | null {
   const match = text.match(CWE_PATTERN);
-  if (!match) return null;
-  const id = match[0].toUpperCase();
-  return CWE_ENTRIES_BY_ID[id] ?? null;
+  if (match) {
+    const entry = CWE_ENTRIES_BY_ID[match[0].toUpperCase()];
+    if (entry) return entry;
+  }
+  return detectCweFromUrls(referenceUrls.map((r) => r.url));
 }
 
 const OWASP_CODE_PATTERN = /\b(?:API\d{1,2}|LLM\d{2}|M\d{1,2}|A\d{1,2}):20\d{2}\b/i;
+/** A code cited without its year, e.g. "(A4)" or "(A04)" next to the category's plain-English
+ *  name, the common shorthand in hand-written reports (the full "A04:2021" form is caught by
+ *  OWASP_CODE_PATTERN above). */
+const SHORT_OWASP_CODE_PATTERN = /^([A-Za-z]+)(\d{1,2}):(\d{4})$/;
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Matches a category's own plain-English name immediately followed by its short code in
+ *  parentheses, e.g. "Insecure Design (A4)" or "Insecure Design (A04)" — the format most reports
+ *  use when they cite the category inline without its year (e.g. "Insecure Design (A4)"), which
+ *  OWASP_CODE_PATTERN alone can't resolve since it requires the ":20xx" suffix. Requiring the
+ *  name right next to the code (not just the code alone) is what keeps this safe: the same bare
+ *  number can belong to different categories across editions/families (2021 A04 vs 2025 A06 are
+ *  both "A0x", but only one shares the exact name text with the code that follows it). */
+function detectOwaspFromNameAndCode(text: string): OwaspCategory | null {
+  for (const category of OWASP_CATEGORIES) {
+    const separatorIndex = category.label.indexOf(" - ");
+    if (separatorIndex === -1) continue;
+    const codePart = category.label.slice(0, separatorIndex);
+    const name = category.label.slice(separatorIndex + 3).trim();
+    const codeMatch = codePart.match(SHORT_OWASP_CODE_PATTERN);
+    if (!codeMatch) continue;
+    const [, prefix, number] = codeMatch;
+    const shortCode = `${prefix}${parseInt(number, 10)}`;
+    const fullCode = `${prefix}${number}`;
+    const pattern = new RegExp(`${escapeRegExp(name)}\\s*\\((?:${escapeRegExp(fullCode)}|${escapeRegExp(shortCode)})\\)`, "i");
+    if (pattern.test(text)) return category;
+  }
+  return null;
+}
+
+/** Resolves an OWASP category from a reference link such as
+ *  "https://owasp.org/Top10/A04_2021-Insecure_Design/" (a report may write the URL with or
+ *  without the "/2021/" path segment our own catalogue URL uses) by comparing the final path
+ *  segment of each detected URL against the final path segment of every catalogue entry's URL,
+ *  rather than requiring an exact full-URL match. */
+function detectOwaspFromUrls(urls: string[]): OwaspCategory | null {
+  const lastSegment = (url: string): string => {
+    const clean = url.replace(/[?#].*$/, "").replace(/\/+$/, "");
+    const idx = clean.lastIndexOf("/");
+    try {
+      return decodeURIComponent(clean.slice(idx + 1)).toLowerCase();
+    } catch {
+      return clean.slice(idx + 1).toLowerCase();
+    }
+  };
+  for (const url of urls) {
+    if (!/owasp\.org/i.test(url)) continue;
+    const segment = lastSegment(url);
+    if (!segment) continue;
+    const match = OWASP_CATEGORIES.find((c) => lastSegment(c.url) === segment);
+    if (match) return match;
+  }
+  return null;
+}
 
 /** OWASP category ids in this app are internal slugs (e.g. "web-a03-injection"), but every
  *  category's *label* is authored starting with the literal human-readable code (e.g.
  *  "A03:2021 - Injection", "API1:2023 - ...", "LLM01:2025 - ..."). Matching a code found in the
  *  report text against that label prefix lets us resolve back to our internal id without a
- *  separate code-to-id table that could drift out of sync with owasp.ts. */
-export function detectOwaspCategory(text: string): OwaspCategory | null {
+ *  separate code-to-id table that could drift out of sync with owasp.ts. Falls back to a
+ *  name+shorthand-code match (e.g. "Insecure Design (A4)") and then to an owasp.org reference
+ *  link when no "A03:2021"-style code is present in the text. */
+export function detectOwaspCategory(text: string, referenceUrls: CvssReference[] = []): OwaspCategory | null {
   const match = text.match(OWASP_CODE_PATTERN);
-  if (!match) return null;
-  const code = match[0].toUpperCase();
-  return OWASP_CATEGORIES.find((c) => c.label.toUpperCase().startsWith(code)) ?? null;
+  if (match) {
+    const code = match[0].toUpperCase();
+    const byCode = OWASP_CATEGORIES.find((c) => c.label.toUpperCase().startsWith(code));
+    if (byCode) return byCode;
+  }
+  const byNameAndCode = detectOwaspFromNameAndCode(text);
+  if (byNameAndCode) return byNameAndCode;
+  return detectOwaspFromUrls(referenceUrls.map((r) => r.url));
 }
 
 const URL_PATTERN = /https?:\/\/[^\s"'<>()[\]]+/gi;
@@ -107,7 +187,7 @@ export type LabeledReportField = "title" | "description" | "impact" | "notes";
  *  the next section. */
 const FIELD_LABELS: Record<LabeledReportField, string[]> = {
   title: ["Title", "Finding"],
-  description: ["Description"],
+  description: ["Description", "Vulnerability Description"],
   impact: ["Impact"],
   notes: ["Notes", "Rationale"],
 };
@@ -154,6 +234,26 @@ export function detectLabeledField(text: string, field: LabeledReportField): str
   return null;
 }
 
+const LEADING_NUMBERING_PATTERN = /^\d+(?:\.\d+)*\.?[ \t]+/;
+
+/** When no "Title:"/"Finding:" line exists, falls back to the report's very first non-blank
+ *  line, which most hand-written finding write-ups use as an unlabeled heading, e.g.
+ *  "3.1.3.  Insecure Design (A4) - Response Manipulation Lead to Unrestricted File Upload". Any
+ *  leading section numbering ("3.1.3.") is stripped since it's document structure, not part of
+ *  the finding's title. Bails out (returns null) if that first line is itself a recognized label
+ *  line or a standalone vector/CWE/OWASP line, since that means the report has no separate
+ *  heading to use, not that a header was found. */
+function detectTitleFallback(text: string): string | null {
+  const lines = text.split(/\r?\n/);
+  for (const line of lines) {
+    if (line.trim() === "") continue;
+    if (ANY_LABEL_LINE.test(line) || isStandaloneCodeLine(line)) return null;
+    const withoutNumbering = line.trim().replace(LEADING_NUMBERING_PATTERN, "").trim();
+    return withoutNumbering.length > 0 ? withoutNumbering.slice(0, MAX_LABELED_FIELD_LENGTH) : null;
+  }
+  return null;
+}
+
 export interface CvssReportImportDetection {
   vector: CvssVectorDetectionResult;
   cwe: CweEntry | null;
@@ -168,12 +268,13 @@ export interface CvssReportImportDetection {
 /** Runs every detector once over a single pasted report excerpt — the one entry point the
  *  import modal calls on submit. Each key mirrors a field in the preview/confirm UI. */
 export function detectCvssFieldsFromReport(text: string): CvssReportImportDetection {
+  const references = detectReferenceUrls(text);
   return {
     vector: detectCvssVector(text),
-    cwe: detectCwe(text),
-    owasp: detectOwaspCategory(text),
-    references: detectReferenceUrls(text),
-    title: detectLabeledField(text, "title"),
+    cwe: detectCwe(text, references),
+    owasp: detectOwaspCategory(text, references),
+    references,
+    title: detectLabeledField(text, "title") ?? detectTitleFallback(text),
     description: detectLabeledField(text, "description"),
     impact: detectLabeledField(text, "impact"),
     notes: detectLabeledField(text, "notes"),

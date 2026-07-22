@@ -141,7 +141,7 @@ export function ImportFromReportModal({
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 id={headingId} className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-            Import From Report
+            Import from Report/Text
           </h2>
           <button
             type="button"

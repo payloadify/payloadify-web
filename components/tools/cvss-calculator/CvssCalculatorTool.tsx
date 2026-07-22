@@ -383,9 +383,10 @@ export function CvssCalculatorTool() {
   const vector40 = useMemo(() => buildCvss40Vector(metrics40), [metrics40]);
 
   const selectedSavedTemplate = selectedSavedTemplateId ? savedTemplates.find((t) => t.id === selectedSavedTemplateId) : null;
-  // Only a real, loaded/picked template name is safe to use as the actual saved name — the
-  // placeholder text below it is illustrative ("e.g. ...") and must never be saved verbatim.
-  const suggestedSaveName = selectedSavedTemplate?.name ?? currentTemplate?.label ?? null;
+  // Only a real, loaded/picked template name, preset label, or user-entered title (e.g. set by
+  // "Import from Report/Text") is safe to use as the actual saved name — the placeholder text
+  // below it is illustrative ("e.g. ...") and must never be saved verbatim.
+  const suggestedSaveName = selectedSavedTemplate?.name ?? currentTemplate?.label ?? (meta.title.trim() || null);
   const saveNamePlaceholder = suggestedSaveName ?? "e.g. Client X - login XSS";
 
   function saveCurrentAsTemplate() {
@@ -464,9 +465,6 @@ export function CvssCalculatorTool() {
             </button>
           ))}
         </div>
-        <button type="button" onClick={() => setImportReportModalOpen(true)} className={iconButtonClasses}>
-          Import From Report
-        </button>
       </div>
 
       {importReportModalOpen && (
@@ -658,6 +656,9 @@ export function CvssCalculatorTool() {
             </button>
             <button type="button" onClick={triggerImportSavedTemplates} className={iconButtonClasses}>
               Import Templates
+            </button>
+            <button type="button" onClick={() => setImportReportModalOpen(true)} className={iconButtonClasses}>
+              Import from Report/Text
             </button>
             <input
               ref={importFileInputRef}
