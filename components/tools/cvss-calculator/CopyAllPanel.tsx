@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { CopyAllFieldList } from "@/components/ui/CopyAllFieldList";
-import { CopyAllAdditionalSettings } from "@/components/ui/CopyAllAdditionalSettings";
+import { CopyAllAdditionalSettings, CopyAllExtraToggle } from "@/components/ui/CopyAllAdditionalSettings";
 import { CopyAllStylePicker } from "@/components/ui/CopyAllStylePicker";
 import { WrappableCode } from "@/components/ui/WrappableCode";
 import { CopyField, CopyStyle, formatList } from "@payloadify/cvss-core";
@@ -15,6 +15,7 @@ const ADDITIONAL_SETTINGS_COLLAPSED_KEY = "payloadify:cvss-calculator:copy-all-a
 export function CopyAllPanel({ fields }: { fields: CopyField[] }) {
   const [settings, updateSettings] = useCvssCopyAllSettings();
   const [additionalSettingsCollapsed, setAdditionalSettingsCollapsed] = usePersistedBoolean(ADDITIONAL_SETTINGS_COLLAPSED_KEY, true);
+  const [wrap, setWrap] = useState(true);
   const excludedIds = useMemo(() => new Set(settings.excludedIds), [settings.excludedIds]);
   const urlFieldIds = useMemo(() => new Set(settings.urlFieldIds), [settings.urlFieldIds]);
   const { styleKind, customPrefix, labelsEnabled } = settings;
@@ -78,6 +79,15 @@ export function CopyAllPanel({ fields }: { fields: CopyField[] }) {
     updateSettings({ urlFieldIds: selectAll ? urlCapableFields.map((f) => f.id) : [] });
   }
 
+  function resetPositions() {
+    updateSettings({ order: [] });
+  }
+
+  const extraToggles: CopyAllExtraToggle[] = [
+    { id: "labels", label: "Show field labels (e.g. Title:)", checked: labelsEnabled, onChange: () => updateSettings({ labelsEnabled: !labelsEnabled }) },
+    { id: "wrap", label: "Wrap long lines", checked: wrap, onChange: () => setWrap(!wrap) },
+  ];
+
   return (
     <div className="flex flex-col gap-3 rounded border border-zinc-300 p-4 dark:border-zinc-700">
       <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Combined Copy Format</div>
@@ -90,18 +100,18 @@ export function CopyAllPanel({ fields }: { fields: CopyField[] }) {
         onToggleIncluded={toggleIncluded}
         onSetPosition={setPosition}
         onToggleAll={toggleAllIncluded}
+        onResetOrder={resetPositions}
       />
 
-      {urlCapableFields.length > 0 && (
-        <CopyAllAdditionalSettings
-          fields={urlCapableFields}
-          urlFieldIds={urlFieldIds}
-          collapsed={additionalSettingsCollapsed}
-          onToggleCollapsed={() => setAdditionalSettingsCollapsed(!additionalSettingsCollapsed)}
-          onToggleUrlForm={toggleUrlForm}
-          onToggleAll={toggleAllUrlForm}
-        />
-      )}
+      <CopyAllAdditionalSettings
+        fields={urlCapableFields}
+        urlFieldIds={urlFieldIds}
+        collapsed={additionalSettingsCollapsed}
+        onToggleCollapsed={() => setAdditionalSettingsCollapsed(!additionalSettingsCollapsed)}
+        onToggleUrlForm={toggleUrlForm}
+        onToggleAll={toggleAllUrlForm}
+        extraToggles={extraToggles}
+      />
 
       <CopyAllStylePicker
         styleKind={styleKind}
@@ -110,24 +120,16 @@ export function CopyAllPanel({ fields }: { fields: CopyField[] }) {
         onPrefixChange={(value) => updateSettings({ customPrefix: value })}
       />
 
-      <div className="flex items-start gap-2">
+      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-start">
         <div className="min-w-0 flex-1">
           <WrappableCode
             text={includedFields.length > 0 ? formatted : "No fields selected. Check at least one field above."}
-            extraControls={
-              <button
-                type="button"
-                onClick={() => updateSettings({ labelsEnabled: !labelsEnabled })}
-                aria-pressed={labelsEnabled}
-                title="Prepend each field's label (e.g. 'Title:') in the Copy All output"
-                className="rounded border border-zinc-300 px-2 py-0.5 text-xs text-zinc-500 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500"
-              >
-                {labelsEnabled ? "Labels: On" : "Labels: Off"}
-              </button>
-            }
+            wrap={wrap}
+            onWrapChange={setWrap}
+            showWrapButton={false}
           />
         </div>
-        <CopyButton text={formatted} label="Copy All" disabled={includedFields.length === 0} />
+        <CopyButton text={formatted} label="Copy All" disabled={includedFields.length === 0} className="w-full py-1.5 text-sm sm:w-auto sm:py-1 sm:text-xs" />
       </div>
     </div>
   );

@@ -2,9 +2,19 @@
 
 import type { CopyAllFieldOption } from "@/components/ui/CopyAllFieldList";
 
+export interface CopyAllExtraToggle {
+  id: string;
+  label: string;
+  checked: boolean;
+  onChange: () => void;
+}
+
 /** Collapsible "use URL form" toggle list for the Copy All panel. Like CopyAllFieldList, this
  *  only ever sees field labels/ids — never values. Caller is responsible for only rendering
- *  this when there's at least one URL-capable field (matches prior per-tool behavior). */
+ *  this when there's at least one URL-capable field (matches prior per-tool behavior).
+ *  `extraToggles` is an optional slot for caller-specific checkbox toggles (e.g. the CVSS
+ *  calculator's "Labels" and "Wrap" toggles) rendered above the URL-form list, in the same
+ *  checkbox style. Left unset, other callers are unaffected. */
 export function CopyAllAdditionalSettings({
   fields,
   urlFieldIds,
@@ -12,6 +22,7 @@ export function CopyAllAdditionalSettings({
   onToggleCollapsed,
   onToggleUrlForm,
   onToggleAll,
+  extraToggles,
 }: {
   fields: CopyAllFieldOption[];
   urlFieldIds: Set<string>;
@@ -19,6 +30,7 @@ export function CopyAllAdditionalSettings({
   onToggleCollapsed: () => void;
   onToggleUrlForm: (fieldId: string) => void;
   onToggleAll: (selectAll: boolean) => void;
+  extraToggles?: CopyAllExtraToggle[];
 }) {
   const allSelected = fields.length > 0 && fields.every((field) => urlFieldIds.has(field.id));
 
@@ -38,26 +50,47 @@ export function CopyAllAdditionalSettings({
 
       {!collapsed && (
         <div className="flex flex-col gap-2 border-t border-blue-200 px-3 pb-3 pt-3 dark:border-blue-900">
-          <button
-            type="button"
-            onClick={() => onToggleAll(!allSelected)}
-            className="self-start text-xs text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-          >
-            {allSelected ? "Unselect all" : "Select all"}
-          </button>
+          {extraToggles && extraToggles.length > 0 && (
+            <div className="flex flex-col gap-2 border-b border-blue-200 pb-3 dark:border-blue-900">
+              {extraToggles.map((toggle) => (
+                <label key={toggle.id} className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                  <input
+                    type="checkbox"
+                    checked={toggle.checked}
+                    onChange={toggle.onChange}
+                    aria-label={toggle.label}
+                    className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700"
+                  />
+                  {toggle.label}
+                </label>
+              ))}
+            </div>
+          )}
 
-          {fields.map((field) => (
-            <label key={field.id} className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-              <input
-                type="checkbox"
-                checked={urlFieldIds.has(field.id)}
-                onChange={() => onToggleUrlForm(field.id)}
-                aria-label={`Use URL form for ${field.label} in Copy All`}
-                className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700"
-              />
-              Use URL for {field.label}
-            </label>
-          ))}
+          {fields.length > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={() => onToggleAll(!allSelected)}
+                className="self-start text-xs text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+              >
+                {allSelected ? "Unselect all" : "Select all"}
+              </button>
+
+              {fields.map((field) => (
+                <label key={field.id} className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+                  <input
+                    type="checkbox"
+                    checked={urlFieldIds.has(field.id)}
+                    onChange={() => onToggleUrlForm(field.id)}
+                    aria-label={`Use URL form for ${field.label} in Copy All`}
+                    className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700"
+                  />
+                  Use URL for {field.label}
+                </label>
+              ))}
+            </>
+          )}
         </div>
       )}
     </div>

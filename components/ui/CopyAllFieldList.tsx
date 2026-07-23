@@ -18,6 +18,7 @@ export function CopyAllFieldList({
   onToggleIncluded,
   onSetPosition,
   onToggleAll,
+  onResetOrder,
 }: {
   fields: CopyAllFieldOption[];
   effectiveOrder: string[];
@@ -26,18 +27,32 @@ export function CopyAllFieldList({
   onToggleIncluded: (fieldId: string) => void;
   onSetPosition: (fieldId: string, position: number) => void;
   onToggleAll: (selectAll: boolean) => void;
+  /** Optional "Reset positions" action, shown next to Select/Unselect all when provided.
+   *  Restores the default field order without touching inclusion/exclusion. */
+  onResetOrder?: () => void;
 }) {
   const allSelected = effectiveOrder.length > 0 && excludedIds.size === 0;
 
   return (
     <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        onClick={() => onToggleAll(!allSelected)}
-        className="self-start text-xs text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-      >
-        {allSelected ? "Unselect all" : "Select all"}
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => onToggleAll(!allSelected)}
+          className="self-start text-xs text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+        >
+          {allSelected ? "Unselect all" : "Select all"}
+        </button>
+        {onResetOrder && (
+          <button
+            type="button"
+            onClick={onResetOrder}
+            className="self-start text-xs text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+          >
+            Reset positions
+          </button>
+        )}
+      </div>
 
       <div className="grid gap-2 sm:grid-cols-2">
         {effectiveOrder.map((id) => {
