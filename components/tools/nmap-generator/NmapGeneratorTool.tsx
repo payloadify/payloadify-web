@@ -24,7 +24,7 @@ import {
   ServiceOsDetection,
   TimingPerformance,
 } from "@/lib/nmap/params";
-import { DEFAULT_TEMPLATE_ID } from "@/lib/nmap/templates";
+import { DEFAULT_TEMPLATE_ID, NMAP_TEMPLATES_BY_ID } from "@/lib/nmap/templates";
 import { validateSelection } from "@/lib/nmap/validation";
 import { CustomAdvancedFields } from "./CustomAdvancedFields";
 import { CustomCoreFields } from "./CustomCoreFields";
@@ -129,6 +129,27 @@ export function NmapGeneratorTool() {
   const validation = validateSelection(liveSelection);
   const canGenerateNow = validation.ok;
 
+  // Carries the currently-selected template's settings into Custom Build's own structured fields
+  // when the user switches modes, so Custom Build picks up where the template left off instead of
+  // starting over from its blank defaults. Always starts from the Custom Build defaults first (not
+  // the fields' current values) so switching between templates and back to Custom gives a clean,
+  // predictable result rather than merging with whatever was left over from an earlier session.
+  function switchToCustomBuild() {
+    const overrides = NMAP_TEMPLATES_BY_ID[templateId]?.customOverrides ?? {};
+    setScanType(overrides.scanType ?? "sS");
+    setZombieHost("");
+    setPortSpec({ ...DEFAULT_PORT_SPEC, ...overrides.portSpec });
+    setServiceOsDetection({ ...DEFAULT_SERVICE_OS, ...overrides.serviceOsDetection });
+    setScriptScan({ ...DEFAULT_SCRIPT_SCAN, ...overrides.scriptScan });
+    setTimingPerformance({ ...DEFAULT_TIMING, ...overrides.timingPerformance });
+    setEvasionSpoofing({ ...DEFAULT_EVASION, ...overrides.evasionSpoofing });
+    setHostDiscovery({ ...DEFAULT_HOST_DISCOVERY, ...overrides.hostDiscovery });
+    setDns({ ...DEFAULT_DNS, ...overrides.dns });
+    setMisc({ ...DEFAULT_MISC, ...overrides.misc });
+    setIpv6(overrides.ipv6 ?? false);
+    setBuilderMode("custom");
+  }
+
   function generate() {
     if (!canGenerateNow) return;
     const check = checkAndClear();
@@ -170,7 +191,11 @@ export function NmapGeneratorTool() {
           <button type="button" onClick={() => setBuilderMode("template")} className={toggleButtonClasses(builderMode === "template")}>
             Scenario Templates
           </button>
-          <button type="button" onClick={() => setBuilderMode("custom")} className={toggleButtonClasses(builderMode === "custom")}>
+          <button
+            type="button"
+            onClick={() => (builderMode === "template" ? switchToCustomBuild() : setBuilderMode("custom"))}
+            className={toggleButtonClasses(builderMode === "custom")}
+          >
             Custom Build
           </button>
         </div>

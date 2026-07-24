@@ -23,6 +23,13 @@ describe("NMAP_TEMPLATES", () => {
     }
   });
 
+  it("every template defines customOverrides for the Custom Build handoff", () => {
+    for (const t of NMAP_TEMPLATES) {
+      expect(t.customOverrides, `Missing customOverrides for template "${t.id}"`).toBeDefined();
+      expect(Object.keys(t.customOverrides).length).toBeGreaterThan(0);
+    }
+  });
+
   /** Every token here is drawn only from the confirmed Nmap-Cheatsheet reference
    *  (github.com/jasonniebauer/Nmap-Cheatsheet) this tool was built against — either a flag
    *  itself, or a known argument that flag accepts. This test is a permanent guard against a
