@@ -11,7 +11,7 @@ export function base64ToBytes(base64: string): Uint8Array {
   try {
     binary = atob(base64);
   } catch {
-    throw new Error("Invalid Base64 — contains characters outside the standard Base64 alphabet.");
+    throw new Error("Invalid Base64. Contains characters outside the standard Base64 alphabet.");
   }
   return Uint8Array.from(binary, (c) => c.charCodeAt(0));
 }
@@ -20,7 +20,7 @@ export function hexToBytes(hex: string): Uint8Array {
   const clean = hex.trim().replace(/^0x/i, "").replace(/\s+/g, "");
   if (clean.length === 0) return new Uint8Array(0);
   if (clean.length % 2 !== 0 || !/^[0-9a-fA-F]+$/.test(clean)) {
-    throw new Error("Invalid hex — expected an even number of hex digits (0-9, a-f).");
+    throw new Error("Invalid hex. Expected an even number of hex digits (0-9, a-f).");
   }
   const bytes = new Uint8Array(clean.length / 2);
   for (let i = 0; i < bytes.length; i++) {
@@ -58,14 +58,14 @@ export function percentDecodeToBytes(input: string): Uint8Array {
     if (ch === "%") {
       const hex = input.slice(i + 1, i + 3);
       if (!/^[0-9a-fA-F]{2}$/.test(hex)) {
-        throw new Error("Invalid URL encoding — contains a malformed % escape sequence.");
+        throw new Error("Invalid URL encoding. Contains a malformed % escape sequence.");
       }
       bytes.push(parseInt(hex, 16));
       i += 2;
     } else {
       const code = input.charCodeAt(i);
       if (code >= 128) {
-        throw new Error("Invalid URL encoding — contains a literal non-ASCII character outside of a %XX escape.");
+        throw new Error("Invalid URL encoding. Contains a literal non-ASCII character outside of a %XX escape.");
       }
       bytes.push(code);
     }
@@ -90,7 +90,7 @@ export function resolveAndDecodeText(bytes: Uint8Array, charset: string | undefi
   if (charset === AUTO_DETECT_CHARSET) {
     const detected = detectCharset(bytes);
     if (detected === null) {
-      throw new Error("Couldn't confidently auto-detect the character encoding — please pick one manually.");
+      throw new Error("Couldn't confidently auto-detect the character encoding. Please pick one manually.");
     }
     return decodeBytesWithCharset(bytes, detected);
   }

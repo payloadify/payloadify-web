@@ -3,6 +3,8 @@
 import { ChangeEvent, useMemo, useRef, useState } from "react";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { toggleButtonClasses } from "@/components/ui/formClasses";
+import { SectionNav, useSectionTracking } from "@/components/ui/SectionNav";
+import { StickySummaryBar } from "@/components/ui/StickySummaryBar";
 import { saveAsFile } from "@/lib/download/saveAsFile";
 import {
   buildCvss31Vector,
@@ -45,12 +47,20 @@ import { Cvss31MetricsGrid } from "./Cvss31MetricsGrid";
 import { Cvss40MetricsGrid } from "./Cvss40MetricsGrid";
 import { DescriptionImpactFields } from "./DescriptionImpactFields";
 import { ImportFromReportModal, ReportImportApplyPayload } from "./ImportFromReportModal";
-import { OutputPanel } from "./OutputPanel";
+import { OutputPanel, SEVERITY_CLASSES } from "./OutputPanel";
 import { PlatformVulnPicker } from "./PlatformVulnPicker";
 import { SavedTemplatesPanel, StatusMsg } from "./SavedTemplatesPanel";
 
 const VERSIONS: CvssVersion[] = ["3.1", "4.0"];
 const SAVED_CVSS_TEMPLATES_KEY = "payloadify:cvss-calculator:saved-templates";
+
+const NAV_SECTIONS = [
+  { id: "finding", label: "Finding" },
+  { id: "description", label: "Description" },
+  { id: "metrics", label: "Metrics" },
+  { id: "score", label: "Score" },
+  { id: "templates", label: "Templates & Export" },
+];
 
 export function CvssCalculatorTool() {
   const [version, setVersion] = useState<CvssVersion>("3.1");
@@ -413,6 +423,11 @@ export function CvssCalculatorTool() {
     return fields;
   }, [title, vector, meta, chainVulnTypeId]);
 
+  const { activeId, outputVisible } = useSectionTracking(
+    NAV_SECTIONS.map((s) => s.id),
+    "score",
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -425,6 +440,8 @@ export function CvssCalculatorTool() {
         </div>
       </div>
 
+      <SectionNav sections={NAV_SECTIONS} activeId={activeId} />
+
       {importReportModalOpen && (
         <ImportFromReportModal
           currentVersion={version}
@@ -434,76 +451,98 @@ export function CvssCalculatorTool() {
         />
       )}
 
-      <PlatformVulnPicker
-        version={version}
-        platformFilter={platformFilter}
-        onPlatformChange={selectPlatform}
-        vulnTypeId={vulnTypeId}
-        onVulnTypeChange={selectVulnType}
-        templateId={templateId}
-        onTemplateChange={selectTemplate}
-        templatesForVulnType={templatesForVulnType}
+      <div id="finding" className="flex flex-col gap-6">
+        <PlatformVulnPicker
+          version={version}
+          platformFilter={platformFilter}
+          onPlatformChange={selectPlatform}
+          vulnTypeId={vulnTypeId}
+          onVulnTypeChange={selectVulnType}
+          templateId={templateId}
+          onTemplateChange={selectTemplate}
+          templatesForVulnType={templatesForVulnType}
+        />
+
+        {currentTemplate && <ChainPicker firstVulnTypeId={currentTemplate.vulnTypeId} chainVulnTypeId={chainVulnTypeId} onChainChange={selectChain} />}
+
+        {title && (
+          <div className="flex items-center gap-2 rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700">
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => updateMeta({ title: e.target.value })}
+              maxLength={MAX_CVSS_TITLE_LENGTH}
+              title="Overrides the auto-derived title; clear it to fall back to the selected vulnerability type's name"
+              className="min-w-0 flex-1 truncate bg-transparent text-sm font-medium text-zinc-700 outline-none dark:text-zinc-300"
+            />
+            <CopyButton text={title} label="Copy Title" />
+          </div>
+        )}
+      </div>
+
+      <div id="description">
+        <DescriptionImpactFields meta={meta} onMetaChange={updateMeta} showChainedImpact={!!chainVulnTypeId} />
+      </div>
+
+      <div id="metrics">
+        {version === "3.1" ? (
+          <Cvss31MetricsGrid metrics={metrics31} onChange={setMetric31} />
+        ) : (
+          <Cvss40MetricsGrid metrics={metrics40} onChange={setMetric40} />
+        )}
+      </div>
+
+      <div id="score">
+        <OutputPanel
+          baseScore={baseScore}
+          severity={severity}
+          vector={vector}
+          meta={meta}
+          onMetaChange={updateMeta}
+          owaspWebVersion={owaspWebVersion}
+          onOwaspWebVersionChange={changeOwaspWebVersion}
+          platform={platformFilter}
+        />
+      </div>
+
+      <div id="templates" className="flex flex-col gap-6">
+        <SavedTemplatesPanel
+          saveNameInput={saveNameInput}
+          onSaveNameChange={setSaveNameInput}
+          saveNamePlaceholder={saveNamePlaceholder}
+          onSave={saveCurrentAsTemplate}
+          saveStatus={saveStatus}
+          savedTemplates={savedTemplates}
+          selectedSavedTemplate={selectedSavedTemplate}
+          savedMenuOpen={savedMenuOpen}
+          onToggleMenu={() => setSavedMenuOpen((open) => !open)}
+          onCloseMenu={() => setSavedMenuOpen(false)}
+          onLoad={loadSavedTemplate}
+          onDelete={deleteSavedTemplate}
+          onDeleteAll={deleteAllSavedTemplates}
+          onReset={resetWorkingState}
+          onExport={exportSavedTemplates}
+          onTriggerImport={triggerImportSavedTemplates}
+          onImportFile={handleImportSavedTemplatesFile}
+          importFileInputRef={importFileInputRef}
+          importStatus={importStatus}
+          onOpenImportReportModal={() => setImportReportModalOpen(true)}
+        />
+
+        <CopyAllPanel fields={copyFields} />
+      </div>
+
+      <StickySummaryBar
+        visible={!outputVisible}
+        content={
+          <span className="flex items-center gap-2">
+            <span className="text-base font-semibold">{baseScore.toFixed(1)}</span>
+            <span className={`font-medium ${SEVERITY_CLASSES[severity]}`}>{severity}</span>
+            <code className="truncate text-xs text-zinc-500 dark:text-zinc-400">{vector}</code>
+          </span>
+        }
+        actions={<CopyButton text={vector} label="Copy Vector" />}
       />
-
-      {currentTemplate && <ChainPicker firstVulnTypeId={currentTemplate.vulnTypeId} chainVulnTypeId={chainVulnTypeId} onChainChange={selectChain} />}
-
-      {title && (
-        <div className="flex items-center gap-2 rounded border border-zinc-300 px-3 py-2 dark:border-zinc-700">
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => updateMeta({ title: e.target.value })}
-            maxLength={MAX_CVSS_TITLE_LENGTH}
-            title="Overrides the auto-derived title; clear it to fall back to the selected vulnerability type's name"
-            className="min-w-0 flex-1 truncate bg-transparent text-sm font-medium text-zinc-700 outline-none dark:text-zinc-300"
-          />
-          <CopyButton text={title} label="Copy Title" />
-        </div>
-      )}
-
-      <DescriptionImpactFields meta={meta} onMetaChange={updateMeta} showChainedImpact={!!chainVulnTypeId} />
-
-      {version === "3.1" ? (
-        <Cvss31MetricsGrid metrics={metrics31} onChange={setMetric31} />
-      ) : (
-        <Cvss40MetricsGrid metrics={metrics40} onChange={setMetric40} />
-      )}
-
-      <OutputPanel
-        baseScore={baseScore}
-        severity={severity}
-        vector={vector}
-        meta={meta}
-        onMetaChange={updateMeta}
-        owaspWebVersion={owaspWebVersion}
-        onOwaspWebVersionChange={changeOwaspWebVersion}
-        platform={platformFilter}
-      />
-
-      <SavedTemplatesPanel
-        saveNameInput={saveNameInput}
-        onSaveNameChange={setSaveNameInput}
-        saveNamePlaceholder={saveNamePlaceholder}
-        onSave={saveCurrentAsTemplate}
-        saveStatus={saveStatus}
-        savedTemplates={savedTemplates}
-        selectedSavedTemplate={selectedSavedTemplate}
-        savedMenuOpen={savedMenuOpen}
-        onToggleMenu={() => setSavedMenuOpen((open) => !open)}
-        onCloseMenu={() => setSavedMenuOpen(false)}
-        onLoad={loadSavedTemplate}
-        onDelete={deleteSavedTemplate}
-        onDeleteAll={deleteAllSavedTemplates}
-        onReset={resetWorkingState}
-        onExport={exportSavedTemplates}
-        onTriggerImport={triggerImportSavedTemplates}
-        onImportFile={handleImportSavedTemplatesFile}
-        importFileInputRef={importFileInputRef}
-        importStatus={importStatus}
-        onOpenImportReportModal={() => setImportReportModalOpen(true)}
-      />
-
-      <CopyAllPanel fields={copyFields} />
     </div>
   );
 }

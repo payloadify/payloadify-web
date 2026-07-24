@@ -3,7 +3,10 @@
 import { useMemo, useState } from "react";
 import { Callout } from "@/components/ui/Callout";
 import { AuthorizedUseNotice } from "@/components/ui/AuthorizedUseNotice";
-import { inputClasses, selectClasses } from "@/components/ui/formClasses";
+import { CopyButton } from "@/components/ui/CopyButton";
+import { inputClasses, primaryButtonClasses, secondaryButtonClasses, selectClasses } from "@/components/ui/formClasses";
+import { SectionNav, useSectionTracking } from "@/components/ui/SectionNav";
+import { StickySummaryBar } from "@/components/ui/StickySummaryBar";
 import { ArchId } from "@/lib/msfvenom/archs";
 import { EncoderId, MSFVENOM_ENCODERS_BY_ID, NONE_ENCODER, encodersForArch } from "@/lib/msfvenom/encoders";
 import { FormatId, MSFVENOM_FORMATS_BY_ID } from "@/lib/msfvenom/formats";
@@ -36,6 +39,14 @@ import { ListenerPanel } from "./ListenerPanel";
 import { PayloadSelectionFields } from "./PayloadSelectionFields";
 
 const HISTORY_KEY = "payloadify:msfvenom-generator:history";
+
+const NAV_SECTIONS = [
+  { id: "payload", label: "Payload" },
+  { id: "evasion", label: "Evasion" },
+  { id: "listener", label: "Listener" },
+  { id: "advanced", label: "Advanced" },
+  { id: "output", label: "Output" },
+];
 
 const DEFAULT_PAYLOAD = MSFVENOM_PAYLOADS_BY_ID["windows/meterpreter/reverse_tcp"];
 const DEFAULT_FORMAT_ID: FormatId = "exe";
@@ -278,109 +289,115 @@ export function MsfvenomGeneratorTool() {
     recordGeneration(check.now);
   }
 
+  const { activeId, outputVisible } = useSectionTracking(
+    NAV_SECTIONS.map((s) => s.id),
+    "output",
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <AuthorizedUseNotice />
 
-      <PayloadSelectionFields
-        templateId={templateId}
-        templates={MSFVENOM_TEMPLATES}
-        onTemplateChange={selectTemplate}
-        platformFilter={platformFilter}
-        onPlatformChange={selectPlatform}
-        payloadId={payloadId}
-        payload={payload}
-        visibleCategories={visibleCategories}
-        filteredPayloads={filteredPayloads}
-        onPayloadChange={selectPayload}
-        archId={archId}
-        onArchChange={selectArch}
-        formatId={formatId}
-        format={format}
-        formatOptions={formatOptions}
-        onFormatChange={selectFormat}
-      />
+      <SectionNav sections={NAV_SECTIONS} activeId={activeId} />
 
-      <EvasionOptionsPanel
-        encoderId={encoderId}
-        encoder={encoder}
-        encoderOptions={encoderOptions}
-        onEncoderChange={selectEncoder}
-        archId={archId}
-        iterationsText={iterationsText}
-        iterationsValid={iterationsValid}
-        onIterationsChange={setIterationsTextWrapped}
-        liveRisk={liveRisk}
-      />
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label className="mb-1 block text-sm font-medium">LHOST (attacker IP)</label>
-          <input
-            type="text"
-            value={lhost}
-            onChange={(e) => setLhost(e.target.value)}
-            placeholder="10.10.10.10"
-            className={inputClasses}
-          />
-          {lhost.length > 0 && !hostValidation.ok && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{hostValidation.message}</p>}
-        </div>
-        <div>
-          <label className="mb-1 block text-sm font-medium">LPORT</label>
-          <input
-            type="number"
-            min={1}
-            max={65535}
-            value={lportText}
-            onChange={(e) => setLportText(e.target.value)}
-            onBlur={() => {
-              if (lportText.trim().length === 0) return;
-              setLportText(String(clampPort(Number(lportText))));
-            }}
-            placeholder="4444"
-            className={`${selectClasses} w-full`}
-          />
-          {lportText.length > 0 && !portValid && <p className="mt-1 text-xs text-red-600 dark:text-red-400">Enter a port between 1 and 65535.</p>}
-        </div>
+      <div id="payload" className="flex flex-col gap-6">
+        <PayloadSelectionFields
+          templateId={templateId}
+          templates={MSFVENOM_TEMPLATES}
+          onTemplateChange={selectTemplate}
+          platformFilter={platformFilter}
+          onPlatformChange={selectPlatform}
+          payloadId={payloadId}
+          payload={payload}
+          visibleCategories={visibleCategories}
+          filteredPayloads={filteredPayloads}
+          onPayloadChange={selectPayload}
+          archId={archId}
+          onArchChange={selectArch}
+          formatId={formatId}
+          format={format}
+          formatOptions={formatOptions}
+          onFormatChange={selectFormat}
+        />
       </div>
 
-      <ListenerPanel
-        lhost={lhost}
-        lportText={lportText}
-        port={port}
-        hostValidation={hostValidation}
-        portValid={portValid}
-        onLhostChange={setLhost}
-        onLportTextChange={setLportText}
-      />
+      <div id="evasion">
+        <EvasionOptionsPanel
+          encoderId={encoderId}
+          encoder={encoder}
+          encoderOptions={encoderOptions}
+          onEncoderChange={selectEncoder}
+          archId={archId}
+          iterationsText={iterationsText}
+          iterationsValid={iterationsValid}
+          onIterationsChange={setIterationsTextWrapped}
+          liveRisk={liveRisk}
+        />
+      </div>
 
-      <AdvancedOptionsPanel
-        payload={payload}
-        onToggleStaging={toggleStaging}
-        exitfunc={exitfunc}
-        onExitfuncChange={selectExitfunc}
-        filename={filename}
-        needsFilename={needsFilename}
-        filenameValid={filenameValid}
-        onFilenameChange={setFilenameWrapped}
-        extraOptions={extraOptions}
-        onExtraOptionsChange={setExtraOptionsWrapped}
-      />
+      <div id="listener" className="flex flex-col gap-6">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-sm font-medium">LHOST (attacker IP)</label>
+            <input
+              type="text"
+              value={lhost}
+              onChange={(e) => setLhost(e.target.value)}
+              placeholder="10.10.10.10"
+              className={inputClasses}
+            />
+            {lhost.length > 0 && !hostValidation.ok && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{hostValidation.message}</p>}
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">LPORT</label>
+            <input
+              type="number"
+              min={1}
+              max={65535}
+              value={lportText}
+              onChange={(e) => setLportText(e.target.value)}
+              onBlur={() => {
+                if (lportText.trim().length === 0) return;
+                setLportText(String(clampPort(Number(lportText))));
+              }}
+              placeholder="4444"
+              className={`${selectClasses} w-full`}
+            />
+            {lportText.length > 0 && !portValid && <p className="mt-1 text-xs text-red-600 dark:text-red-400">Enter a port between 1 and 65535.</p>}
+          </div>
+        </div>
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={generate}
-          disabled={!canGenerateNow}
-          className="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-        >
+        <ListenerPanel
+          lhost={lhost}
+          lportText={lportText}
+          port={port}
+          hostValidation={hostValidation}
+          portValid={portValid}
+          onLhostChange={setLhost}
+          onLportTextChange={setLportText}
+        />
+      </div>
+
+      <div id="advanced">
+        <AdvancedOptionsPanel
+          payload={payload}
+          onToggleStaging={toggleStaging}
+          exitfunc={exitfunc}
+          onExitfuncChange={selectExitfunc}
+          filename={filename}
+          needsFilename={needsFilename}
+          filenameValid={filenameValid}
+          onFilenameChange={setFilenameWrapped}
+          extraOptions={extraOptions}
+          onExtraOptionsChange={setExtraOptionsWrapped}
+        />
+      </div>
+
+      <div className="flex flex-wrap gap-2 border-t border-zinc-200 pt-2 dark:border-zinc-800">
+        <button type="button" onClick={generate} disabled={!canGenerateNow} className={primaryButtonClasses}>
           Generate Command
         </button>
-        <button
-          type="button"
-          onClick={resetAll}
-          className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
+        <button type="button" onClick={resetAll} className={secondaryButtonClasses}>
           Reset
         </button>
       </div>
@@ -389,17 +406,25 @@ export function MsfvenomGeneratorTool() {
 
       {!generatedCommand && !blockedMsg && <Callout variant="info">Pick your options above, then click Generate Command.</Callout>}
 
-      {generatedSelection && generatedCommand && (
-        <GeneratedOutputPanel
-          generatedSelection={generatedSelection}
-          generatedCommand={generatedCommand}
-          generatedBashVariable={generatedBashVariable}
-          generatedListenerParams={generatedListenerParams}
-          generatedRisk={generatedRisk}
-          guideLhost={guideLhost}
-          guideLport={guideLport}
-        />
-      )}
+      <div id="output">
+        {generatedSelection && generatedCommand && (
+          <GeneratedOutputPanel
+            generatedSelection={generatedSelection}
+            generatedCommand={generatedCommand}
+            generatedBashVariable={generatedBashVariable}
+            generatedListenerParams={generatedListenerParams}
+            generatedRisk={generatedRisk}
+            guideLhost={guideLhost}
+            guideLport={guideLport}
+          />
+        )}
+      </div>
+
+      <StickySummaryBar
+        visible={!outputVisible && !!generatedCommand}
+        content={<code className="truncate text-xs">{generatedCommand ?? "Not generated yet"}</code>}
+        actions={generatedCommand && <CopyButton text={generatedCommand} label="Copy" />}
+      />
     </div>
   );
 }

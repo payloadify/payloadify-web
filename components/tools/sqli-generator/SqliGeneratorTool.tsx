@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Callout } from "@/components/ui/Callout";
 import { AuthorizedUseNotice } from "@/components/ui/AuthorizedUseNotice";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { iconButtonClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
+import { iconButtonClasses, inputClasses, primaryButtonClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { CHARSET_GROUPS, DEFAULT_CHARSET } from "@/lib/encoding/charsets";
 import { ENCODING_OPERATIONS, ENCODING_OPERATIONS_BY_ID, EncodingOperationId } from "@/lib/encoding/operations";
 import { COMMON_BLACKLIST_CHARS, unavoidableChars } from "@/lib/sqli/blacklist";
@@ -518,7 +518,7 @@ export function SqliGeneratorTool() {
         type="button"
         onClick={generate}
         disabled={combinedInfoExpr === null && chosenTechnique !== undefined && chosenTechnique.usesInfoExpr}
-        className="self-start rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        className={`self-start ${primaryButtonClasses}`}
       >
         Generate payload
       </button>

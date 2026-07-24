@@ -40,7 +40,7 @@ function buildNoMatchHint(hashPart: string): string | null {
     return "This looks like it might be a bcrypt hash (starts with $2), but it doesn't match the expected $2a$/$2b$/$2y$ + cost + 53-character format.";
   }
   if (KNOWN_HEX_LENGTHS.includes(hashPart.length) && !/^[0-9a-f]+$/i.test(hashPart)) {
-    return `This is ${hashPart.length} characters — a common length for a hex-encoded hash — but it contains characters outside 0-9a-f, so it can't be identified as a hex hash.`;
+    return `This is ${hashPart.length} characters (a common length for a hex-encoded hash), but it contains characters outside 0-9a-f, so it can't be identified as a hex hash.`;
   }
   return null;
 }
@@ -75,7 +75,7 @@ export function identifyHash(rawInput: string): HashDetectionResult {
   }));
 
   const ambiguityNote = allTied
-    ? `${hashPart.length} hex characters — this length is shared by ${matches.map((m) => m.name).join(", ")}. Check each candidate's note below for context.`
+    ? `${hashPart.length} hex characters. This length is shared by ${matches.map((m) => m.name).join(", ")}. Check each candidate's note below for context.`
     : null;
 
   return { kind: "matched", hashPart, candidates, ambiguityNote, salt };

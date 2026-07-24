@@ -4,11 +4,11 @@ import { useMemo, useState } from "react";
 import { applySelections, getAlternativesFor, randomizeText } from "@/lib/homoglyph/generate";
 import { Callout } from "@/components/ui/Callout";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { RunsLocallyNote } from "@/components/ui/RunsLocallyNote";
+import { focusVisibleClasses, inputClasses, primaryButtonClasses } from "@/components/ui/formClasses";
 
-const inputClasses =
-  "w-full rounded border border-zinc-300 bg-white p-3 font-mono text-sm outline-none focus:ring-1 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
 const selectClasses =
-  "rounded border border-zinc-300 bg-white px-1.5 py-1 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
+  `rounded border border-zinc-300 bg-white px-1.5 py-1 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 ${focusVisibleClasses}`;
 
 export function HomoglyphGeneratorTool() {
   const [input, setInput] = useState("");
@@ -55,14 +55,12 @@ export function HomoglyphGeneratorTool() {
             type="button"
             onClick={randomize}
             disabled={input.length === 0}
-            className="shrink-0 self-start rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+            className={`shrink-0 self-start ${primaryButtonClasses}`}
           >
             Randomize
           </button>
         </div>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Computed entirely in your browser. This text is never sent anywhere.
-        </p>
+        <RunsLocallyNote />
       </div>
 
       {input.length === 0 && (

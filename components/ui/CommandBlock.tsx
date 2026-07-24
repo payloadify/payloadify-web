@@ -23,7 +23,7 @@ export function CommandBlock({
         <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{label}</p>
         <div className="flex gap-2">{actions}</div>
       </div>
-      <code className="block rounded border border-zinc-200 bg-white p-3 text-sm break-all whitespace-pre-wrap dark:border-zinc-800 dark:bg-zinc-900">
+      <code className="block rounded border border-zinc-300 bg-white p-4 text-sm break-all whitespace-pre-wrap dark:border-zinc-700 dark:bg-zinc-900">
         {command}
       </code>
       {children}

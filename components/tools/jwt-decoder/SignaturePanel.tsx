@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { Callout } from "@/components/ui/Callout";
 import { DecodedJwt, reSignHS256, stripToAlgNone, verifyHS256 } from "@/lib/jwt/jwt";
+import { primaryButtonClasses, secondaryButtonClasses } from "@/components/ui/formClasses";
 
 export function SignaturePanel({
   decoded,
@@ -18,9 +19,6 @@ export function SignaturePanel({
   const [verifyStatus, setVerifyStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
   const [outputToken, setOutputToken] = useState("");
   const [outputError, setOutputError] = useState<string | null>(null);
-
-  const secondaryButtonClass =
-    "rounded border border-zinc-300 px-3 py-1.5 text-sm hover:border-zinc-400 dark:border-zinc-700";
 
   async function handleVerify() {
     setVerifyStatus("checking");
@@ -66,14 +64,14 @@ export function SignaturePanel({
         <button
           type="button"
           onClick={handleVerify}
-          className="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          className={primaryButtonClasses}
         >
           Verify with secret
         </button>
-        <button type="button" onClick={handleReSign} className={secondaryButtonClass}>
+        <button type="button" onClick={handleReSign} className={secondaryButtonClasses}>
           Re-sign as HS256
         </button>
-        <button type="button" onClick={handleStripToNone} className={secondaryButtonClass}>
+        <button type="button" onClick={handleStripToNone} className={secondaryButtonClasses}>
           Strip to alg:none
         </button>
       </div>

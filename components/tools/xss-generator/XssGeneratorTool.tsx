@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Callout } from "@/components/ui/Callout";
 import { AuthorizedUseNotice } from "@/components/ui/AuthorizedUseNotice";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
+import { inputClasses, primaryButtonClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useRateLimitedGeneration } from "@/lib/hooks/useRateLimitedGeneration";
 import { XSS_ACTIONS, XSS_ACTIONS_BY_ID, XssActionId } from "@/lib/xss/actions";
@@ -322,7 +322,7 @@ export function XssGeneratorTool() {
         type="button"
         onClick={generate}
         disabled={actionId === "custom" && customInput.trim().length === 0}
-        className="self-start rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        className={`self-start ${primaryButtonClasses}`}
       >
         Generate payload
       </button>

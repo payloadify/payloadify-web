@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { selectClasses } from "@/components/ui/formClasses";
+import { primaryButtonClasses, secondaryButtonClasses, selectClasses } from "@/components/ui/formClasses";
+import { RunsLocallyNote } from "@/components/ui/RunsLocallyNote";
 import { HASH_CONTEXTS, HashContextId } from "@/lib/hash/context";
 import { identifyHash } from "@/lib/hash/detect";
 import { isVerifiable, verifyPlaintext } from "@/lib/hash/verify";
@@ -72,7 +73,7 @@ export function HashIdentifierTool() {
           <button
             type="button"
             onClick={() => setSubmittedInput(draftInput)}
-            className="shrink-0 self-start rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+            className={`shrink-0 self-start ${primaryButtonClasses}`}
           >
             Submit
           </button>
@@ -118,7 +119,7 @@ export function HashIdentifierTool() {
               type="button"
               onClick={handleVerify}
               disabled={plaintext.length === 0 || verifyStatus === "checking"}
-              className="shrink-0 rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+              className={`shrink-0 ${primaryButtonClasses}`}
             >
               Verify
             </button>
@@ -126,15 +127,14 @@ export function HashIdentifierTool() {
               type="button"
               onClick={handleResetVerification}
               disabled={plaintext.length === 0 && confirmedId === null && verifyStatus === "idle"}
-              className="shrink-0 rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              className={`shrink-0 ${secondaryButtonClasses}`}
             >
               Reset
             </button>
           </div>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            Computed entirely in your browser; this text is never sent anywhere. If it matches
-            one of the candidates below (e.g. MD5 vs NTLM), that candidate is confirmed.
-          </p>
+          <RunsLocallyNote>
+            If it matches one of the candidates below (e.g. MD5 vs NTLM), that candidate is confirmed.
+          </RunsLocallyNote>
           {verifyStatus === "no-match" && (
             <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
               That plaintext didn&apos;t match any of the computable candidates below.
