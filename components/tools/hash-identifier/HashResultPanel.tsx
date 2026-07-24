@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Callout } from "@/components/ui/Callout";
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { HASH_CONTEXTS_BY_ID, HashContextId } from "@/lib/hash/context";
 import { HashCandidate, HashDetectionResult } from "@/lib/hash/detect";
@@ -144,11 +145,12 @@ export function HashResultPanel({
       </div>
 
       {restCandidates.length > 0 && !confirmedId && (
-        <details className="rounded border border-zinc-200 dark:border-zinc-800">
-          <summary className="cursor-pointer p-3 text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Also structurally possible ({restCandidates.length})
-          </summary>
-          <div className="flex flex-col divide-y divide-zinc-200 border-t border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
+        <CollapsibleSection
+          title={`Also structurally possible (${restCandidates.length})`}
+          storageKey="payloadify:hash-identifier:also-possible-collapsed"
+          defaultOpen={false}
+        >
+          <div className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800">
             {restCandidates.map(({ signature, confidence }) => (
               <CandidateRow
                 key={signature.id}
@@ -160,7 +162,7 @@ export function HashResultPanel({
               />
             ))}
           </div>
-        </details>
+        </CollapsibleSection>
       )}
 
       {isAmbiguous && !confirmedId && (

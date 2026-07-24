@@ -5,10 +5,11 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AuthorizedUseNotice } from "@/components/ui/AuthorizedUseNotice";
 import { Callout } from "@/components/ui/Callout";
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CommandBlock, InlineCommandRow } from "@/components/ui/CommandBlock";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { Tooltip } from "@/components/ui/Tooltip";
-import { checkboxLabelClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
+import { checkboxLabelClasses, inputClasses, primaryButtonClasses, secondaryButtonClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { iconButtonClasses } from "@/components/ui/formClasses";
 import { AttackModeId, ATTACK_MODES, ATTACK_MODES_BY_ID } from "@/lib/hashcat/attackModes";
 import { buildBenchmarkCommand, buildCommand, buildShowCommand } from "@/lib/hashcat/generate";
@@ -422,9 +423,7 @@ export function HashcatGeneratorTool() {
         </div>
       )}
 
-      <details className="rounded border border-zinc-200 dark:border-zinc-800">
-        <summary className="cursor-pointer px-3 py-2 text-sm font-medium">+ Advanced Options</summary>
-        <div className="flex flex-col gap-4 px-3 pb-3">
+      <CollapsibleSection title="Advanced Options" storageKey="payloadify:hashcat-generator:advanced-collapsed" defaultOpen={false}>
           {attackMode === "3" && (
             <div className="flex flex-col gap-3 rounded border border-zinc-200 p-3 dark:border-zinc-800">
               <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
@@ -524,23 +523,13 @@ export function HashcatGeneratorTool() {
               />
             </div>
           </div>
-        </div>
-      </details>
+      </CollapsibleSection>
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={generate}
-          disabled={!canGenerateNow}
-          className="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-        >
+      <div className="flex flex-wrap gap-2 border-t border-zinc-200 pt-2 dark:border-zinc-800">
+        <button type="button" onClick={generate} disabled={!canGenerateNow} className={primaryButtonClasses}>
           Generate Command
         </button>
-        <button
-          type="button"
-          onClick={resetAll}
-          className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
+        <button type="button" onClick={resetAll} className={secondaryButtonClasses}>
           Reset
         </button>
       </div>
@@ -557,17 +546,14 @@ export function HashcatGeneratorTool() {
         <div className="flex flex-col gap-4">
           <CommandBlock label="Command" command={generatedCommand} actions={<CopyButton text={generatedCommand} label="Copy Command" />} />
 
-          <details className="rounded border border-zinc-200 dark:border-zinc-800" open>
-            <summary className="cursor-pointer px-3 py-2 text-sm font-medium">Companion commands</summary>
-            <div className="flex flex-col gap-3 px-3 pb-3 text-sm text-zinc-600 dark:text-zinc-400">
-              <InlineCommandRow label="Check already-cracked results (no re-run)" command={generatedShowCommand ?? ""} />
-              <InlineCommandRow label="Benchmark this mode on your hardware" command={generatedBenchmarkCommand ?? ""} />
-              <p>
-                Already-cracked hashes are looked up from hashcat&apos;s potfile (unless <code>--potfile-disable</code> is set).{" "}
-                <code>--show</code> reads it without spending any GPU time.
-              </p>
-            </div>
-          </details>
+          <CollapsibleSection title="Companion commands" storageKey="payloadify:hashcat-generator:companion-commands-collapsed" defaultOpen={true}>
+            <InlineCommandRow label="Check already-cracked results (no re-run)" command={generatedShowCommand ?? ""} />
+            <InlineCommandRow label="Benchmark this mode on your hardware" command={generatedBenchmarkCommand ?? ""} />
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Already-cracked hashes are looked up from hashcat&apos;s potfile (unless <code>--potfile-disable</code> is set).{" "}
+              <code>--show</code> reads it without spending any GPU time.
+            </p>
+          </CollapsibleSection>
         </div>
       )}
     </div>

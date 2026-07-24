@@ -30,7 +30,7 @@ export const HASH_ALGORITHMS: HashAlgorithm[] = [
     id: "ntlm",
     name: "NTLM",
     compute: (pw) => md4(utf16leBytes(pw)),
-    note: "NTLM hashes the UTF-16LE encoding of the input, not UTF-8 — this is why it differs from a plain MD4 of the same text.",
+    note: "NTLM hashes the UTF-16LE encoding of the input, not UTF-8. This is why it differs from a plain MD4 of the same text.",
   },
   { id: "sha1", name: "SHA-1", compute: (pw) => subtleDigestHex("SHA-1", pw) },
   { id: "sha224", name: "SHA-224", compute: (pw) => bytesToHex(sha224(utf8Bytes(pw))) },

@@ -3,10 +3,11 @@
 import { useMemo, useState } from "react";
 import { Callout } from "@/components/ui/Callout";
 import { AuthorizedUseNotice } from "@/components/ui/AuthorizedUseNotice";
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CommandBlock, InlineCommandRow } from "@/components/ui/CommandBlock";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { DownloadButton } from "@/components/ui/DownloadButton";
-import { checkboxLabelClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
+import { checkboxLabelClasses, inputClasses, primaryButtonClasses, secondaryButtonClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { EncoderId, NONE_ENCODER, SHELL_ENCODERS, SHELL_ENCODERS_BY_ID } from "@/lib/reverse-shell/encoders";
 import { buildFileBody, buildShell } from "@/lib/reverse-shell/generate";
 import { OsFamily } from "@/lib/reverse-shell/params";
@@ -262,20 +263,16 @@ export function ReverseShellGeneratorTool() {
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 border-t border-zinc-200 pt-2 dark:border-zinc-800">
         <button
           type="button"
           onClick={generate}
           disabled={!hostValidation.ok || !portValid || !shellPathValid}
-          className="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          className={primaryButtonClasses}
         >
           Generate payload
         </button>
-        <button
-          type="button"
-          onClick={resetAll}
-          className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
+        <button type="button" onClick={resetAll} className={secondaryButtonClasses}>
           Reset
         </button>
       </div>
@@ -338,17 +335,14 @@ export function ReverseShellGeneratorTool() {
             </div>
           )}
 
-          <details className="rounded border border-zinc-200 dark:border-zinc-800">
-            <summary className="cursor-pointer px-3 py-2 text-sm font-medium">After you catch the shell</summary>
-            <div className="flex flex-col gap-2 px-3 pb-3 text-sm text-zinc-600 dark:text-zinc-400">
-              <p>Upgrade a bare Unix shell to a full interactive TTY:</p>
-              <InlineCommandRow command={'python3 -c \'import pty; pty.spawn("/bin/bash")\''} />
-              <p>
-                Then background it (<code>Ctrl+Z</code>), run <code>stty raw -echo; fg</code>, press Enter twice, and set{" "}
-                <code>export TERM=xterm</code> for working arrow keys/Ctrl+C and a correct terminal size.
-              </p>
-            </div>
-          </details>
+          <CollapsibleSection title="After you catch the shell" storageKey="payloadify:reverse-shell-generator:tty-upgrade-collapsed" defaultOpen={false}>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">Upgrade a bare Unix shell to a full interactive TTY:</p>
+            <InlineCommandRow command={'python3 -c \'import pty; pty.spawn("/bin/bash")\''} />
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              Then background it (<code>Ctrl+Z</code>), run <code>stty raw -echo; fg</code>, press Enter twice, and set{" "}
+              <code>export TERM=xterm</code> for working arrow keys/Ctrl+C and a correct terminal size.
+            </p>
+          </CollapsibleSection>
         </div>
       )}
     </div>

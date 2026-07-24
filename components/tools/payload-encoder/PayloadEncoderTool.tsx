@@ -6,6 +6,7 @@ import { computeChain, Direction, Step } from "@/lib/encoding/chain";
 import { AUTO_DETECT_CHARSET, CHARSET_GROUPS, DEFAULT_CHARSET } from "@/lib/encoding/charsets";
 import { Callout } from "@/components/ui/Callout";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { RunsLocallyNote } from "@/components/ui/RunsLocallyNote";
 import { checkboxLabelClasses, iconButtonClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 
 const ENCODABLE_CHARSETS = CHARSET_GROUPS.flatMap((group) => group.charsets).filter((c) => c.encodable);
@@ -61,9 +62,7 @@ export function PayloadEncoderTool({ direction }: { direction: Direction }) {
           placeholder="Type or paste the text to encode/decode"
           className={inputClasses}
         />
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Computed entirely in your browser. This text is never sent anywhere.
-        </p>
+        <RunsLocallyNote />
       </div>
 
       <div className="flex flex-col gap-3">

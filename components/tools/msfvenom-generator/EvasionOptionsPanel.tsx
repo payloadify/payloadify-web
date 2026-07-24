@@ -1,6 +1,7 @@
 "use client";
 
 import { Callout } from "@/components/ui/Callout";
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { selectClasses } from "@/components/ui/formClasses";
 import { ArchId } from "@/lib/msfvenom/archs";
@@ -28,9 +29,8 @@ export function EvasionOptionsPanel({
   liveRisk: boolean;
 }) {
   return (
-    <details className="rounded border border-zinc-200 dark:border-zinc-800">
-      <summary className="cursor-pointer px-3 py-2 text-sm font-medium">+ Evasion Options</summary>
-      <div className="flex flex-col gap-4 px-3 pb-3">
+    <CollapsibleSection title="Evasion Options" storageKey="payloadify:msfvenom-generator:evasion-collapsed" defaultOpen={true}>
+      <div className="flex flex-col gap-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1 flex items-center text-sm font-medium">
@@ -79,6 +79,6 @@ export function EvasionOptionsPanel({
           </Callout>
         )}
       </div>
-    </details>
+    </CollapsibleSection>
   );
 }

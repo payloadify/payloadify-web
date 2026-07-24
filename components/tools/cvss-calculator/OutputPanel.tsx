@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { iconButtonClasses, inputClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import {
@@ -24,12 +25,11 @@ import {
   VRT_CATEGORIES_BY_ID,
   VRT_VERSION,
 } from "@payloadify/cvss-core";
-import { usePersistedBoolean } from "@/lib/storage/persistedBoolean";
 import { SearchableSelect, SearchableSelectOption } from "@/components/ui/SearchableSelect";
 
 const ADDITIONAL_INFO_COLLAPSED_KEY = "payloadify:cvss-calculator:additional-info-collapsed";
 
-const SEVERITY_CLASSES: Record<SeverityRating, string> = {
+export const SEVERITY_CLASSES: Record<SeverityRating, string> = {
   None: "text-zinc-600 dark:text-zinc-400",
   Low: "text-blue-600 dark:text-blue-400",
   Medium: "text-amber-600 dark:text-amber-400",
@@ -59,7 +59,6 @@ export function OutputPanel({
   const owasp = meta.owaspRefId ? OWASP_CATEGORIES_BY_ID[meta.owaspRefId] : null;
   const vrt = meta.vrtRefId ? VRT_CATEGORIES_BY_ID[meta.vrtRefId] : null;
   const cwe = meta.cweId ? CWE_ENTRIES_BY_ID[meta.cweId] : null;
-  const [collapsed, setCollapsed] = usePersistedBoolean(ADDITIONAL_INFO_COLLAPSED_KEY, false);
   const [showOwaspApiNote, setShowOwaspApiNote] = useState(false);
 
   // OWASP's API Security Top 10 (2023) has no category of its own for classic injection
@@ -149,159 +148,143 @@ export function OutputPanel({
         </div>
       </div>
 
-      <div className="border-t border-zinc-200 pt-4 dark:border-zinc-800">
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => setCollapsed(!collapsed)}
-            aria-expanded={!collapsed}
-            className="flex flex-1 items-center justify-between text-sm font-medium text-zinc-700 dark:text-zinc-300"
-          >
-            Additional Info
-            <span className="text-zinc-400">{collapsed ? "▸" : "▾"}</span>
+      <CollapsibleSection title="Additional Info" storageKey={ADDITIONAL_INFO_COLLAPSED_KEY} defaultOpen={true}>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-500">Rationale / notes (optional)</label>
+          <textarea
+            value={meta.rationale}
+            onChange={(e) => onMetaChange({ rationale: e.target.value })}
+            rows={2}
+            maxLength={MAX_CVSS_RATIONALE_LENGTH}
+            placeholder="Free-text notes for this finding, not included unless you add it in Copy All."
+            className={`${inputClasses} font-sans`}
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="mb-1 flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-500">OWASP Category</label>
+                {showOwaspApiNoteToggle && (
+                  <button
+                    type="button"
+                    onClick={() => setShowOwaspApiNote((v) => !v)}
+                    aria-expanded={showOwaspApiNote}
+                    aria-label="Why does this API finding cite a Web OWASP category?"
+                    title="Why does this API finding cite a Web OWASP category?"
+                    className="flex h-4 w-4 items-center justify-center rounded-full border border-zinc-400 text-[10px] leading-none text-zinc-500 hover:border-zinc-600 hover:text-zinc-700 dark:border-zinc-600 dark:text-zinc-400 dark:hover:border-zinc-400 dark:hover:text-zinc-200"
+                  >
+                    i
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-zinc-500 dark:text-zinc-500">Web edition:</span>
+                {(["2021", "2025"] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    className={toggleButtonClasses(owaspWebVersion === v)}
+                    onClick={() => onOwaspWebVersionChange(v)}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <SearchableSelect
+              value={meta.owaspRefId ?? ""}
+              onChange={(v) => onMetaChange({ owaspRefId: v || null })}
+              options={owaspOptions}
+              placeholder="Search OWASP categories..."
+              ariaLabel="OWASP Category"
+            />
+          </div>
+          {owasp && <CopyButton text={owasp.label} label="Copy" />}
+        </div>
+        {showOwaspApiNoteToggle && showOwaspApiNote && (
+          <p className="-mt-2 text-xs text-zinc-500 dark:text-zinc-500">
+            This finding is on the API platform, but OWASP&apos;s API Security Top 10 has no category of its own for this
+            vulnerability type. It&apos;s only covered under the main OWASP Top 10 (Web), so that category is cited instead.
+          </p>
+        )}
+
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-500">VRT Category</label>
+            <SearchableSelect
+              value={meta.vrtRefId ?? ""}
+              onChange={handleVrtChange}
+              options={vrtOptions}
+              placeholder="Search VRT categories..."
+              ariaLabel="VRT Category"
+            />
+          </div>
+          {vrt && <CopyButton text={`VRT ${VRT_VERSION} - ${vrt.label}`} label="Copy" />}
+        </div>
+        {vrt?.inferred && (
+          <p className="-mt-2 text-xs text-zinc-500 dark:text-zinc-500">Inferred: not a literal VRT leaf. {vrt.note}</p>
+        )}
+
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-500">CWE</label>
+            <SearchableSelect
+              value={meta.cweId ?? ""}
+              onChange={(v) => onMetaChange({ cweId: v || null })}
+              options={cweOptions}
+              placeholder="Search CWE (id or name)..."
+              ariaLabel="CWE"
+            />
+          </div>
+          {cwe && <CopyButton text={`${cwe.id}: ${cwe.label}`} label="Copy" />}
+        </div>
+
+        <div>
+          <div className="mb-1 flex items-center justify-between">
+            <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-500">References</label>
+            {meta.references.length > 0 && <CopyButton text={meta.references.map((r) => r.url).join("\n")} label="Copy all" />}
+          </div>
+          <div className="flex flex-col gap-2">
+            {meta.references.map((ref, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={ref.label}
+                  onChange={(e) => updateReference(i, { label: e.target.value })}
+                  placeholder="Label, e.g. PortSwigger: XSS"
+                  className={`${inputClasses} flex-1 font-sans`}
+                />
+                <input
+                  type="text"
+                  value={ref.url}
+                  onChange={(e) => updateReference(i, { url: e.target.value })}
+                  placeholder="https://..."
+                  className={`${inputClasses} flex-1 font-sans`}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeReference(i)}
+                  aria-label={`Remove reference ${i + 1}`}
+                  className="rounded px-1.5 py-0.5 text-sm text-zinc-500 hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+          <button type="button" onClick={addReference} className={`${iconButtonClasses} mt-2`}>
+            + Add Reference
           </button>
         </div>
 
-        {!collapsed && (
-          <div className="mt-3 flex flex-col gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-500">Rationale / notes (optional)</label>
-              <textarea
-                value={meta.rationale}
-                onChange={(e) => onMetaChange({ rationale: e.target.value })}
-                rows={2}
-                maxLength={MAX_CVSS_RATIONALE_LENGTH}
-                placeholder="Free-text notes for this finding, not included unless you add it in Copy All."
-                className={`${inputClasses} font-sans`}
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="min-w-0 flex-1">
-                <div className="mb-1 flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-500">OWASP Category</label>
-                    {showOwaspApiNoteToggle && (
-                      <button
-                        type="button"
-                        onClick={() => setShowOwaspApiNote((v) => !v)}
-                        aria-expanded={showOwaspApiNote}
-                        aria-label="Why does this API finding cite a Web OWASP category?"
-                        title="Why does this API finding cite a Web OWASP category?"
-                        className="flex h-4 w-4 items-center justify-center rounded-full border border-zinc-400 text-[10px] leading-none text-zinc-500 hover:border-zinc-600 hover:text-zinc-700 dark:border-zinc-600 dark:text-zinc-400 dark:hover:border-zinc-400 dark:hover:text-zinc-200"
-                      >
-                        i
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-zinc-500 dark:text-zinc-500">Web edition:</span>
-                    {(["2021", "2025"] as const).map((v) => (
-                      <button
-                        key={v}
-                        type="button"
-                        className={toggleButtonClasses(owaspWebVersion === v)}
-                        onClick={() => onOwaspWebVersionChange(v)}
-                      >
-                        {v}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <SearchableSelect
-                  value={meta.owaspRefId ?? ""}
-                  onChange={(v) => onMetaChange({ owaspRefId: v || null })}
-                  options={owaspOptions}
-                  placeholder="Search OWASP categories..."
-                  ariaLabel="OWASP Category"
-                />
-              </div>
-              {owasp && <CopyButton text={owasp.label} label="Copy" />}
-            </div>
-            {showOwaspApiNoteToggle && showOwaspApiNote && (
-              <p className="-mt-2 text-xs text-zinc-500 dark:text-zinc-500">
-                This finding is on the API platform, but OWASP&apos;s API Security Top 10 has no category of its own for this
-                vulnerability type. It&apos;s only covered under the main OWASP Top 10 (Web), so that category is cited instead.
-              </p>
-            )}
-
-            <div className="flex items-center gap-2">
-              <div className="min-w-0 flex-1">
-                <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-500">VRT Category</label>
-                <SearchableSelect
-                  value={meta.vrtRefId ?? ""}
-                  onChange={handleVrtChange}
-                  options={vrtOptions}
-                  placeholder="Search VRT categories..."
-                  ariaLabel="VRT Category"
-                />
-              </div>
-              {vrt && <CopyButton text={`VRT ${VRT_VERSION} - ${vrt.label}`} label="Copy" />}
-            </div>
-            {vrt?.inferred && (
-              <p className="-mt-2 text-xs text-zinc-500 dark:text-zinc-500">Inferred: not a literal VRT leaf. {vrt.note}</p>
-            )}
-
-            <div className="flex items-center gap-2">
-              <div className="min-w-0 flex-1">
-                <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-500">CWE</label>
-                <SearchableSelect
-                  value={meta.cweId ?? ""}
-                  onChange={(v) => onMetaChange({ cweId: v || null })}
-                  options={cweOptions}
-                  placeholder="Search CWE (id or name)..."
-                  ariaLabel="CWE"
-                />
-              </div>
-              {cwe && <CopyButton text={`${cwe.id}: ${cwe.label}`} label="Copy" />}
-            </div>
-
-            <div>
-              <div className="mb-1 flex items-center justify-between">
-                <label className="block text-xs font-medium text-zinc-500 dark:text-zinc-500">References</label>
-                {meta.references.length > 0 && <CopyButton text={meta.references.map((r) => r.url).join("\n")} label="Copy all" />}
-              </div>
-              <div className="flex flex-col gap-2">
-                {meta.references.map((ref, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={ref.label}
-                      onChange={(e) => updateReference(i, { label: e.target.value })}
-                      placeholder="Label, e.g. PortSwigger: XSS"
-                      className={`${inputClasses} flex-1 font-sans`}
-                    />
-                    <input
-                      type="text"
-                      value={ref.url}
-                      onChange={(e) => updateReference(i, { url: e.target.value })}
-                      placeholder="https://..."
-                      className={`${inputClasses} flex-1 font-sans`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeReference(i)}
-                      aria-label={`Remove reference ${i + 1}`}
-                      className="rounded px-1.5 py-0.5 text-sm text-zinc-500 hover:bg-zinc-200 dark:text-zinc-400 dark:hover:bg-zinc-700"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button type="button" onClick={addReference} className={`${iconButtonClasses} mt-2`}>
-                + Add Reference
-              </button>
-            </div>
-
-            {hasAnyMeta && (
-              <button type="button" onClick={clearAllMeta} className={`${iconButtonClasses} self-start`}>
-                Clear Additional Info
-              </button>
-            )}
-          </div>
+        {hasAnyMeta && (
+          <button type="button" onClick={clearAllMeta} className={`${iconButtonClasses} self-start`}>
+            Clear Additional Info
+          </button>
         )}
-      </div>
+      </CollapsibleSection>
     </div>
   );
 }

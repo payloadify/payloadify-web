@@ -164,8 +164,8 @@ export function ImportFromReportModal({
         <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-1">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             Paste a finding from your own report below (title, description, impact, CVSS vector, CWE, OWASP category, references,
-            whatever you have). This runs entirely in your browser and is never sent anywhere. Nothing is applied until you review the
-            detected fields and click Apply.
+            whatever you have). Computed entirely in your browser, nothing here is sent to a server. Nothing is applied until you
+            review the detected fields and click Apply.
           </p>
 
           <div>
@@ -249,7 +249,7 @@ export function ImportFromReportModal({
               <div>
                 <div className="mb-1 text-xs font-medium text-zinc-500 dark:text-zinc-500">References</div>
                 {detection.references.length === 0 ? (
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500">Not detected — fill in manually.</p>
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">Not detected. Fill in manually.</p>
                 ) : (
                   <div className="flex flex-col gap-1">
                     {detection.references.map((r) => (
@@ -299,7 +299,7 @@ function DetectionRow({
       <div className="flex items-center gap-2 opacity-60">
         <input type="checkbox" checked={false} disabled />
         <span className="text-sm text-zinc-500 dark:text-zinc-500">
-          <span className="font-medium">{label}:</span> Not detected — fill in manually.
+          <span className="font-medium">{label}:</span> Not detected. Fill in manually.
         </span>
       </div>
     );

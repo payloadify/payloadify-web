@@ -4,7 +4,8 @@ import { useState } from "react";
 import { HASH_ALGORITHMS_BY_ID } from "@/lib/hash/algorithms";
 import { Callout } from "@/components/ui/Callout";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { inputClasses } from "@/components/ui/formClasses";
+import { RunsLocallyNote } from "@/components/ui/RunsLocallyNote";
+import { inputClasses, primaryButtonClasses } from "@/components/ui/formClasses";
 
 // Explicit, ordered subset of the shared algorithm list — kept in sync with every
 // non-salted algorithm lib/hash/signatures.ts can detect, so Identify and Generate
@@ -61,14 +62,12 @@ export function HashGeneratorTool() {
             type="button"
             onClick={handleGenerate}
             disabled={draftInput.length === 0 || isComputing}
-            className="shrink-0 self-start rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+            className={`shrink-0 self-start ${primaryButtonClasses}`}
           >
             Generate
           </button>
         </div>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Computed entirely in your browser; this text is never sent anywhere.
-        </p>
+        <RunsLocallyNote />
       </div>
 
       {!results && <Callout variant="info">Enter some text above and click Generate to compute its hashes.</Callout>}

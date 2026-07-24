@@ -95,7 +95,7 @@ function unicodeEscapeEncode(input: string, mode: string | undefined): string {
 
 function unicodeEscapeDecode(input: string): string {
   if (!/^(\\u[0-9a-fA-F]{4})*$/.test(input)) {
-    throw new Error("Invalid Unicode escape — expected a sequence of \\uXXXX groups.");
+    throw new Error("Invalid Unicode escape. Expected a sequence of \\uXXXX groups.");
   }
   return input.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex: string) => String.fromCharCode(parseInt(hex, 16)));
 }

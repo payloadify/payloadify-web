@@ -28,7 +28,7 @@ export function CopyButton({
           setCopied(false);
         }
       }}
-      className={`rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-600 hover:border-zinc-400 disabled:opacity-30 disabled:hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500 dark:disabled:hover:border-zinc-700 ${className}`}
+      className={`rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-600 hover:border-zinc-400 disabled:opacity-30 disabled:hover:border-zinc-300 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500 dark:disabled:hover:border-zinc-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:focus-visible:outline-zinc-400 ${className}`}
     >
       {copied ? "Copied" : label}
     </button>

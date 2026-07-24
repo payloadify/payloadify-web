@@ -1,9 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Callout } from "@/components/ui/Callout";
 import { AuthorizedUseNotice } from "@/components/ui/AuthorizedUseNotice";
+import { RunsLocallyNote } from "@/components/ui/RunsLocallyNote";
 import { ReferencesPanel } from "@/components/ui/ReferencesPanel";
+import { secondaryButtonClasses } from "@/components/ui/formClasses";
 import { useDebouncedValue } from "@/lib/hooks/useDebouncedValue";
 import { useRateLimitedGeneration } from "@/lib/hooks/useRateLimitedGeneration";
 import { DEFAULT_CONFIG_FLAGS, SeparatorId, SortMode, SubdomainGeneratorConfig, WordlistSize } from "@/lib/subdomain/config";
@@ -186,9 +187,9 @@ export function SubdomainPermutationGeneratorTool() {
   return (
     <div className="flex flex-col gap-6">
       <AuthorizedUseNotice subject="domains" />
-      <Callout variant="info">
-        100% client-side, generation only. This tool builds a candidate wordlist; it never queries DNS or contacts the target.
-      </Callout>
+      <RunsLocallyNote variant="callout">
+        This tool builds a candidate wordlist; it never queries DNS or contacts the target.
+      </RunsLocallyNote>
 
       <DomainAndSeedInputs
         rawBaseDomain={rawBaseDomain}
@@ -245,7 +246,7 @@ export function SubdomainPermutationGeneratorTool() {
       <button
         type="button"
         onClick={handleReset}
-        className="self-start rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className={`self-start ${secondaryButtonClasses}`}
       >
         Reset
       </button>

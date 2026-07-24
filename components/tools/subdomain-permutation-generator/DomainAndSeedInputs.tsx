@@ -1,6 +1,7 @@
 "use client";
 
 import { ParsedDomain } from "@/lib/subdomain/domainParse";
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { checkboxLabelClasses, inputClasses } from "@/components/ui/formClasses";
 
 export function DomainAndSeedInputs({
@@ -62,38 +63,39 @@ export function DomainAndSeedInputs({
         )}
       </div>
 
-      <details className="rounded border border-zinc-200 dark:border-zinc-800">
-        <summary className="cursor-pointer px-3 py-2 text-sm font-medium">Add your own keywords / seed subdomains (optional)</summary>
-        <div className="flex flex-col gap-4 px-3 pb-3">
-          <div>
-            <label className="mb-1 block text-sm font-medium">Keywords</label>
-            <textarea
-              value={rawKeywords}
-              onChange={(e) => onKeywordsChange(e.target.value)}
-              placeholder={"acme\ncustomerportal, billing"}
-              rows={3}
-              className={inputClasses}
-            />
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              Company/product names, environments, or observed tokens: one per line or comma-separated.
-            </p>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium">Seed from known subdomains</label>
-            <textarea
-              value={rawKnownSubdomains}
-              onChange={(e) => onKnownSubdomainsChange(e.target.value)}
-              placeholder={"api-dev.example.com\nvpn.example.com"}
-              rows={3}
-              className={inputClasses}
-            />
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              Paste subdomains you&apos;ve already discovered; their labels get extracted and mutated too.
-            </p>
-          </div>
+      <CollapsibleSection
+        title="Add your own keywords / seed subdomains (optional)"
+        storageKey="payloadify:subdomain-permutation-generator:seed-inputs-collapsed"
+        defaultOpen={false}
+      >
+        <div>
+          <label className="mb-1 block text-sm font-medium">Keywords</label>
+          <textarea
+            value={rawKeywords}
+            onChange={(e) => onKeywordsChange(e.target.value)}
+            placeholder={"acme\ncustomerportal, billing"}
+            rows={3}
+            className={inputClasses}
+          />
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            Company/product names, environments, or observed tokens: one per line or comma-separated.
+          </p>
         </div>
-      </details>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">Seed from known subdomains</label>
+          <textarea
+            value={rawKnownSubdomains}
+            onChange={(e) => onKnownSubdomainsChange(e.target.value)}
+            placeholder={"api-dev.example.com\nvpn.example.com"}
+            rows={3}
+            className={inputClasses}
+          />
+          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+            Paste subdomains you&apos;ve already discovered; their labels get extracted and mutated too.
+          </p>
+        </div>
+      </CollapsibleSection>
     </div>
   );
 }

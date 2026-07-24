@@ -1,7 +1,7 @@
 "use client";
 
 import { Callout } from "@/components/ui/Callout";
-import { inputClasses, toggleButtonClasses } from "@/components/ui/formClasses";
+import { inputClasses, primaryButtonClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { CandidateEstimate } from "@/lib/subdomain/estimate";
 import { isValidMaxOutput, MAX_OUTPUT_CEILING, MAX_OUTPUT_FLOOR } from "@/lib/subdomain/validation";
 
@@ -89,7 +89,7 @@ export function GenerationGuardrail({
         type="button"
         onClick={onGenerate}
         disabled={generateDisabled}
-        className="self-start rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        className={`self-start ${primaryButtonClasses}`}
       >
         Generate
       </button>

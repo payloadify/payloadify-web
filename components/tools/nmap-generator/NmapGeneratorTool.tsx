@@ -5,7 +5,9 @@ import { AuthorizedUseNotice } from "@/components/ui/AuthorizedUseNotice";
 import { Callout } from "@/components/ui/Callout";
 import { CommandBlock } from "@/components/ui/CommandBlock";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { toggleButtonClasses } from "@/components/ui/formClasses";
+import { primaryButtonClasses, secondaryButtonClasses, toggleButtonClasses } from "@/components/ui/formClasses";
+import { SectionNav, useSectionTracking } from "@/components/ui/SectionNav";
+import { StickySummaryBar } from "@/components/ui/StickySummaryBar";
 import { useRateLimitedGeneration } from "@/lib/hooks/useRateLimitedGeneration";
 import { buildCommand } from "@/lib/nmap/generate";
 import {
@@ -181,11 +183,28 @@ export function NmapGeneratorTool() {
 
   const generatedCommand = useMemo(() => (generatedSelection ? buildCommand(generatedSelection) : null), [generatedSelection]);
 
+  const navSections = useMemo(() => {
+    const sections = [
+      { id: "mode", label: "Mode" },
+      { id: "core", label: "Core Options" },
+    ];
+    if (builderMode === "custom") sections.push({ id: "advanced", label: "Advanced" });
+    sections.push({ id: "target", label: "Target & Output" }, { id: "command", label: "Command" });
+    return sections;
+  }, [builderMode]);
+
+  const { activeId, outputVisible } = useSectionTracking(
+    navSections.map((s) => s.id),
+    "command",
+  );
+
   return (
     <div className="flex flex-col gap-6">
       <AuthorizedUseNotice />
 
-      <div>
+      <SectionNav sections={navSections} activeId={activeId} />
+
+      <div id="mode">
         <label className="mb-1 block text-sm font-medium">Mode</label>
         <div className="flex flex-wrap gap-1">
           <button type="button" onClick={() => setBuilderMode("template")} className={toggleButtonClasses(builderMode === "template")}>
@@ -201,10 +220,10 @@ export function NmapGeneratorTool() {
         </div>
       </div>
 
-      {builderMode === "template" ? (
-        <TemplateFields templateId={templateId} onTemplateChange={setTemplateId} />
-      ) : (
-        <>
+      <div id="core">
+        {builderMode === "template" ? (
+          <TemplateFields templateId={templateId} onTemplateChange={setTemplateId} />
+        ) : (
           <CustomCoreFields
             scanType={scanType}
             onScanTypeChange={setScanType}
@@ -215,6 +234,11 @@ export function NmapGeneratorTool() {
             hostDiscovery={hostDiscovery}
             onHostDiscoveryChange={setHostDiscovery}
           />
+        )}
+      </div>
+
+      {builderMode === "custom" && (
+        <div id="advanced">
           <CustomAdvancedFields
             serviceOsDetection={serviceOsDetection}
             onServiceOsDetectionChange={setServiceOsDetection}
@@ -231,32 +255,25 @@ export function NmapGeneratorTool() {
             ipv6={ipv6}
             onIpv6Change={setIpv6}
           />
-        </>
+        </div>
       )}
 
-      <TargetExcludeOutputFields
-        target={target}
-        onTargetChange={setTarget}
-        exclude={exclude}
-        onExcludeChange={setExclude}
-        output={output}
-        onOutputChange={setOutput}
-      />
+      <div id="target">
+        <TargetExcludeOutputFields
+          target={target}
+          onTargetChange={setTarget}
+          exclude={exclude}
+          onExcludeChange={setExclude}
+          output={output}
+          onOutputChange={setOutput}
+        />
+      </div>
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={generate}
-          disabled={!canGenerateNow}
-          className="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-        >
+      <div className="flex flex-wrap gap-2 border-t border-zinc-200 pt-2 dark:border-zinc-800">
+        <button type="button" onClick={generate} disabled={!canGenerateNow} className={primaryButtonClasses}>
           Generate Command
         </button>
-        <button
-          type="button"
-          onClick={resetAll}
-          className="rounded border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
+        <button type="button" onClick={resetAll} className={secondaryButtonClasses}>
           Reset
         </button>
       </div>
@@ -267,9 +284,17 @@ export function NmapGeneratorTool() {
 
       {!generatedCommand && !blockedMsg && <Callout variant="info">Pick your options above, then click Generate Command.</Callout>}
 
-      {generatedCommand && (
-        <CommandBlock label="Command" command={generatedCommand} actions={<CopyButton text={generatedCommand} label="Copy Command" />} />
-      )}
+      <div id="command">
+        {generatedCommand && (
+          <CommandBlock label="Command" command={generatedCommand} actions={<CopyButton text={generatedCommand} label="Copy Command" />} />
+        )}
+      </div>
+
+      <StickySummaryBar
+        visible={!outputVisible && !!generatedCommand}
+        content={<code className="truncate text-xs">{generatedCommand ?? "Not generated yet"}</code>}
+        actions={generatedCommand && <CopyButton text={generatedCommand} label="Copy" />}
+      />
     </div>
   );
 }

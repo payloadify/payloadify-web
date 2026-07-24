@@ -30,14 +30,15 @@ const sections: { title: string; slugs: string[] }[] = [
 
 export default function Home() {
   return (
-    <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-12">
+    <div id="main-content" className="mx-auto w-full max-w-6xl flex-1 px-4 py-12">
       <div className="mb-10">
         <h1 className="text-3xl font-semibold tracking-tight">
           Free pentest tools, one job each
         </h1>
         <p className="mt-3 max-w-2xl text-zinc-600 dark:text-zinc-400">
           No accounts, no tracking, no server round-trips where it can be
-          avoided. Pick a tool below. Everything runs in your browser.
+          avoided, built for real engagement workflows. Pick a tool below.
+          Everything runs in your browser.
         </p>
       </div>
 
@@ -56,7 +57,7 @@ export default function Home() {
                   <Link
                     key={tool.slug}
                     href={`/${tool.slug}`}
-                    className="rounded-lg border border-zinc-200 p-5 shadow-sm transition-all hover:-translate-y-px hover:border-zinc-400 hover:shadow-md dark:border-zinc-800 dark:shadow-none dark:hover:border-zinc-600"
+                    className="rounded-lg border border-zinc-200 p-5 shadow-sm transition-all hover:-translate-y-px hover:border-zinc-400 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-500 dark:border-zinc-800 dark:shadow-none dark:hover:border-zinc-600 dark:focus-visible:outline-zinc-400"
                   >
                     <h3 className="text-base font-semibold tracking-tight">
                       {tool.name}

@@ -71,6 +71,12 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:rounded focus:bg-zinc-900 focus:px-3 focus:py-2 focus:text-sm focus:text-white focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-zinc-500 dark:focus:bg-zinc-100 dark:focus:text-zinc-900"
+        >
+          Skip to content
+        </a>
         <SiteHeader />
         {children}
         <SiteFooter />

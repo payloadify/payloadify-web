@@ -1,3 +1,4 @@
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { Tooltip } from "@/components/ui/Tooltip";
 import { checkboxLabelClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { DnsOptions, EvasionSpoofing, MiscOptions, ScriptScan, ServiceOsDetection, TimingPerformance } from "@/lib/nmap/params";
@@ -47,11 +48,12 @@ export function CustomAdvancedFields({
   };
 
   return (
-    <details className="rounded border border-zinc-200 dark:border-zinc-800">
-      <summary className="cursor-pointer px-3 py-2 text-sm font-medium">+ Advanced Options</summary>
-      <div className="flex flex-col gap-4 px-3 pb-3">
-        <div className="flex flex-col gap-3 rounded border border-zinc-200 p-3 dark:border-zinc-800">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Service &amp; OS Detection</p>
+    <div className="flex flex-col gap-4">
+      <CollapsibleSection
+        title="Service & OS Detection"
+        storageKey="payloadify:nmap-generator:advanced-service-os-collapsed"
+        defaultOpen={true}
+      >
           <label className={checkboxLabelClasses}>
             <input
               type="checkbox"
@@ -103,10 +105,9 @@ export function CustomAdvancedFields({
               </label>
             )}
           </div>
-        </div>
+      </CollapsibleSection>
 
-        <div className="flex flex-col gap-3 rounded border border-zinc-200 p-3 dark:border-zinc-800">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">NSE Script Scanning</p>
+      <CollapsibleSection title="NSE Script Scanning" storageKey="payloadify:nmap-generator:advanced-script-scan-collapsed" defaultOpen={false}>
           <label className={checkboxLabelClasses}>
             <input
               type="checkbox"
@@ -147,10 +148,9 @@ export function CustomAdvancedFields({
               --script-updatedb
             </label>
           </div>
-        </div>
+      </CollapsibleSection>
 
-        <div className="flex flex-col gap-3 rounded border border-zinc-200 p-3 dark:border-zinc-800">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Timing &amp; Performance</p>
+      <CollapsibleSection title="Timing & Performance" storageKey="payloadify:nmap-generator:advanced-timing-collapsed" defaultOpen={false}>
           <div>
             <label className="mb-1 block text-sm font-medium">Timing template</label>
             <div className="flex flex-wrap gap-1">
@@ -313,10 +313,9 @@ export function CustomAdvancedFields({
             />
             --defeat-rst-ratelimit
           </label>
-        </div>
+      </CollapsibleSection>
 
-        <div className="flex flex-col gap-3 rounded border border-zinc-200 p-3 dark:border-zinc-800">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Evasion &amp; Spoofing</p>
+      <CollapsibleSection title="Evasion & Spoofing" storageKey="payloadify:nmap-generator:advanced-evasion-collapsed" defaultOpen={false}>
           <div className="flex flex-wrap gap-4">
             <label className={checkboxLabelClasses}>
               <input
@@ -400,10 +399,9 @@ export function CustomAdvancedFields({
               className={inputClasses}
             />
           </div>
-        </div>
+      </CollapsibleSection>
 
-        <div className="flex flex-col gap-3 rounded border border-zinc-200 p-3 dark:border-zinc-800">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">DNS Resolution</p>
+      <CollapsibleSection title="DNS Resolution" storageKey="payloadify:nmap-generator:advanced-dns-collapsed" defaultOpen={false}>
           <div className="flex flex-wrap gap-1">
             <button
               type="button"
@@ -447,10 +445,9 @@ export function CustomAdvancedFields({
               className={inputClasses}
             />
           </div>
-        </div>
+      </CollapsibleSection>
 
-        <div className="flex flex-col gap-3 rounded border border-zinc-200 p-3 dark:border-zinc-800">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Troubleshooting &amp; Misc</p>
+      <CollapsibleSection title="Troubleshooting & Misc" storageKey="payloadify:nmap-generator:advanced-misc-collapsed" defaultOpen={false}>
           <label className={checkboxLabelClasses}>
             <input type="checkbox" checked={ipv6} onChange={(e) => onIpv6Change(e.target.checked)} />
             IPv6 targets (-6)
@@ -495,8 +492,7 @@ export function CustomAdvancedFields({
               className={inputClasses}
             />
           </div>
-        </div>
-      </div>
-    </details>
+      </CollapsibleSection>
+    </div>
   );
 }

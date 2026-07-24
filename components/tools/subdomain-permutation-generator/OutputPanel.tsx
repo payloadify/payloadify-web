@@ -2,10 +2,11 @@
 
 import { useMemo } from "react";
 import { Callout } from "@/components/ui/Callout";
+import { CollapsibleSection } from "@/components/ui/CollapsibleSection";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { DownloadButton } from "@/components/ui/DownloadButton";
 import { FilenameInput } from "@/components/ui/FilenameInput";
-import { inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
+import { inputClasses, primaryButtonClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 import { useEditableFilename } from "@/lib/hooks/useEditableFilename";
 import { SortMode } from "@/lib/subdomain/config";
 import { applyPatternFilter } from "@/lib/subdomain/filter";
@@ -114,7 +115,7 @@ export function OutputPanel({
           type="button"
           onClick={onApplyFilter}
           disabled={!hasUnappliedChanges}
-          className="rounded bg-zinc-900 px-3 py-1.5 text-sm text-white hover:bg-zinc-700 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+          className={primaryButtonClasses}
         >
           Apply
         </button>
@@ -151,29 +152,26 @@ export function OutputPanel({
         className={`${inputClasses} resize-y`}
       />
 
-      <details className="rounded border border-zinc-200 dark:border-zinc-800">
-        <summary className="cursor-pointer px-3 py-2 text-sm font-medium">Resolve these candidates</summary>
-        <div className="flex flex-col gap-2 px-3 pb-3">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            This tool only generates candidate names. Nothing here queries DNS. Save the output above as{" "}
-            <code>{filename}</code>, then pipe it into a resolver with one of the commands below (each expects a{" "}
-            <code>resolvers.txt</code> file of resolver IPs, one per line):
-          </p>
-          <ul className="flex flex-col gap-2">
-            {resolverCommands.map((tool) => (
-              <li key={tool.name} className="rounded border border-zinc-200 p-2.5 dark:border-zinc-700">
-                <div className="flex items-start justify-between gap-2">
-                  <code className="break-all text-xs text-zinc-800 dark:text-zinc-200">{tool.command}</code>
-                  <CopyButton text={tool.command} />
-                </div>
-                <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
-                  <span className="font-medium text-zinc-600 dark:text-zinc-300">{tool.name}</span>: {tool.description}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </details>
+      <CollapsibleSection title="Resolve these candidates" storageKey="payloadify:subdomain-permutation-generator:resolve-collapsed" defaultOpen={false}>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
+          This tool only generates candidate names. Nothing here queries DNS. Save the output above as{" "}
+          <code>{filename}</code>, then pipe it into a resolver with one of the commands below (each expects a{" "}
+          <code>resolvers.txt</code> file of resolver IPs, one per line):
+        </p>
+        <ul className="flex flex-col gap-2">
+          {resolverCommands.map((tool) => (
+            <li key={tool.name} className="rounded border border-zinc-200 p-2.5 dark:border-zinc-700">
+              <div className="flex items-start justify-between gap-2">
+                <code className="break-all text-xs text-zinc-800 dark:text-zinc-200">{tool.command}</code>
+                <CopyButton text={tool.command} />
+              </div>
+              <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                <span className="font-medium text-zinc-600 dark:text-zinc-300">{tool.name}</span>: {tool.description}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </CollapsibleSection>
     </div>
   );
 }

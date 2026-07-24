@@ -27,3 +27,11 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Smooth-scroll for in-page anchor links (SectionNav on the long tool pages), gated behind
+   prefers-reduced-motion — the only motion this UI/UX pass introduces. */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}

@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { identifyHomoglyphs } from "@/lib/homoglyph/identify";
 import { Callout } from "@/components/ui/Callout";
+import { RunsLocallyNote } from "@/components/ui/RunsLocallyNote";
 
 const inputClasses =
   "w-full rounded border border-zinc-300 bg-white p-3 font-mono text-sm outline-none focus:ring-1 focus:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100";
@@ -25,9 +26,7 @@ export function HomoglyphIdentifierTool() {
           placeholder="Paste a domain name or other text to check for homoglyph/confusable characters"
           className={inputClasses}
         />
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Computed entirely in your browser. This text is never sent anywhere.
-        </p>
+        <RunsLocallyNote />
       </div>
 
       {input.length === 0 && (
