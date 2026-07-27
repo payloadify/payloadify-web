@@ -20,7 +20,7 @@ const sections: { title: string; slugs: string[] }[] = [
   },
   {
     title: "Command Builders",
-    slugs: ["hashcat-generator", "msfvenom-generator", "nmap-generator"],
+    slugs: ["hashcat-generator", "msfvenom-generator", "nmap-generator", "john-generator"],
   },
   {
     title: "Recon & Infrastructure Checks",
