@@ -6,8 +6,9 @@ function baseSelection(overrides: Partial<JohnSelection> = {}): JohnSelection {
   return {
     format: "nt",
     customFormat: "",
+    targetKind: "file",
+    targetValue: "",
     hashFile: "hashes.txt",
-    handoffHash: "",
     crackMode: "wordlist",
     wordlist: "rockyou.txt",
     rules: "None",
@@ -37,6 +38,22 @@ describe("validateSelection", () => {
     const result = validateSelection(baseSelection({ hashFile: "  " }));
     expect(result.ok).toBe(false);
     expect(result.message).toMatch(/hash file/i);
+  });
+
+  it("fails when targetKind is value but no hash value is entered", () => {
+    const result = validateSelection(baseSelection({ targetKind: "value", targetValue: "  " }));
+    expect(result.ok).toBe(false);
+    expect(result.message).toMatch(/hash value/i);
+  });
+
+  it("passes when targetKind is value and a hash value is entered", () => {
+    const result = validateSelection(baseSelection({ targetKind: "value", targetValue: "abc123" }));
+    expect(result.ok).toBe(true);
+  });
+
+  it("does not require a hash value when targetKind is file", () => {
+    const result = validateSelection(baseSelection({ targetKind: "file", targetValue: "" }));
+    expect(result.ok).toBe(true);
   });
 
   it("fails when neither format dropdown nor custom format is set", () => {

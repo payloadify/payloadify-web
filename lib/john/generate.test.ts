@@ -6,8 +6,9 @@ function baseSelection(overrides: Partial<JohnSelection> = {}): JohnSelection {
   return {
     format: "nt",
     customFormat: "",
+    targetKind: "file",
+    targetValue: "",
     hashFile: "hashes.txt",
-    handoffHash: "",
     crackMode: "wordlist",
     wordlist: "rockyou.txt",
     rules: "None",
@@ -114,29 +115,37 @@ describe("buildCommand", () => {
     );
   });
 
-  it("prefixes an echo-to-file step when a handoff hash is set", () => {
-    const sel = baseSelection({ handoffHash: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08" });
+  it("prefixes an echo-to-file step when targetKind is value", () => {
+    const sel = baseSelection({
+      targetKind: "value",
+      targetValue: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+    });
     expect(buildCommand(sel)).toBe(
       "echo '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08' > hashes.txt && john --format='nt' --wordlist='rockyou.txt' hashes.txt",
     );
   });
 
   it("writes the echoed hash to whatever hash file path is currently set", () => {
-    const sel = baseSelection({ handoffHash: "abc123", hashFile: "/mnt/dumps/hashes.txt" });
+    const sel = baseSelection({ targetKind: "value", targetValue: "abc123", hashFile: "/mnt/dumps/hashes.txt" });
     expect(buildCommand(sel)).toBe(
       "echo 'abc123' > /mnt/dumps/hashes.txt && john --format='nt' --wordlist='rockyou.txt' /mnt/dumps/hashes.txt",
     );
   });
 
-  it("escapes an embedded single quote in the handoff hash instead of breaking out of quoting", () => {
-    const sel = baseSelection({ handoffHash: "abc' ; touch pwned #" });
+  it("escapes an embedded single quote in the target value instead of breaking out of quoting", () => {
+    const sel = baseSelection({ targetKind: "value", targetValue: "abc' ; touch pwned #" });
     expect(buildCommand(sel)).toBe(
       "echo 'abc'\\'' ; touch pwned #' > hashes.txt && john --format='nt' --wordlist='rockyou.txt' hashes.txt",
     );
   });
 
-  it("omits the echo prefix when no handoff hash is set", () => {
-    const sel = baseSelection({ handoffHash: "" });
+  it("omits the echo prefix when targetKind is file, even if targetValue happens to be set", () => {
+    const sel = baseSelection({ targetKind: "file", targetValue: "leftover" });
+    expect(buildCommand(sel)).toBe("john --format='nt' --wordlist='rockyou.txt' hashes.txt");
+  });
+
+  it("omits the echo prefix when targetKind is value but targetValue is blank", () => {
+    const sel = baseSelection({ targetKind: "value", targetValue: "   " });
     expect(buildCommand(sel)).toBe("john --format='nt' --wordlist='rockyou.txt' hashes.txt");
   });
 });

@@ -26,9 +26,10 @@ function pushFlagValue(parts: string[], flag: string, value: string): void {
  *  The hash file path is left unquoted, matching how Hashcat's builder treats a target of kind
  *  "file" — John never accepts a bare hash value as a positional argument, only a file path.
  *
- *  When sel.handoffHash is set (a value handed off from Hash Identifier), the returned string is
- *  prefixed with `echo '<hash>' > <hashFile> && ` so the command is directly runnable instead of
- *  requiring the user to go create the file by hand first. */
+ *  When sel.targetKind is "value" (a hash typed in directly, e.g. handed off from Hash
+ *  Identifier), the returned string is prefixed with `echo '<hash>' > <hashFile> && ` so the
+ *  command is directly runnable instead of requiring the user to go create the file by hand
+ *  first. */
 export function buildCommand(sel: JohnSelection): string {
   const parts: string[] = ["john"];
   pushFlagValue(parts, "--format", effectiveFormat(sel));
@@ -76,10 +77,10 @@ export function buildCommand(sel: JohnSelection): string {
   parts.push(sel.hashFile.trim());
 
   const johnCommand = parts.join(" ");
-  const handoffHash = sel.handoffHash.trim();
-  if (handoffHash.length === 0) return johnCommand;
+  const targetValue = sel.targetValue.trim();
+  if (sel.targetKind !== "value" || targetValue.length === 0) return johnCommand;
 
-  return `echo ${quoteShellArg(handoffHash)} > ${sel.hashFile.trim()} && ${johnCommand}`;
+  return `echo ${quoteShellArg(targetValue)} > ${sel.hashFile.trim()} && ${johnCommand}`;
 }
 
 /** Companion command to view already-cracked results for this hash file without re-running the

@@ -13,7 +13,7 @@ import { checkboxLabelClasses, inputClasses, primaryButtonClasses, secondaryButt
 import { CrackModeId, CRACK_MODES, CRACK_MODES_BY_ID, INCREMENTAL_MODES, RULE_SETS } from "@/lib/john/crackModes";
 import { JOHN_FORMATS } from "@/lib/john/formats";
 import { buildBenchmarkCommand, buildCommand, buildRestoreCommand, buildShowCommand } from "@/lib/john/generate";
-import { JohnSelection } from "@/lib/john/params";
+import { JohnSelection, JohnTargetKind } from "@/lib/john/params";
 import { validateSelection } from "@/lib/john/validation";
 import { useRateLimitedGeneration } from "@/lib/hooks/useRateLimitedGeneration";
 
@@ -37,11 +37,10 @@ export function JohnGeneratorTool() {
     handoffFormatIsKnown ? handoffFormatParam! : (JOHN_FORMATS[0]?.format ?? ""),
   );
   const [customFormat, setCustomFormat] = useState(() => (handoffFormatIsKnown ? "" : (handoffFormatParam ?? "")));
-  // John takes a hash *file*, not a hash value, so a handed-off hash can't pre-fill an input the
-  // way Hashcat's target value does — instead the generated command writes it to a file itself,
-  // see the handoffHash wiring into buildCommand below.
-  const [handoffHash] = useState<string | null>(handoffHashParam);
-
+  // Mirrors HashcatGeneratorTool's target value/file toggle. Defaults to "value" when arriving
+  // with a handed-off hash (pre-filled, freely editable/clearable), "file" otherwise.
+  const [targetKind, setTargetKind] = useState<JohnTargetKind>(() => (handoffHashParam ? "value" : "file"));
+  const [targetValue, setTargetValue] = useState(() => handoffHashParam ?? "");
   const [hashFile, setHashFile] = useState(() => (handoffHashParam ? "hashes.txt" : ""));
   const [crackMode, setCrackMode] = useState<CrackModeId>("wordlist");
   const [wordlist, setWordlist] = useState("/usr/share/wordlists/rockyou.txt");
@@ -77,8 +76,9 @@ export function JohnGeneratorTool() {
   const liveSelection: JohnSelection = {
     format: formatSelect,
     customFormat,
+    targetKind,
+    targetValue,
     hashFile,
-    handoffHash: handoffHash ?? "",
     crackMode,
     wordlist,
     rules,
@@ -109,9 +109,26 @@ export function JohnGeneratorTool() {
     recordGeneration(check.now);
   }
 
+  // Auto-run the same generate() a manual "Generate Command" click would trigger, but only when
+  // we actually arrived with a hash handed off from the Hash Identifier (not on a bare visit or
+  // a page refresh, since the handoff params are scrubbed from the URL right after mount above).
+  // This still goes through generate()'s existing checkAndClear()/recordGeneration() path exactly
+  // like a manual click, so it counts against the same per-browser rate limit (lib/rateLimit/rateLimit.ts:
+  // 1.5s cooldown, 20/min cap) — repeatedly hitting this page with different format/hash query params
+  // (scripted or by hand) is throttled the same way mashing the Generate button already is. Same
+  // pattern as HashcatGeneratorTool.
+  useEffect(() => {
+    if (handoffHashParam === null) return;
+    generate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only, using the
+    // handoff-populated state already applied via the lazy useState initializers above
+  }, []);
+
   function resetAll() {
     setFormatSelect(JOHN_FORMATS[0]?.format ?? "");
     setCustomFormat("");
+    setTargetKind("file");
+    setTargetValue("");
     setHashFile("");
     setCrackMode("wordlist");
     setWordlist("/usr/share/wordlists/rockyou.txt");
@@ -161,15 +178,6 @@ export function JohnGeneratorTool() {
         </Link>
       </p>
 
-      {handoffHash && (
-        <Callout variant="info">
-          Hash from Hash Identifier: <code className="break-all">{handoffHash}</code>. John only accepts a hash{" "}
-          <strong>file</strong>, not a raw value, so the generated command below writes this hash to{" "}
-          <code>{hashFile || "hashes.txt"}</code> for you before running John. Change the path if you want it saved
-          somewhere else.
-        </Callout>
-      )}
-
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1 flex items-center text-sm font-medium">
@@ -207,30 +215,56 @@ export function JohnGeneratorTool() {
       </div>
 
       <div>
-        <label className="mb-1 flex items-center text-sm font-medium">
-          Hash file path
-          <Tooltip text="John never accepts a bare hash value on the command line, only a file path. This tool never reads your filesystem: enter the path you'll actually use on your own machine." />
-        </label>
-        <input
-          type="text"
-          value={hashFile}
-          onChange={(e) => setHashFile(e.target.value)}
-          placeholder="hashes.txt"
-          className={inputClasses}
-        />
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          {handoffHash ? (
-            <>
-              The generated command creates this file for you. For multiple hashes, save them yourself first, one
-              per line, optionally as <code>user:hash</code>.
-            </>
-          ) : (
-            <>
+        <label className="mb-1 block text-sm font-medium">Target</label>
+        <div className="mb-2 flex flex-wrap gap-1">
+          <button type="button" onClick={() => setTargetKind("value")} className={toggleButtonClasses(targetKind === "value")}>
+            Hash value
+          </button>
+          <button type="button" onClick={() => setTargetKind("file")} className={toggleButtonClasses(targetKind === "file")}>
+            Hash file path
+          </button>
+        </div>
+
+        {targetKind === "value" && (
+          <>
+            <input
+              type="text"
+              value={targetValue}
+              onChange={(e) => setTargetValue(e.target.value)}
+              placeholder="9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+              className={`${inputClasses} font-mono`}
+            />
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              John never accepts a bare hash value on the command line, only a file. The command below writes this
+              value to the hash file path below first, then runs John against it.
+            </p>
+            <label className="mb-1 mt-3 block text-sm font-medium">Write to file</label>
+            <input
+              type="text"
+              value={hashFile}
+              onChange={(e) => setHashFile(e.target.value)}
+              placeholder="hashes.txt"
+              className={inputClasses}
+            />
+          </>
+        )}
+
+        {targetKind === "file" && (
+          <>
+            <input
+              type="text"
+              value={hashFile}
+              onChange={(e) => setHashFile(e.target.value)}
+              placeholder="hashes.txt"
+              className={inputClasses}
+            />
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
               Save your hash(es) to this file first, one per line. Use <code>user:hash</code> format if you have
-              usernames too.
-            </>
-          )}
-        </p>
+              usernames too. This tool never reads your filesystem: enter the path you&apos;ll actually use on your
+              own machine.
+            </p>
+          </>
+        )}
       </div>
 
       <div>
@@ -431,7 +465,9 @@ export function JohnGeneratorTool() {
         </button>
       </div>
 
-      {!canGenerateNow && validation.message && hashFile.length + wordlist.length + mask.length + externalMode.length > 0 && (
+      {!canGenerateNow &&
+        validation.message &&
+        hashFile.length + targetValue.length + wordlist.length + mask.length + externalMode.length > 0 && (
         <Callout variant="warning">{validation.message}</Callout>
       )}
 

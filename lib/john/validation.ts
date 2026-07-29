@@ -16,6 +16,10 @@ export function validateSelection(sel: JohnSelection): JohnValidation {
     return { ok: false, message: "Enter a hash file path." };
   }
 
+  if (sel.targetKind === "value" && sel.targetValue.trim().length === 0) {
+    return { ok: false, message: "Enter a hash value." };
+  }
+
   if (sel.crackMode === "wordlist" && sel.wordlist.trim().length === 0) {
     return { ok: false, message: "Enter a wordlist path." };
   }
