@@ -14,6 +14,7 @@ import {
 import { serializeStepsForUrl } from "@/lib/encoding/chain";
 import { Callout } from "@/components/ui/Callout";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { ExpandableText } from "@/components/ui/ExpandableText";
 import { RunsLocallyNote } from "@/components/ui/RunsLocallyNote";
 import { checkboxLabelClasses, inputClasses, primaryButtonClasses, secondaryButtonClasses } from "@/components/ui/formClasses";
 
@@ -256,15 +257,14 @@ export function MagicDecoderTool() {
                           {isManual && " (manual)"}
                         </p>
                         <div className="flex items-start justify-between gap-2">
-                          <code
+                          <ExpandableText
+                            text={step.output}
                             className={`break-all whitespace-pre-wrap text-xs ${
                               isFinal
                                 ? "font-semibold text-zinc-900 dark:text-zinc-100"
                                 : "text-zinc-600 dark:text-zinc-400"
                             }`}
-                          >
-                            {step.output}
-                          </code>
+                          />
                           <CopyButton text={step.output} />
                         </div>
                       </div>
@@ -297,15 +297,14 @@ export function MagicDecoderTool() {
                         After {step.operationName} (manual)
                       </p>
                       <div className="flex items-start justify-between gap-2">
-                        <code
+                        <ExpandableText
+                          text={step.output}
                           className={`break-all whitespace-pre-wrap text-xs ${
                             isFinal
                               ? "font-semibold text-zinc-900 dark:text-zinc-100"
                               : "text-zinc-600 dark:text-zinc-400"
                           }`}
-                        >
-                          {step.output}
-                        </code>
+                        />
                         <CopyButton text={step.output} />
                       </div>
                     </div>

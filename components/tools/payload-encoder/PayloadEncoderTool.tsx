@@ -8,6 +8,7 @@ import { computeChain, Direction, parseStepsFromUrl, Step } from "@/lib/encoding
 import { AUTO_DETECT_CHARSET, CHARSET_GROUPS, DEFAULT_CHARSET } from "@/lib/encoding/charsets";
 import { Callout } from "@/components/ui/Callout";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { ExpandableText } from "@/components/ui/ExpandableText";
 import { RunsLocallyNote } from "@/components/ui/RunsLocallyNote";
 import { checkboxLabelClasses, iconButtonClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 
@@ -272,9 +273,10 @@ export function PayloadEncoderTool({ direction }: { direction: Direction }) {
                           {isFinal ? "Final output" : `After step ${index + 1}`}
                         </p>
                         <div className="flex items-start justify-between gap-2">
-                          <code className="break-all whitespace-pre-wrap text-xs text-zinc-600 dark:text-zinc-400">
-                            {result.output}
-                          </code>
+                          <ExpandableText
+                            text={result.output}
+                            className="break-all whitespace-pre-wrap text-xs text-zinc-600 dark:text-zinc-400"
+                          />
                           <CopyButton text={result.output} />
                         </div>
                       </>
@@ -289,7 +291,10 @@ export function PayloadEncoderTool({ direction }: { direction: Direction }) {
                         </Callout>
                       ) : (
                         <div key={lineIndex} className="flex items-start justify-between gap-2">
-                          <code className="break-all text-xs text-zinc-600 dark:text-zinc-400">{line.output}</code>
+                          <ExpandableText
+                            text={line.output ?? ""}
+                            className="break-all text-xs text-zinc-600 dark:text-zinc-400"
+                          />
                           <CopyButton text={line.output ?? ""} />
                         </div>
                       ),
