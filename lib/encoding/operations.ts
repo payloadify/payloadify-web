@@ -7,8 +7,10 @@ import {
   percentEncodeBytes,
   percentDecodeToBytes,
   resolveAndDecodeText,
+  bytesToBinary,
+  binaryToBytes,
 } from "./bytes";
-export type EncodingOperationId = "base64" | "hex" | "url" | "html-entity" | "unicode-escape";
+export type EncodingOperationId = "base64" | "hex" | "url" | "html-entity" | "unicode-escape" | "rot13" | "binary";
 
 export type OperationOptions = { mode?: string; charset?: string };
 
@@ -100,6 +102,15 @@ function unicodeEscapeDecode(input: string): string {
   return input.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex: string) => String.fromCharCode(parseInt(hex, 16)));
 }
 
+/** Self-inverse Caesar shift of 13, only rotates ASCII letters; everything else passes through
+ *  unchanged, matching the standard ROT13 convention. */
+function rot13Transform(input: string): string {
+  return input.replace(/[a-zA-Z]/g, (ch) => {
+    const base = ch <= "Z" ? 65 : 97;
+    return String.fromCharCode(((ch.charCodeAt(0) - base + 13) % 26) + base);
+  });
+}
+
 /** Single source of truth for every encode/decode operation the Payload Encoder can chain. */
 export const ENCODING_OPERATIONS: EncodingOperation[] = [
   {
@@ -146,6 +157,20 @@ export const ENCODING_OPERATIONS: EncodingOperation[] = [
     ],
     encode: (input, options) => unicodeEscapeEncode(input, options?.mode),
     decode: (input) => unicodeEscapeDecode(input),
+  },
+  {
+    id: "rot13",
+    name: "ROT13",
+    encode: (input) => rot13Transform(input),
+    decode: (input) => rot13Transform(input),
+  },
+  {
+    id: "binary",
+    name: "Binary",
+    supportsCharset: true,
+    supportsLineOptions: true,
+    encode: (input, options) => bytesToBinary(charsetToBytes(input, options?.charset)),
+    decode: (input, options) => resolveAndDecodeText(binaryToBytes(input), options?.charset),
   },
 ];
 

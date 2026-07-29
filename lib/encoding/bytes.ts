@@ -29,6 +29,23 @@ export function hexToBytes(hex: string): Uint8Array {
   return bytes;
 }
 
+export function bytesToBinary(bytes: Uint8Array): string {
+  return Array.from(bytes, (b) => b.toString(2).padStart(8, "0")).join("");
+}
+
+export function binaryToBytes(binary: string): Uint8Array {
+  const clean = binary.trim().replace(/\s+/g, "");
+  if (clean.length === 0) return new Uint8Array(0);
+  if (clean.length % 8 !== 0 || !/^[01]+$/.test(clean)) {
+    throw new Error("Invalid binary. Expected a multiple of 8 bits (0/1 only).");
+  }
+  const bytes = new Uint8Array(clean.length / 8);
+  for (let i = 0; i < bytes.length; i++) {
+    bytes[i] = parseInt(clean.substr(i * 8, 8), 2);
+  }
+  return bytes;
+}
+
 export function utf16beBytes(input: string): Uint8Array {
   const bytes = new Uint8Array(input.length * 2);
   const view = new DataView(bytes.buffer);

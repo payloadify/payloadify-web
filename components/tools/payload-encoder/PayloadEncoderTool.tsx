@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ENCODING_OPERATIONS, ENCODING_OPERATIONS_BY_ID, EncodingOperationId } from "@/lib/encoding/operations";
-import { computeChain, Direction, Step } from "@/lib/encoding/chain";
+import { computeChain, Direction, parseStepsFromUrl, Step } from "@/lib/encoding/chain";
 import { AUTO_DETECT_CHARSET, CHARSET_GROUPS, DEFAULT_CHARSET } from "@/lib/encoding/charsets";
 import { Callout } from "@/components/ui/Callout";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { ExpandableText } from "@/components/ui/ExpandableText";
 import { RunsLocallyNote } from "@/components/ui/RunsLocallyNote";
 import { checkboxLabelClasses, iconButtonClasses, inputClasses, selectClasses, toggleButtonClasses } from "@/components/ui/formClasses";
 
@@ -18,8 +21,30 @@ function defaultStep(): Step {
 }
 
 export function PayloadEncoderTool({ direction }: { direction: Direction }) {
-  const [input, setInput] = useState("");
-  const [steps, setSteps] = useState<Step[]>([defaultStep()]);
+  // Receive side of the Magic Decoder's "Open in Payload Encoder/Decoder" handoff: ?chain=
+  // carries an auto-detected decode chain, ?input= carries the original string. Also doubles as
+  // the plain-input-only handoff from a direction="decode" page's own "Try Magic Decode" link
+  // round trip (chain absent, input present).
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const handoffInputParam = searchParams.get("input");
+  const handoffChainParam = searchParams.get("chain");
+
+  const [input, setInput] = useState(() => handoffInputParam ?? "");
+  const [steps, setSteps] = useState<Step[]>(() => {
+    if (handoffChainParam) {
+      const parsed = parseStepsFromUrl(handoffChainParam).map((s) => ({ ...s, id: nextStepId++ }));
+      if (parsed.length > 0) return parsed;
+    }
+    return [defaultStep()];
+  });
+
+  useEffect(() => {
+    if (handoffInputParam === null && handoffChainParam === null) return;
+    router.replace(pathname, { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
+  }, []);
 
   const { results } = computeChain(input, steps, direction);
 
@@ -52,6 +77,16 @@ export function PayloadEncoderTool({ direction }: { direction: Direction }) {
 
   return (
     <div className="flex flex-col gap-6">
+      {direction === "decode" && (
+        <Callout variant="info">
+          Not sure what encoding this is or how many layers deep it goes?{" "}
+          <Link href={`/magic-decoder?input=${encodeURIComponent(input)}`} className="font-medium underline">
+            Try Magic Decode
+          </Link>{" "}
+          to auto-detect the chain.
+        </Callout>
+      )}
+
       <div>
         <label className="mb-1 block text-sm font-medium">Input</label>
         <textarea
@@ -238,9 +273,10 @@ export function PayloadEncoderTool({ direction }: { direction: Direction }) {
                           {isFinal ? "Final output" : `After step ${index + 1}`}
                         </p>
                         <div className="flex items-start justify-between gap-2">
-                          <code className="break-all whitespace-pre-wrap text-xs text-zinc-600 dark:text-zinc-400">
-                            {result.output}
-                          </code>
+                          <ExpandableText
+                            text={result.output}
+                            className="break-all whitespace-pre-wrap text-xs text-zinc-600 dark:text-zinc-400"
+                          />
                           <CopyButton text={result.output} />
                         </div>
                       </>
@@ -255,7 +291,10 @@ export function PayloadEncoderTool({ direction }: { direction: Direction }) {
                         </Callout>
                       ) : (
                         <div key={lineIndex} className="flex items-start justify-between gap-2">
-                          <code className="break-all text-xs text-zinc-600 dark:text-zinc-400">{line.output}</code>
+                          <ExpandableText
+                            text={line.output ?? ""}
+                            className="break-all text-xs text-zinc-600 dark:text-zinc-400"
+                          />
                           <CopyButton text={line.output ?? ""} />
                         </div>
                       ),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeChain, Step } from "./chain";
+import { computeChain, parseStepsFromUrl, serializeStepsForUrl, Step } from "./chain";
 import { ENCODING_OPERATIONS_BY_ID } from "./operations";
 
 const base64Op = ENCODING_OPERATIONS_BY_ID["base64"];
@@ -81,5 +81,30 @@ describe("computeChain — encode line/chunk/separator options", () => {
       output: `${base64Op.encode("foo")}\r\n${base64Op.encode("bar")}`,
       error: null,
     });
+  });
+});
+
+describe("serializeStepsForUrl / parseStepsFromUrl", () => {
+  it("round-trips a chain that mixes charset and non-charset operations", () => {
+    const steps: Step[] = [
+      { id: 1, operationId: "base64", charset: "utf-8" },
+      { id: 2, operationId: "hex", charset: "windows-1251" },
+      { id: 3, operationId: "rot13" },
+    ];
+    const serialized = serializeStepsForUrl(steps);
+    const parsed = parseStepsFromUrl(serialized);
+
+    expect(parsed.map((s) => s.operationId)).toEqual(["base64", "hex", "rot13"]);
+    expect(parsed.map((s) => s.charset)).toEqual(["utf-8", "windows-1251", undefined]);
+  });
+
+  it("drops an unrecognized operationId instead of throwing", () => {
+    const parsed = parseStepsFromUrl("base64:utf-8,not-a-real-op:utf-8,rot13:");
+    expect(parsed.map((s) => s.operationId)).toEqual(["base64", "rot13"]);
+  });
+
+  it("returns [] for an empty or fully-malformed string", () => {
+    expect(parseStepsFromUrl("")).toEqual([]);
+    expect(parseStepsFromUrl("bogus,also-bogus")).toEqual([]);
   });
 });
