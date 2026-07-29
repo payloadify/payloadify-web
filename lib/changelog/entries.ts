@@ -14,6 +14,23 @@ export interface ChangelogEntry {
 // Newest first. To ship a new entry, add a new object at the TOP of this array.
 export const changelogEntries: ChangelogEntry[] = [
   {
+    date: "2026-07-29",
+    items: [
+      {
+        category: "Added",
+        text: "John the Ripper Command Generator tool: build a full command for all five crack modes (wordlist, single, incremental, mask, external), plus advanced flags (session, fork, pot file, no-log) and companion show/restore/benchmark commands. Hash Identifier now links out to it via a \"Build John Command\" button, matching the existing Hashcat chain",
+      },
+      {
+        category: "Added",
+        text: "John the Ripper Command Generator: hash from Hash Identifier now lands in an editable Target section (Hash value or Hash file path), matching the Hashcat builder; Hash value mode auto-generates the echo step to write it to a file since John only accepts hash files on the command line",
+      },
+      {
+        category: "Fixed",
+        text: "John the Ripper Command Generator: mask mode's min/max length fields no longer silently accept non-numeric input, a pasted non-numeric value now shows a validation error instead of passing through uncaught",
+      },
+    ],
+  },
+  {
     date: "2026-07-24",
     items: [
       {
