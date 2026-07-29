@@ -1,34 +1,5 @@
 import { ENCODING_OPERATIONS_BY_ID, EncodingOperationId } from "./operations";
 
-/** Serializes only operationId + charset — mode is encode-direction-only and per-step line
- *  options are manual-only toggles, neither implied by an auto-detected decode chain. */
-export function serializeStepsForUrl(steps: Step[]): string {
-  return steps
-    .map((step) => {
-      const operation = ENCODING_OPERATIONS_BY_ID[step.operationId];
-      const charset = operation.supportsCharset ? (step.charset ?? "") : "";
-      return `${step.operationId}:${charset}`;
-    })
-    .join(",");
-}
-
-/** Drops/ignores any unrecognized operationId rather than throwing, returning [] if nothing
- *  valid parses — a malformed query param shouldn't crash the receiving page. */
-export function parseStepsFromUrl(raw: string): Step[] {
-  if (raw.trim() === "") return [];
-  const steps: Step[] = [];
-  let id = 1;
-  for (const part of raw.split(",")) {
-    const [operationIdRaw, charsetRaw] = part.split(":");
-    const operation = ENCODING_OPERATIONS_BY_ID[operationIdRaw as EncodingOperationId];
-    if (!operation) continue;
-    const step: Step = { id: id++, operationId: operation.id as EncodingOperationId };
-    if (operation.supportsCharset && charsetRaw) step.charset = charsetRaw;
-    steps.push(step);
-  }
-  return steps;
-}
-
 export type Direction = "encode" | "decode";
 
 export type Step = {

@@ -39,16 +39,8 @@ export const tools: Tool[] = [
     slug: "payload-encoder",
     name: "Payload Encoder/Decoder",
     tagline: "Chain encoding and decoding steps into one pipeline.",
-    supports: "Base64, Hex, URL, HTML-entity, ROT13, and Binary, in any order.",
-    meta: ["Base64", "Hex", "URL", "ROT13"],
-    status: "live",
-  },
-  {
-    slug: "magic-decoder",
-    name: "Magic Auto-Decoder",
-    tagline: "Paste an obfuscated string, get the plaintext.",
-    supports: "Auto-detects layered Base64, Hex, URL, HTML-entity, ROT13, and Binary, up to 4 layers deep.",
-    meta: ["Base64", "Hex", "ROT13", "Binary"],
+    supports: "Base64, Hex, URL, and HTML-entity, in any order.",
+    meta: ["Base64", "Hex", "URL", "HTML Entity"],
     status: "live",
   },
   {
