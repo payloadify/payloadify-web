@@ -36,6 +36,18 @@ export const changelogEntries: ChangelogEntry[] = [
         category: "Added",
         text: "Payload Encoder/Decoder: added ROT13 and Binary as new chainable steps, alongside the existing Base64, Hex, URL, HTML entity, and Unicode Escape",
       },
+      {
+        category: "Improved",
+        text: "Magic Auto-Decoder: now defaults to a manual Decode button instead of scanning on every keystroke, with an Auto decode checkbox to opt back into live decoding; a decoded link arriving from the Payload Decoder still decodes immediately either way",
+      },
+      {
+        category: "Improved",
+        text: "Magic Auto-Decoder: stop heuristics are smarter about what counts as plaintext (recognizing JSON, XML, URL, and email structure, or real dictionary words) so a wrong guess like ROT13-of-Base64 no longer outranks or replaces the correct decode; added a manual \"Decode one more layer\" control to keep stepping through a chain by hand, and an Advanced option to raise the auto-decode depth past the default of 4 (up to 12, with a warning)",
+      },
+      {
+        category: "Improved",
+        text: "Magic Decoder and Payload Encoder/Decoder: long decoded or encoded output is now trimmed behind a Show more/Show less toggle past 500 characters, while Copy still grabs the full untruncated text",
+      },
     ],
   },
   {
