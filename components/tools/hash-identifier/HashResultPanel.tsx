@@ -77,6 +77,14 @@ function CandidateRow({
         ) : (
           <span>No Hashcat mode</span>
         )}
+        {signature.johnFormat && (
+          <Link
+            href={`/john-generator?format=${encodeURIComponent(signature.johnFormat)}&hash=${encodeURIComponent(hashValue)}`}
+            className="rounded border border-zinc-300 px-2 py-1 text-xs text-zinc-600 hover:border-zinc-400 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-zinc-500"
+          >
+            Build John Command
+          </Link>
+        )}
       </div>
       {signature.note && <p className="text-sm text-zinc-500 dark:text-zinc-400">{signature.note}</p>}
     </div>

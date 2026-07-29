@@ -131,6 +131,14 @@ export const tools: Tool[] = [
     meta: ["Fast Scan", "Full Scan", "NSE"],
     status: "live",
   },
+  {
+    slug: "john-generator",
+    name: "John the Ripper Command Generator",
+    tagline: "Build a complete john the ripper command.",
+    supports: "Format, crack mode, wordlists, rules, masks, advanced flags.",
+    meta: ["Wordlist", "Rules", "Mask"],
+    status: "live",
+  },
 ];
 
 export function getTool(slug: string): Tool | undefined {
