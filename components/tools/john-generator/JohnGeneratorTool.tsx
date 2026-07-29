@@ -38,10 +38,11 @@ export function JohnGeneratorTool() {
   );
   const [customFormat, setCustomFormat] = useState(() => (handoffFormatIsKnown ? "" : (handoffFormatParam ?? "")));
   // John takes a hash *file*, not a hash value, so a handed-off hash can't pre-fill an input the
-  // way Hashcat's target value does — it's shown as read-only reference text instead.
+  // way Hashcat's target value does — instead the generated command writes it to a file itself,
+  // see the handoffHash wiring into buildCommand below.
   const [handoffHash] = useState<string | null>(handoffHashParam);
 
-  const [hashFile, setHashFile] = useState("");
+  const [hashFile, setHashFile] = useState(() => (handoffHashParam ? "hashes.txt" : ""));
   const [crackMode, setCrackMode] = useState<CrackModeId>("wordlist");
   const [wordlist, setWordlist] = useState("/usr/share/wordlists/rockyou.txt");
   const [rules, setRules] = useState("None");
@@ -77,6 +78,7 @@ export function JohnGeneratorTool() {
     format: formatSelect,
     customFormat,
     hashFile,
+    handoffHash: handoffHash ?? "",
     crackMode,
     wordlist,
     rules,
@@ -162,8 +164,9 @@ export function JohnGeneratorTool() {
       {handoffHash && (
         <Callout variant="info">
           Hash from Hash Identifier: <code className="break-all">{handoffHash}</code>. John only accepts a hash{" "}
-          <strong>file</strong>, not a raw value. Save this hash to a file first (one per line, optionally{" "}
-          <code>user:hash</code>), then enter that file&apos;s path below.
+          <strong>file</strong>, not a raw value, so the generated command below writes this hash to{" "}
+          <code>{hashFile || "hashes.txt"}</code> for you before running John. Change the path if you want it saved
+          somewhere else.
         </Callout>
       )}
 
@@ -216,7 +219,17 @@ export function JohnGeneratorTool() {
           className={inputClasses}
         />
         <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Save your hash(es) to this file first, one per line. Use <code>user:hash</code> format if you have usernames too.
+          {handoffHash ? (
+            <>
+              The generated command creates this file for you. For multiple hashes, save them yourself first, one
+              per line, optionally as <code>user:hash</code>.
+            </>
+          ) : (
+            <>
+              Save your hash(es) to this file first, one per line. Use <code>user:hash</code> format if you have
+              usernames too.
+            </>
+          )}
         </p>
       </div>
 

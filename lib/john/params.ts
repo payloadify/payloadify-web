@@ -7,6 +7,10 @@ export interface JohnSelection {
   /** John never accepts a bare hash value on the command line, only a file path — see
    *  lib/john/generate.ts for why this differs from Hashcat's value/file toggle. */
   hashFile: string;
+  /** Raw hash value handed off from Hash Identifier, if any. When set, buildCommand prepends an
+   *  `echo ... > hashFile` step so the generated command is runnable as-is instead of just
+   *  telling the user to go create the file themselves. */
+  handoffHash: string;
   crackMode: CrackModeId;
   wordlist: string;
   /** Dropdown value from RULE_SETS, "None" to omit --rules= entirely. */

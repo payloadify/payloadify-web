@@ -7,6 +7,7 @@ function baseSelection(overrides: Partial<JohnSelection> = {}): JohnSelection {
     format: "nt",
     customFormat: "",
     hashFile: "hashes.txt",
+    handoffHash: "",
     crackMode: "wordlist",
     wordlist: "rockyou.txt",
     rules: "None",

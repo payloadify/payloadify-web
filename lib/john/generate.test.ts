@@ -7,6 +7,7 @@ function baseSelection(overrides: Partial<JohnSelection> = {}): JohnSelection {
     format: "nt",
     customFormat: "",
     hashFile: "hashes.txt",
+    handoffHash: "",
     crackMode: "wordlist",
     wordlist: "rockyou.txt",
     rules: "None",
@@ -111,6 +112,32 @@ describe("buildCommand", () => {
     expect(buildCommand(sel)).toBe(
       "john --format='nt' --wordlist='rockyou.txt' --session='job1' --fork='4' --pot='custom.pot' --no-log hashes.txt",
     );
+  });
+
+  it("prefixes an echo-to-file step when a handoff hash is set", () => {
+    const sel = baseSelection({ handoffHash: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08" });
+    expect(buildCommand(sel)).toBe(
+      "echo '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08' > hashes.txt && john --format='nt' --wordlist='rockyou.txt' hashes.txt",
+    );
+  });
+
+  it("writes the echoed hash to whatever hash file path is currently set", () => {
+    const sel = baseSelection({ handoffHash: "abc123", hashFile: "/mnt/dumps/hashes.txt" });
+    expect(buildCommand(sel)).toBe(
+      "echo 'abc123' > /mnt/dumps/hashes.txt && john --format='nt' --wordlist='rockyou.txt' /mnt/dumps/hashes.txt",
+    );
+  });
+
+  it("escapes an embedded single quote in the handoff hash instead of breaking out of quoting", () => {
+    const sel = baseSelection({ handoffHash: "abc' ; touch pwned #" });
+    expect(buildCommand(sel)).toBe(
+      "echo 'abc'\\'' ; touch pwned #' > hashes.txt && john --format='nt' --wordlist='rockyou.txt' hashes.txt",
+    );
+  });
+
+  it("omits the echo prefix when no handoff hash is set", () => {
+    const sel = baseSelection({ handoffHash: "" });
+    expect(buildCommand(sel)).toBe("john --format='nt' --wordlist='rockyou.txt' hashes.txt");
   });
 });
 
