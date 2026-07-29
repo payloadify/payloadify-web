@@ -84,4 +84,12 @@ describe("validateSelection", () => {
     expect(result.ok).toBe(false);
     expect(result.message).toMatch(/length/i);
   });
+
+  it("fails when a pasted non-numeric value ends up in min/max length", () => {
+    const result = validateSelection(
+      baseSelection({ crackMode: "mask", wordlist: "", mask: "?d?d?d?d", minLength: "abc", maxLength: "4" }),
+    );
+    expect(result.ok).toBe(false);
+    expect(result.message).toMatch(/number/i);
+  });
 });

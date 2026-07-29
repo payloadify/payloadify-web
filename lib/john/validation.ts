@@ -31,6 +31,9 @@ export function validateSelection(sel: JohnSelection): JohnValidation {
   if (sel.crackMode === "mask" && sel.minLength.trim() !== "" && sel.maxLength.trim() !== "") {
     const min = Number(sel.minLength);
     const max = Number(sel.maxLength);
+    if (Number.isNaN(min) || Number.isNaN(max)) {
+      return { ok: false, message: "Min/max length must be numbers." };
+    }
     if (min > max) return { ok: false, message: "Min length cannot be greater than max length." };
   }
 
