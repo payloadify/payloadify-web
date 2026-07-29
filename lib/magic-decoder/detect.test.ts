@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findDecodings, plausibilityScore } from "./detect";
+import { findDecodings, guessNextLayer, plausibilityScore } from "./detect";
 import { ENCODING_OPERATIONS_BY_ID } from "../encoding/operations";
 
 const base64Op = ENCODING_OPERATIONS_BY_ID["base64"];
@@ -65,6 +65,54 @@ describe("findDecodings", () => {
         expect(["rot13", "html-entity", "unicode-escape"]).toContain(step.operationId);
       }
     }
+  });
+
+  it("stops at a confident plaintext match instead of grinding on to the depth cap", () => {
+    // Base64(Hex(sentence)) is only 2 real layers, the search should stop once it finds the
+    // sentence rather than continuing to explore past it up to maxDepth.
+    const layered = base64Op.encode(hexOp.encode("the password is admin and the login is test"));
+    const results = findDecodings(layered, 4);
+    expect(results.length).toBeGreaterThan(0);
+    expect(results[0].chain).toHaveLength(2);
+  });
+
+  it("does not present a short wrong guess (ROT13-of-Base64) as a confident decode", () => {
+    // Regression test: short pure-letter decode results used to auto-score 1.0 regardless of
+    // whether they were real words, so a coincidental ROT13-of-Base64 result could outrank (or
+    // stand in for) the real decode. "QWJjMTIz" is Base64 for "Abc123", neither the real decode
+    // (has digits, so it's not pure letters) nor the ROT13-of-Base64 wrong guess should surface.
+    const results = findDecodings(base64Op.encode("Abc123"));
+    expect(results).toEqual([]);
+  });
+
+  it("respects a custom maxDepth beyond the default of 4 (Advanced setting)", () => {
+    // 5 real layers, unreachable within the default depth-4 cap.
+    const layered = base64Op.encode(hexOp.encode(base64Op.encode(hexOp.encode(base64Op.encode("HELLO")))));
+    expect(findDecodings(layered, 4)).toEqual([]);
+    const deeper = findDecodings(layered, 8);
+    expect(deeper.length).toBeGreaterThan(0);
+    expect(deeper[0].text).toBe("HELLO");
+    expect(deeper[0].chain).toHaveLength(5);
+  });
+});
+
+describe("guessNextLayer", () => {
+  it("ranks a real decode above a wrong guess for the same input", () => {
+    const guesses = guessNextLayer(hexOp.encode("HELLO"));
+    expect(guesses.length).toBeGreaterThan(0);
+    expect(guesses[0].operationId).toBe("hex");
+    expect(guesses[0].output).toBe("HELLO");
+  });
+
+  it("returns no-op-free guesses for random noise, letting the caller show 'nothing found'", () => {
+    const guesses = guessNextLayer("xQ9!kZp#2vLm7@Rt$Wj4^Ny8&Bh3*Fc6");
+    for (const guess of guesses) {
+      expect(guess.output).not.toBe("xQ9!kZp#2vLm7@Rt$Wj4^Ny8&Bh3*Fc6");
+    }
+  });
+
+  it("returns an empty array for empty input", () => {
+    expect(guessNextLayer("")).toEqual([]);
   });
 });
 
