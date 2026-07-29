@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { ENCODING_OPERATIONS_BY_ID } from "./operations";
+import { bytesToBinary, hexToBytes } from "./bytes";
 
 const base64 = ENCODING_OPERATIONS_BY_ID["base64"];
 const hex = ENCODING_OPERATIONS_BY_ID["hex"];
 const url = ENCODING_OPERATIONS_BY_ID["url"];
 const htmlEntity = ENCODING_OPERATIONS_BY_ID["html-entity"];
 const unicodeEscape = ENCODING_OPERATIONS_BY_ID["unicode-escape"];
+const rot13 = ENCODING_OPERATIONS_BY_ID["rot13"];
+const binary = ENCODING_OPERATIONS_BY_ID["binary"];
 
 describe("base64", () => {
   it("matches a known reference value", () => {
@@ -129,6 +132,46 @@ describe("unicode-escape", () => {
 
   it("throws on a truncated \\u escape", () => {
     expect(() => unicodeEscape.decode("\\u12")).toThrow(/invalid unicode escape/i);
+  });
+});
+
+describe("rot13", () => {
+  it("matches a known reference value", () => {
+    expect(rot13.encode("Hello, World!")).toBe("Uryyb, Jbeyq!");
+  });
+
+  it("is self-inverse (applying it twice returns the original)", () => {
+    expect(rot13.decode(rot13.encode("The Quick Brown Fox"))).toBe("The Quick Brown Fox");
+  });
+
+  it("leaves non-alphabetic characters unchanged", () => {
+    expect(rot13.encode("123 !@# abc")).toBe("123 !@# nop");
+  });
+});
+
+describe("binary", () => {
+  it("matches a known reference value", () => {
+    expect(binary.encode("Hi")).toBe("0100100001101001");
+  });
+
+  it("round-trips ASCII and emoji input", () => {
+    for (const text of ["hello world", "😀 payload"]) {
+      expect(binary.decode(binary.encode(text))).toBe(text);
+    }
+  });
+
+  it("throws on a bit count that isn't a multiple of 8", () => {
+    expect(() => binary.decode("0100")).toThrow(/invalid binary/i);
+  });
+
+  it("throws on non-0/1 characters", () => {
+    expect(() => binary.decode("0100200a")).toThrow(/invalid binary/i);
+  });
+
+  it("decodes raw Windows-1251 bytes as Cyrillic text when that charset is selected", () => {
+    // Same fixture bytes as the hex/base64 Windows-1251 tests, expressed as binary.
+    const binaryFixture = bytesToBinary(hexToBytes("cff0e8e2e5f2"));
+    expect(binary.decode(binaryFixture, { charset: "windows-1251" })).toBe("Привет");
   });
 });
 

@@ -12,7 +12,7 @@ const sections: { title: string; slugs: string[] }[] = [
   },
   {
     title: "Text & Token Tools",
-    slugs: ["jwt-decoder", "payload-encoder", "homoglyph-identifier"],
+    slugs: ["jwt-decoder", "payload-encoder", "magic-decoder", "homoglyph-identifier"],
   },
   {
     title: "Payload Generators",

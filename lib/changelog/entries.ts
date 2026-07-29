@@ -28,6 +28,14 @@ export const changelogEntries: ChangelogEntry[] = [
         category: "Fixed",
         text: "John the Ripper Command Generator: mask mode's min/max length fields no longer silently accept non-numeric input, a pasted non-numeric value now shows a validation error instead of passing through uncaught",
       },
+      {
+        category: "Added",
+        text: "Magic Auto-Decoder tool: paste an unknown obfuscated string and it auto-detects and unwraps common decoding chains (Base64, Hex, URL, HTML entity, ROT13, Binary) up to 4 layers deep, showing the exact chain and every intermediate step's output so you can verify it yourself. Shows up to 3 candidates when the decoding is ambiguous. Cross-linked both ways with the Payload Encoder/Decoder: a \"Try Magic Decode\" shortcut from the decoder, and an \"Open in Payload Encoder/Decoder\" link on each result to keep tweaking a detected chain manually",
+      },
+      {
+        category: "Added",
+        text: "Payload Encoder/Decoder: added ROT13 and Binary as new chainable steps, alongside the existing Base64, Hex, URL, HTML entity, and Unicode Escape",
+      },
     ],
   },
   {
