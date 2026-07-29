@@ -8,7 +8,7 @@ import { serializeStepsForUrl } from "@/lib/encoding/chain";
 import { Callout } from "@/components/ui/Callout";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { RunsLocallyNote } from "@/components/ui/RunsLocallyNote";
-import { inputClasses } from "@/components/ui/formClasses";
+import { checkboxLabelClasses, inputClasses, primaryButtonClasses } from "@/components/ui/formClasses";
 
 export function MagicDecoderTool() {
   const searchParams = useSearchParams();
@@ -17,6 +17,11 @@ export function MagicDecoderTool() {
   const handoffInputParam = searchParams.get("input");
 
   const [input, setInput] = useState(() => handoffInputParam ?? "");
+  const [autoDecode, setAutoDecode] = useState(false);
+  // The input text last actually decoded in manual mode. Seeded from the handoff param so a
+  // "Try Magic Decode" link still shows a result immediately on arrival regardless of the
+  // checkbox state, without needing an extra click.
+  const [decodedInput, setDecodedInput] = useState<string | null>(() => handoffInputParam ?? null);
 
   useEffect(() => {
     if (handoffInputParam === null) return;
@@ -24,7 +29,11 @@ export function MagicDecoderTool() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount only
   }, []);
 
-  const candidates = useMemo(() => findDecodings(input), [input]);
+  const awaitingManualDecode = !autoDecode && decodedInput !== input;
+  const candidates = useMemo(() => {
+    const source = autoDecode ? input : decodedInput;
+    return findDecodings(source ?? "");
+  }, [autoDecode, input, decodedInput]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -38,11 +47,33 @@ export function MagicDecoderTool() {
           placeholder="Paste an obfuscated string (Base64, Hex, URL-encoded, HTML entities, ROT13, or Binary, layered up to 4 deep)"
           className={inputClasses}
         />
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <label className={checkboxLabelClasses}>
+            <input
+              type="checkbox"
+              checked={autoDecode}
+              onChange={(e) => setAutoDecode(e.target.checked)}
+            />
+            Auto decode
+          </label>
+          {!autoDecode && (
+            <button
+              type="button"
+              onClick={() => setDecodedInput(input)}
+              disabled={input.trim() === ""}
+              className={primaryButtonClasses}
+            >
+              Decode
+            </button>
+          )}
+        </div>
         <RunsLocallyNote />
       </div>
 
       {input.trim() === "" ? (
         <Callout variant="info">Paste a string above to try to auto-detect and unwrap it.</Callout>
+      ) : awaitingManualDecode ? (
+        <Callout variant="info">Click Decode to check this input for encoded layers.</Callout>
       ) : candidates.length === 0 ? (
         <Callout variant="warning">No confident plaintext decoding found within 4 layers.</Callout>
       ) : (
