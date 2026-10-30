@@ -43,7 +43,7 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.9",
-    "wrangler": "^4.111.0"
+    "wrangler": "^4.156.0"
   },
   "optionalDependencies": {
     "lightningcss-win32-x64-msvc": "^1.32.0"
